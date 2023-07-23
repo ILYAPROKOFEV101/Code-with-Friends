@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "723880678401",
+    "project_id": "code-with-friends-73cde",
+    "storage_bucket": "code-with-friends-73cde.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:723880678401:android:2f17919dfc7849759d9c00",
+        "android_client_info": {
+          "package_name": "com.example.codewithfriends"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "723880678401-8tiejlvgl8v0qhg48fog0623aab93ksq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.codewithfriends",
+            "certificate_hash": "804187fcfd88ce72bf4acf4e1260de975f93177f"
+          }
+        },
+        {
+          "client_id": "723880678401-e36qj2dcmalhhnp8brc81r5kaiqgr6lb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAEj3A8rO2Am5dVzqy7av0Hzi7DMpkvcs8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "723880678401-e36qj2dcmalhhnp8brc81r5kaiqgr6lb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
