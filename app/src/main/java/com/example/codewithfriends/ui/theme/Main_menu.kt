@@ -44,6 +44,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
+import com.example.codewithfriends.Activity.theme.CreativyRoom
 import com.example.codewithfriends.R
 import com.example.codewithfriends.Activity.theme.Roomcreator
 
@@ -216,7 +217,7 @@ class Main_menu : ComponentActivity() {
 
                     Button( colors = ButtonDefaults.buttonColors(joinroom),
                         onClick = {
-                            val intent = Intent(this@Main_menu, Roomcreator::class.java)
+                            val intent = Intent(this@Main_menu, CreativyRoom::class.java)
                             startActivity(intent)
                                   },
                         modifier = Modifier

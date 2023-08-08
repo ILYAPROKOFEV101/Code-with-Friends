@@ -70,4 +70,5 @@
     <string name="title_activity_tester">Tester</string>
     <string name="title_activity_data_tester">DataActivity_Tester</string>
     <string name="title_activity_write">Write_Activity</string>
+    <string name="title_activity_creativy_room">CreativyRoom</string>
 </resources>
