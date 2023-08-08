@@ -1,5 +1,6 @@
 package com.example.codewithfriends.ui.theme
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -44,6 +45,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import com.example.codewithfriends.R
+import com.example.codewithfriends.Activity.theme.Roomcreator
+
 import com.example.codewithfriends.presentation.profile.ProfileIcon
 import com.example.codewithfriends.presentation.profile.ProfileName
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
@@ -140,21 +143,21 @@ class Main_menu : ComponentActivity() {
                     .fillMaxWidth()
                     .padding(start = 5.dp, end = 5.dp)
                     .wrapContentHeight()
-                    .height(500.dp)
                     .wrapContentSize(align = Alignment.Center) // Выравнивание Box по центру экрана
             ) {
 
 
                 TextField(
-                    value = userText, // Текущее значение текста в поле
-                    onValueChange = { userText = it }, // Обработчик изменения текста, обновляющий переменную "text"
+                    value = text, // Текущее значение текста в поле
+                    onValueChange = { text = it }, // Обработчик изменения текста, обновляющий переменную "text"
                     textStyle = TextStyle(fontSize = textSize),
                    // textStyle = TextStyle.Default, // Стиль текста, используемый в поле ввода (используется стандартный стиль)
 
                     colors = TextFieldDefaults.textFieldColors(
                         focusedIndicatorColor = Color.Transparent, // Цвет индикатора при фокусе на поле (прозрачный - отключает индикатор)
                         unfocusedIndicatorColor = Color.Transparent, // Цвет индикатора при потере фокуса на поле (прозрачный - отключает индикатор)
-                        disabledIndicatorColor = Color.Transparent // Цвет индикатора, когда поле неактивно (прозрачный - отключает индикатор)
+                        disabledIndicatorColor = Color.Transparent, // Цвет индикатора, когда поле неактивно (прозрачный - отключает индикатор)
+                                containerColor = Color.White
                     ),
 
                     label = { // Метка, которая отображается над полем ввода
@@ -181,25 +184,24 @@ class Main_menu : ComponentActivity() {
                         .focusRequester(focusRequester = focusRequester) // Позволяет управлять фокусом поля ввода
                 )
 
-            }
+            }}
             Spacer(modifier = Modifier.height(20.dp))
 
-            Box(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight()
+                    .fillMaxSize()
                     .padding(start = 5.dp, end = 5.dp),
-                contentAlignment = Alignment.BottomCenter
-            ) {
-
-                Column(
-                    modifier = Modifier.fillMaxSize()
+                verticalArrangement = Arrangement.Bottom,
+                horizontalAlignment = Alignment.CenterHorizontally
 
                 ) {
 
                     Button(
                         colors = ButtonDefaults.buttonColors(creatroom),
-                        onClick = { /*TODO*/ },
+                        onClick = {
+
+
+                                  },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(80.dp)
@@ -213,9 +215,11 @@ class Main_menu : ComponentActivity() {
                     Spacer(modifier = Modifier.height(10.dp))
 
                     Button( colors = ButtonDefaults.buttonColors(joinroom),
-                        onClick = { /*TODO*/ },
+                        onClick = {
+                            val intent = Intent(this@Main_menu, Roomcreator::class.java)
+                            startActivity(intent)
+                                  },
                         modifier = Modifier
-
                             .fillMaxWidth()
                             .height(80.dp)
                             .clip(
@@ -226,13 +230,14 @@ class Main_menu : ComponentActivity() {
                         Text(text = stringResource(id = R.string.joinroom),fontSize = 24.sp,)
 
                     }
+                Spacer(modifier = Modifier.height(10.dp))
                 }
 
-            }
+
         }
     }
 
 
-}
+
 
 

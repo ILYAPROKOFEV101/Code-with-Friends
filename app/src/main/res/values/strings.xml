@@ -16,6 +16,8 @@
     <string name="joinroom">Создать команду</string>
     <string name="creatroom">Найти команду</string>
     <string name="aboutyou">Расскажите о себе другим пользователям:</string>
+    <string name="placeinroom">Выбирите миста </string>
+    <string name="Nameofroom">Выбирите миста </string>
 
     <string name="hello">Hello!</string>
     <string name="welcome">Welcome!</string>
