@@ -20,6 +20,11 @@
         android:theme="@style/Theme.CodeWithFriends"
         tools:targetApi="31">
         <activity
+            android:name=".findroom.FindRoom"
+            android:exported="false"
+            android:label="@string/title_activity_find_room"
+            android:theme="@style/Theme.CodeWithFriends" />
+        <activity
             android:name=".Activity.theme.CreativyRoom"
             android:exported="false"
             android:label="@string/title_activity_creativy_room"

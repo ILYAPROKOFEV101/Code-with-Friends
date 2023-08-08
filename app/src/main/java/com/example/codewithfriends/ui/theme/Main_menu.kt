@@ -46,7 +46,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import com.example.codewithfriends.Activity.theme.CreativyRoom
 import com.example.codewithfriends.R
-import com.example.codewithfriends.Activity.theme.Roomcreator
+import com.example.codewithfriends.findroom.FindRoom
 
 import com.example.codewithfriends.presentation.profile.ProfileIcon
 import com.example.codewithfriends.presentation.profile.ProfileName
@@ -200,7 +200,8 @@ class Main_menu : ComponentActivity() {
                     Button(
                         colors = ButtonDefaults.buttonColors(creatroom),
                         onClick = {
-
+                            val intent = Intent(this@Main_menu, FindRoom::class.java)
+                            startActivity(intent)
 
                                   },
                         modifier = Modifier
