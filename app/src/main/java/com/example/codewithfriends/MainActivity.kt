@@ -112,6 +112,9 @@ class  MainActivity: ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
 
+            val intent = Intent(this@MainActivity, Main_menu::class.java)
+            startActivity(intent)
+
             toshear(userData = googleAuthUiClient.getSignedInUser())
 
             @Composable

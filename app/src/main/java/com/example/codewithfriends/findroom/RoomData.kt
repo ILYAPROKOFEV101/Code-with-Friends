@@ -2,7 +2,8 @@ package com.example.codewithfriends.findroom
 
 import kotlinx.serialization.Serializable
 
-@Serializable
+
+
 data class Room(
     val id: String,
     val Roomname: String,
