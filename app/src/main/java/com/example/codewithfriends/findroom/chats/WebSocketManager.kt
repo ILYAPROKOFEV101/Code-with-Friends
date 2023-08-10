@@ -11,13 +11,28 @@ import okhttp3.WebSocketListener
 
 class PieSocketListener : WebSocketListener() {
 
+    private lateinit var webSocket: WebSocket
+
+
+
+
+
     override fun onOpen(webSocket: WebSocket, response: Response) { // Вызывается при открытии соединения с WebSocket
 
         webSocket.send("Hello World!")  // Отправка сообщения "Hello World!" на сервер
 
         Log.e("burak", "baglandi")  // Вывод в лог сообщения о подключении
+
+        this.webSocket = webSocket
+
     }
 
+    fun sendMessage(message: String) {
+
+
+        Log.d("PieSocket", "Sending message: $message")
+        webSocket.send(message)
+    }
 
     override fun onMessage(webSocket: WebSocket, text: String) {  // Вызывается при получении сообщения от сервера
 

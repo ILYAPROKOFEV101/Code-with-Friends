@@ -44,10 +44,11 @@ import okhttp3.Request
 
 class Chat : ComponentActivity() {
 
-    var text by mutableStateOf("")
+    private val roomId by lazy { intent.getStringExtra("roomId") }
+    private val pieSocketListener = PieSocketListener()
+    private var text by mutableStateOf("")
     private val messages = mutableStateListOf<String>()
-    private val client = OkHttpClient()
-
+    private var submittedText by mutableStateOf("")
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,10 +58,15 @@ class Chat : ComponentActivity() {
 
             Creator()
         }
+        setupWebSocket()
     }
 
 
-
+    private fun setupWebSocket() {
+        val client = OkHttpClient()
+        val request = Request.Builder().url("https://getpost-ilya1.up.railway.app/chat/$roomId").build()
+        val webSocket = client.newWebSocket(request, pieSocketListener)
+    }
 
 
 
@@ -119,6 +125,9 @@ class Chat : ComponentActivity() {
                     onClick = {
                         submittedText = text
                         text = ""
+
+                        val messageToSend = "$submittedText"
+                        pieSocketListener.sendMessage(messageToSend)
 
                     }
                 ) {

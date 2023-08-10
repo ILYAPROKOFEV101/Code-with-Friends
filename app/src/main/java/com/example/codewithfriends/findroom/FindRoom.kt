@@ -179,6 +179,10 @@ class FindRoom : ComponentActivity() {
             .build()
                val listener = PieSocketListener()
         val ws: WebSocket = client.newWebSocket(request, listener)
+
+        val intent = Intent(this, Chat::class.java)
+        intent.putExtra("roomId", roomId)
+        startActivity(intent)
     }
 
 
