@@ -72,4 +72,5 @@
     <string name="title_activity_write">Write_Activity</string>
     <string name="title_activity_creativy_room">CreativyRoom</string>
     <string name="title_activity_find_room">FindRoom</string>
+    <string name="title_activity_chat">Chat</string>
 </resources>

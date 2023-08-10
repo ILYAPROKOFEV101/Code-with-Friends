@@ -20,6 +20,11 @@
         android:theme="@style/Theme.CodeWithFriends"
         tools:targetApi="31">
         <activity
+            android:name=".findroom.chats.Chat"
+            android:exported="false"
+            android:label="@string/title_activity_chat"
+            android:theme="@style/Theme.CodeWithFriends" />
+        <activity
             android:name=".findroom.FindRoom"
             android:exported="false"
             android:label="@string/title_activity_find_room"
