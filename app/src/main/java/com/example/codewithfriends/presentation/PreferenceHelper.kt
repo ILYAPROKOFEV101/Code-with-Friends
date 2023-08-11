@@ -10,6 +10,8 @@ object PreferenceHelper {
     private const val KEY_SHOW_ELEMENT = "showElement"
     private const val KEY_USER_TEXT = "userText"
 
+    private const val KEY_ROOM_ID = "roomId"
+
 
 
     private fun getSharedPreferences(context: Context): SharedPreferences {
@@ -29,6 +31,17 @@ object PreferenceHelper {
 
     fun getUserText(context: Context): String? {
         return getSharedPreferences(context).getString(KEY_USER_TEXT, "")
+    }
+
+
+    fun saveRoomId(context: Context, roomId: String) {
+        val editor = getSharedPreferences(context).edit()
+        editor.putString(KEY_ROOM_ID, roomId)
+        editor.apply()
+    }
+
+    fun getRoomId(context: Context): String? {
+        return getSharedPreferences(context).getString(KEY_ROOM_ID, null)
     }
 
 

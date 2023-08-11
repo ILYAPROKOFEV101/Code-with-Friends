@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 
 import androidx.compose.foundation.layout.Row
 
@@ -15,7 +14,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -35,9 +33,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.codewithfriends.R
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import com.example.codewithfriends.findroom.chats.PieSocketListener
+import com.example.reaction.logik.PreferenceHelper
+import com.example.reaction.logik.PreferenceHelper.getRoomId
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
@@ -45,30 +43,34 @@ import okhttp3.WebSocket
 
 class Chat : ComponentActivity() {
 
-    private val roomId by lazy { intent.getStringExtra("roomId") }
     private val pieSocketListener = PieSocketListener()
     private val client = OkHttpClient()
     private lateinit var webSocket: WebSocket
-    private var text by mutableStateOf("")
-    private val messages = mutableStateListOf<String>()
-    private var submittedText by mutableStateOf("")
-    @OptIn(ExperimentalMaterial3Api::class)
+    private var storedRoomId: String? = null // Объявляем на уровне класса
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        storedRoomId = getRoomId(this)
+
 
         setContent {
 
 
             Creator()
+        }// Проверяем, что storedRoomId не равен null
+        if (storedRoomId != null) {
+            setupWebSocket(storedRoomId!!)
+        } else {
+            // roomId не сохранен, обработайте этот случай по вашему усмотрению
         }
-        setupWebSocket()
     }
 
-
-
-     fun setupWebSocket() {
-        val client = OkHttpClient()
-        val request = Request.Builder().url("https://getpost-ilya1.up.railway.app/chat/t9iSQ1cSEp").build()
+    private fun setupWebSocket(roomId: String) {
+        val request: Request = Request.Builder()
+            .url("https://getpost-ilya1.up.railway.app/chat/$roomId")
+            .build()
         webSocket = client.newWebSocket(request, pieSocketListener)
     }
 
@@ -78,10 +80,14 @@ class Chat : ComponentActivity() {
 
 
 
-    @Preview(showBackground = true)
+
+
+
+@Preview(showBackground = true)
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
     @Composable
     fun Creator() {
+        val roomId = intent.getStringExtra("roomId")
         val keyboardController = LocalSoftwareKeyboardController.current
         var textSize by remember { mutableStateOf(20.sp) }
         var text by remember { mutableStateOf("") }

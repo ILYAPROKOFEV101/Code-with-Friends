@@ -2,6 +2,7 @@ package com.example.codewithfriends.findroom
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -48,6 +49,8 @@ import com.example.codewithfriends.R
 import com.example.codewithfriends.findroom.chats.Chat
 
 import com.example.codewithfriends.findroom.chats.PieSocketListener
+import com.example.reaction.logik.PreferenceHelper
+import com.example.reaction.logik.PreferenceHelper.saveRoomId
 import okhttp3.WebSocket
 
 
@@ -55,6 +58,7 @@ class FindRoom : ComponentActivity() {
 
     private val client = OkHttpClient()
    // val client: OkHttpClient =  OkHttpClient()
+   private val handler = Handler()
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
@@ -153,10 +157,13 @@ class FindRoom : ComponentActivity() {
                     Text(text = "Place in room: ${room.Placeinroom}", modifier = Modifier, style = TextStyle(fontSize = 24.sp))
 
                 Button(onClick = {
+                    goToChatActivity(room.id)
 
-                    openWebSocket(room.id)
-                    val intent = Intent(this@FindRoom, Chat::class.java)
-                    startActivity(intent)
+
+                        openWebSocket(room.id)
+                        val intent = Intent(this@FindRoom, Chat::class.java)
+                        startActivity(intent)
+
 
                 }) {
                     Text("Join Room")
@@ -169,18 +176,19 @@ class FindRoom : ComponentActivity() {
         }
 
     private fun openWebSocket(roomId: String) {
-
-        val request: Request = Request
-        .Builder()
-
+        val request: Request = Request.Builder()
             .url("https://getpost-ilya1.up.railway.app/chat/$roomId")
             .build()
-               val listener = PieSocketListener()
-        val ws: WebSocket  = client.newWebSocket(request, listener)
 
-        val intent = Intent(this, Chat::class.java)
-        intent.putExtra("roomId", roomId)
-        startActivity(intent)
+        val listener = PieSocketListener()
+        val ws: WebSocket = client.newWebSocket(request, listener)
+
+
+    }
+    fun goToChatActivity(roomId: String) {
+
+        saveRoomId(this, roomId)
+
     }
 
 
