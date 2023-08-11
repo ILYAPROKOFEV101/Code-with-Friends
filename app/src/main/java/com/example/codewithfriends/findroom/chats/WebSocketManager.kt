@@ -22,14 +22,12 @@ class PieSocketListener : WebSocketListener() {
         webSocket.send("Hello World!")  // Отправка сообщения "Hello World!" на сервер
 
         Log.e("burak", "baglandi")  // Вывод в лог сообщения о подключении
-
-        this.webSocket = webSocket
+        
+       // this.webSocket = webSocket
 
     }
 
-    fun sendMessage(message: String) {
-
-
+    fun sendMessage(webSocket: WebSocket, message: String) {
         Log.d("PieSocket", "Sending message: $message")
         webSocket.send(message)
     }

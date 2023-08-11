@@ -173,12 +173,10 @@ class FindRoom : ComponentActivity() {
         val request: Request = Request
         .Builder()
 
-      //  val apiKey = "VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV"
-
             .url("https://getpost-ilya1.up.railway.app/chat/$roomId")
             .build()
                val listener = PieSocketListener()
-        val ws: WebSocket = client.newWebSocket(request, listener)
+        val ws: WebSocket  = client.newWebSocket(request, listener)
 
         val intent = Intent(this, Chat::class.java)
         intent.putExtra("roomId", roomId)

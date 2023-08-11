@@ -40,12 +40,15 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.WebSocket
 
 
 class Chat : ComponentActivity() {
 
     private val roomId by lazy { intent.getStringExtra("roomId") }
     private val pieSocketListener = PieSocketListener()
+    private val client = OkHttpClient()
+    private lateinit var webSocket: WebSocket
     private var text by mutableStateOf("")
     private val messages = mutableStateListOf<String>()
     private var submittedText by mutableStateOf("")
@@ -62,11 +65,13 @@ class Chat : ComponentActivity() {
     }
 
 
-    private fun setupWebSocket() {
+
+     fun setupWebSocket() {
         val client = OkHttpClient()
-        val request = Request.Builder().url("https://getpost-ilya1.up.railway.app/chat/$roomId").build()
-        val webSocket = client.newWebSocket(request, pieSocketListener)
+        val request = Request.Builder().url("https://getpost-ilya1.up.railway.app/chat/t9iSQ1cSEp").build()
+        webSocket = client.newWebSocket(request, pieSocketListener)
     }
+
 
 
 
@@ -127,7 +132,7 @@ class Chat : ComponentActivity() {
                         text = ""
 
                         val messageToSend = "$submittedText"
-                        pieSocketListener.sendMessage(messageToSend)
+                        pieSocketListener.sendMessage(webSocket ,messageToSend)
 
                     }
                 ) {
