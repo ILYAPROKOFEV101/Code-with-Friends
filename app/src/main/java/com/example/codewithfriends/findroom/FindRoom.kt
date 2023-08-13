@@ -6,6 +6,7 @@ import android.os.Handler
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -31,24 +32,34 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+
+
 import androidx.compose.foundation.layout.Column
 
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.example.codewithfriends.R
 import com.example.codewithfriends.findroom.chats.Chat
 
 import com.example.codewithfriends.findroom.chats.PieSocketListener
+import com.example.codewithfriends.presentation.sign_in.UserData
 import com.example.reaction.logik.PreferenceHelper
 import com.example.reaction.logik.PreferenceHelper.saveRoomId
 import okhttp3.WebSocket
@@ -57,7 +68,7 @@ import okhttp3.WebSocket
 class FindRoom : ComponentActivity() {
 
     private val client = OkHttpClient()
-   // val client: OkHttpClient =  OkHttpClient()
+
    private val handler = Handler()
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -116,64 +127,113 @@ class FindRoom : ComponentActivity() {
     }
 
     @Composable
-    fun RoomItem(room: Room) {
+   fun RoomItem(room: Room){
+    val joinroom: Color = colorResource(id = R.color.joinroom)
+    val creatroom: Color = colorResource(id = R.color.creatroom)
 
+val gg = ""
         Spacer(modifier = Modifier.height(20.dp))
-        Box(
-            modifier = Modifier
+
+            Box(modifier = Modifier
+                .padding(start = 5.dp, end = 5.dp)
                 .fillMaxWidth()
-                .height(300.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color.Blue)
-        )
-
-        {
-        Row(modifier = Modifier.fillMaxSize()){
-
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .weight(0.2f)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.code),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(70.dp)
-                        // .padding(10.dp)
-                        .clip(RoundedCornerShape(50.dp))
-                        .background(Color.Yellow)
-                        .align(Alignment.Center)
+                .clip(RoundedCornerShape(30.dp))
+                .height(500.dp)
+                .border(
+                    border = BorderStroke(5.dp, SolidColor(joinroom)),
+                    shape = RoundedCornerShape(30.dp)
                 )
-            }
+            ){
+                Column(modifier = Modifier.fillMaxSize())
+                {
+                    Row(modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp))
+                    {
+                        Box(
+                            modifier = Modifier
+                                .weight(0.3f)
+                                .align(Alignment.CenterVertically)
+                        )
+                        {
+                            Image(
+                                painter = painterResource(id = R.drawable.android),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .padding(start = 5.dp, end = 5.dp)
+                                    .size(100.dp)
+                                    .clip(RoundedCornerShape(50.dp))
+                                    .align(Alignment.Center)
+                            )
+                        }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .weight(0.7f)
+                                .padding(end = 5.dp)
+                              ){
+                            Box(modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(5.dp)
+                                .height(65.dp)
+                                .clip(CircleShape)
+                                ) {
+                                Text(text = "${room.Roomname}", modifier = Modifier.padding(top = 10.dp , start = 10.dp), style = TextStyle(fontSize = 24.sp))
+                            }
+                            
+                            Box(modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(5.dp)
+                                .height(65.dp)
+                                .clip(CircleShape)
+                            ) {
+                                Text(text = "${room.Lenguage}", modifier = Modifier.padding( start = 10.dp), style = TextStyle(fontSize = 24.sp))
+                            }
 
-            Column(modifier = Modifier
-                .fillMaxHeight()
-                .weight(0.8f)) {
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Row(modifier = Modifier
+                        .height(65.dp)
+                        .fillMaxWidth())
+                    {
+                        Box(modifier = Modifier
+                            .padding(start = 5.dp, end = 5.dp)
+                            .fillMaxWidth()
+                            .clip(CircleShape)
+                            .fillMaxHeight(1f))
+                        {
+                            Button(onClick = {
+                                goToChatActivity(room.id)
+                                openWebSocket(room.id)
+                                val intent = Intent(this@FindRoom, Chat::class.java)
+                                startActivity(intent)
+                            },
+                                colors = ButtonDefaults.buttonColors(creatroom),
+                                modifier = Modifier.fillMaxSize()
+                                  ) {
+                                Text(text = "Join in room: ${room.Placeinroom}", modifier = Modifier, style = TextStyle(fontSize = 24.sp))
 
-                Text(text = "${room.Roomname}", modifier = Modifier, style = TextStyle(fontSize = 24.sp))
-
-                    Text(text = "${room.Lenguage}", modifier = Modifier, style = TextStyle(fontSize = 24.sp))
-                    Text(text = "Place in room: ${room.Placeinroom}", modifier = Modifier, style = TextStyle(fontSize = 24.sp))
-
-                Button(onClick = {
-                    goToChatActivity(room.id)
+                            }
+                        }
+                    }
 
 
-                        openWebSocket(room.id)
-                        val intent = Intent(this@FindRoom, Chat::class.java)
-                        startActivity(intent)
 
+                    LazyColumn(modifier = Modifier
+                        .padding(start = 5.dp, end = 5.dp)
+                        .fillMaxWidth()
+                        .height(350.dp)
+                        .clip(RoundedCornerShape(30.dp))
+                    ){
+                        item {  Text(text = "${room.Aboutroom}", modifier = Modifier.padding( start = 10.dp), style = TextStyle(fontSize = 24.sp)) }
+                    }
 
-                }) {
-                    Text("Join Room")
                 }
-
             }
-           }
-          }
+    }
 
-        }
+
 
     private fun openWebSocket(roomId: String) {
         val request: Request = Request.Builder()
@@ -190,6 +250,9 @@ class FindRoom : ComponentActivity() {
         saveRoomId(this, roomId)
 
     }
+
+
+
 
 
 }

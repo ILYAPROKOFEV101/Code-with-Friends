@@ -5,13 +5,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -33,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -40,6 +45,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.codewithfriends.R
@@ -60,6 +66,8 @@ import java.io.IOException
 class CreativyRoom : ComponentActivity() {
 
     var text by mutableStateOf("")
+    var texts by mutableStateOf("")
+
 
     val languages = listOf(
         "android development",
@@ -89,28 +97,51 @@ class CreativyRoom : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
 
-            Column {
+            LazyColumn {
+                item {
+                    Creator()
+                }
 
-                Creator()
+                item {
+                    Spacer(modifier = Modifier.height(30.dp))
+                }
 
-                Spacer(modifier = Modifier.height(30.dp))
+                item {
+                    LanguagePicker()
+                }
 
-                LanguagePicker()
+                item {
+                    Spacer(modifier = Modifier.height(30.dp))
+                }
 
-                Spacer(modifier = Modifier.height(30.dp))
+                item {
+                    PlaceInRoomPicker()
+                }
 
-                PlaceInRoomPicker()
+                item {
+                    Spacer(modifier = Modifier.height(30.dp))
+                }
 
-                Spacer(modifier = Modifier.height(60.dp))
+                item {
+                    WriteoboutRoom()
+                }
 
-                WriteDb()
+                item {
+                    Spacer(modifier = Modifier.height(30.dp))
+                }
+
+                item {
+                    WriteDb()
+                }
             }
+
 
         }
 
     }
 
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+    @Preview(showBackground = true)
     @Composable
     fun Creator() {
         val keyboardController = LocalSoftwareKeyboardController.current
@@ -128,14 +159,10 @@ class CreativyRoom : ComponentActivity() {
             Modifier
                 .fillMaxWidth()
                 .height(130.dp)
-                .background(Color.White)
-                .padding(top = 30.dp)
-
+                .padding(top = 30.dp, start = 10.dp, end = 10.dp)
+                .clip(RoundedCornerShape(30.dp))
         ) {
-
-            TextField(
-
-
+            TextField(modifier = Modifier.fillMaxSize(),
                 value = text, // Текущее значение текста в поле
                 onValueChange = {
                     text = it
@@ -183,21 +210,17 @@ class CreativyRoom : ComponentActivity() {
 
 
     }
-
+@Preview(showBackground = true)
     @Composable
     fun LanguagePicker() {
         var expanded by remember { mutableStateOf(false) }
 
-
-
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(130.dp)
+                .padding(top = 20.dp, start = 10.dp, end = 10.dp)
                 .clip(RoundedCornerShape(30.dp))
-                .padding()
-                .background(Color.White)
-                .padding(16.dp)
                 .clickable { expanded = true }
         ) {
             if (selectedLanguage.isEmpty()) {
@@ -240,20 +263,13 @@ class CreativyRoom : ComponentActivity() {
 
     @Composable
     fun PlaceInRoomPicker() {
-
         var expanded by remember { mutableStateOf(false) }
-
-
-
-
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(130.dp)
+                .padding(top = 20.dp, start = 10.dp, end = 10.dp)
                 .clip(RoundedCornerShape(30.dp))
-                .padding()
-                .background(Color.White)
-                .padding(16.dp)
                 .clickable { expanded = true }
         ) {
             Text(
@@ -288,6 +304,61 @@ class CreativyRoom : ComponentActivity() {
     }
 
 
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+    @Composable
+    fun WriteoboutRoom(){
+        val keyboardControllers = LocalSoftwareKeyboardController.current
+        var showtext by remember {
+            mutableStateOf(false) }
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 20.dp, start = 10.dp, end = 10.dp)
+            .clip(RoundedCornerShape(30.dp))
+            .height(300.dp)
+        ){
+            TextField(modifier = Modifier.fillMaxSize(),
+                value = texts, // Текущее значение текста в поле
+                onValueChange = { texts = it }, // Обработчик изменения текста, обновляющий переменную "text"
+                textStyle = TextStyle(fontSize = 24.sp),
+                // textStyle = TextStyle.Default, // Стиль текста, используемый в поле ввода (используется стандартный стиль)
+
+                colors = TextFieldDefaults.textFieldColors(
+                    focusedIndicatorColor = Color.Transparent, // Цвет индикатора при фокусе на поле (прозрачный - отключает индикатор)
+                    unfocusedIndicatorColor = Color.Transparent, // Цвет индикатора при потере фокуса на поле (прозрачный - отключает индикатор)
+                    disabledIndicatorColor = Color.Transparent, // Цвет индикатора, когда поле неактивно (прозрачный - отключает индикатор)
+                    containerColor = Color.White
+                ),
+                label = { // Метка, которая отображается над полем ввода
+                    Text(
+                        text = if (!showtext) stringResource(id = R.string.aboutroom) else "",
+                        fontSize = 30.sp,
+                        color = Color.Black,
+                        textAlign = TextAlign.Center
+                    )
+
+                },
+
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done, // Действие на кнопке "Готово" на клавиатуре (закрытие клавиатуры)
+                    keyboardType = KeyboardType.Text // Тип клавиатуры (обычный текст)
+                ),
+
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyboardControllers?.hide() // Обработчик действия при нажатии на кнопку "Готово" на клавиатуре (скрыть клавиатуру)
+                        if (texts != "") {
+                            showtext = !showtext
+                        }
+
+                    }
+                ),
+
+                )
+        }
+
+    }
+
+
     fun generateUniqueId(): String {
         val characters = ('a'..'z') + ('A'..'Z') + ('0'..'9')
         return List(10) { characters.random() }.joinToString("")
@@ -304,6 +375,7 @@ class CreativyRoom : ComponentActivity() {
             .appendQueryParameter("Lenguage", selectedLanguage)
             .appendQueryParameter("Placeinroom", selectedPlace.toString()) // Преобразуем число в строку
             .appendQueryParameter("Roomname", text)
+            .appendQueryParameter("Aboutroom", texts)
             .build()
 
 
@@ -340,7 +412,6 @@ class CreativyRoom : ComponentActivity() {
     fun WriteDb(){
         val coroutineScope = rememberCoroutineScope()
         Button(onClick = {
-
             coroutineScope.launch {
                 pushData()
             }

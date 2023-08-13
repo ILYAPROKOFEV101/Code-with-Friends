@@ -21,6 +21,7 @@
 
     <string name="hello">Hello!</string>
     <string name="welcome">Welcome!</string>
+    <string name="aboutroom">Расскажите в кратце о своем проекте.</string>
 
     <string name="login">Log in with Google</string>
     <string name="username">Username</string>

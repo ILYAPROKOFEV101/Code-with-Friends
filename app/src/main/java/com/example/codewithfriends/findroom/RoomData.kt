@@ -8,5 +8,7 @@ data class Room(
     val id: String,
     val Roomname: String,
     val Lenguage: String,
-    val Placeinroom: Int
+    val Placeinroom: Int,
+    val Aboutroom: String
+
 )

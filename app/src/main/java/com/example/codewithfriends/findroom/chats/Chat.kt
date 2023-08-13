@@ -51,6 +51,8 @@ import okhttp3.WebSocketListener
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.text.font.FontVariation.weight
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 
 import androidx.compose.ui.unit.dp
 
@@ -106,7 +108,10 @@ class Chat : ComponentActivity() {
                     .wrapContentHeight() // Занимает высоту контента
             ) {
                 items(messages) { message ->
-                    Text("${message.sender}: ${message.content}")
+                    Text("${message.sender}: ${message.content}",
+                        textAlign = TextAlign.Center,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold)
                 }
             }
 
