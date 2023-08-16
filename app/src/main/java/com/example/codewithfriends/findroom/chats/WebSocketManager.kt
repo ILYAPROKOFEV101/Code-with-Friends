@@ -2,6 +2,8 @@ package com.example.codewithfriends.findroom.chats
 
 
 import android.util.Log
+import com.example.codewithfriends.presentation.sign_in.UserData
+import com.google.firebase.database.Exclude
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
@@ -14,7 +16,7 @@ import okhttp3.WebSocketListener
 open class PieSocketListener() : WebSocketListener() {
 
     private lateinit var webSocket: WebSocket
-    private val userId = "jdjj"
+
 
 
 
@@ -31,11 +33,12 @@ open class PieSocketListener() : WebSocketListener() {
     fun sendMessage(webSocket: WebSocket, message: String) {
         Log.d("PieSocket", "Sending message: $message")
         webSocket.send(message)
+
     }
 
     override fun onMessage(webSocket: WebSocket, text: String) {  // Вызывается при получении сообщения от сервера
 
-        output("Received : $text") // Вывод полученного сообщения в лог
+        output("$text") // Вывод полученного сообщения в лог
     }
 
 

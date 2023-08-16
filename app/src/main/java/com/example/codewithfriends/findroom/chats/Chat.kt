@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeightIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -50,14 +51,29 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Card
 import androidx.compose.ui.text.font.FontVariation.weight
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 
 import androidx.compose.ui.unit.dp
+import com.example.codewithfriends.datas.User
+import com.example.codewithfriends.presentation.profile.ProfileName
+import com.example.codewithfriends.presentation.profile.UID
+import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
+import com.example.codewithfriends.presentation.sign_in.UserData
+import com.google.android.gms.auth.api.identity.Identity
 
 
 class Chat : ComponentActivity() {
+
+    private val googleAuthUiClient by lazy {
+        GoogleAuthUiClient(
+            context = applicationContext,
+            oneTapClient = Identity.getSignInClient(applicationContext)
+        )
+    }
 
     private val pieSocketListener = PieSocketListener()
     private val client = OkHttpClient()
@@ -71,27 +87,33 @@ class Chat : ComponentActivity() {
         storedRoomId = getRoomId(this)
 
 
-        setContent {
-                Creator()
 
+        setContent {
+            val name = UID(
+                userData = googleAuthUiClient.getSignedInUser()
+            )
+                Creator()
+            if (storedRoomId != null) {
+                setupWebSocket(storedRoomId!!, "$name")
+            } else {
+                // roomId не сохранен, обработайте этот случай по вашему усмотрению
+            }
         }// Проверяем, что storedRoomId не равен null
-        if (storedRoomId != null) {
-            setupWebSocket(storedRoomId!!)
-        } else {
-            // roomId не сохранен, обработайте этот случай по вашему усмотрению
-        }
+
+
     }
 
-    private fun setupWebSocket(roomId: String) {
+
+    private fun setupWebSocket(roomId: String, username: String) {
         val request: Request = Request.Builder()
-            .url("https://getpost-ilya1.up.railway.app/chat/$roomId")
+            .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username")
             .build()
 
         val listener = object : WebSocketListener() {
             // Переопределение методов WebSocketListener для обработки сообщений
             override fun onMessage(webSocket: WebSocket, text: String) {
                 // Обработка полученного текстового сообщения
-                val newMessage = Message(sender = "Sender Name", content = text)
+                val newMessage = Message(sender = "", content = text)
                 messages.value = messages.value + newMessage // Добавление сообщения в список
             }
             // ... другие методы WebSocketListener ...
@@ -102,19 +124,30 @@ class Chat : ComponentActivity() {
 
     @Composable
     fun MessageList(messages: List<Message>) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight() // Занимает высоту контента
-            ) {
-                items(messages) { message ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            reverseLayout = false
+        ) {
+            items(messages) { message ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .requiredHeightIn(min = 50.dp) // Установите минимальную высоту
+                        .padding(8.dp), // Добавьте отступы
+                    backgroundColor = Color.Blue, // Задайте цвет фона
+                    elevation = 4.dp, // Задайте высоту поднятия (тени)
+                    shape = RoundedCornerShape(8.dp) // Задайте скругление углов
+                ) {
                     Text("${message.sender}: ${message.content}",
                         textAlign = TextAlign.Center,
                         fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold)
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White) // Задайте цвет текста
                 }
             }
-
+        }
     }
 
 

@@ -94,11 +94,9 @@ fun ProfileName(userData: UserData?) {
     }
 }
 
-fun UID(userData: UserData?) {
-        if (userData?.userId != null) {
-                val id = userData.userId
-                val name = userData.username
-                val url = userData.profilePictureUrl
-        }
+fun UID(userData: UserData?): String? {
+    return userData?.username
 }
+
+
 

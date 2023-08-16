@@ -123,8 +123,6 @@ class FindRoom : ComponentActivity() {
                 }
             }
 
-
-
     }
 
     @Composable
