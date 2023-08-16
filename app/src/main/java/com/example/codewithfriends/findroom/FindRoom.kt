@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import com.example.codewithfriends.R
 import com.example.codewithfriends.findroom.chats.Chat
 
+
 import com.example.codewithfriends.findroom.chats.PieSocketListener
 import com.example.codewithfriends.presentation.sign_in.UserData
 import com.example.reaction.logik.PreferenceHelper
@@ -178,7 +179,7 @@ val gg = ""
                                 .height(65.dp)
                                 .clip(CircleShape)
                                 ) {
-                                Text(text = "${room.Roomname}", modifier = Modifier.padding(top = 10.dp , start = 10.dp), style = TextStyle(fontSize = 24.sp))
+                                Text(text = "${room.roomName}", modifier = Modifier.padding(top = 10.dp , start = 10.dp), style = TextStyle(fontSize = 24.sp))
                             }
                             
                             Box(modifier = Modifier
@@ -187,7 +188,7 @@ val gg = ""
                                 .height(65.dp)
                                 .clip(CircleShape)
                             ) {
-                                Text(text = "${room.Lenguage}", modifier = Modifier.padding( start = 10.dp), style = TextStyle(fontSize = 24.sp))
+                                Text(text = "${room.language}", modifier = Modifier.padding( start = 10.dp), style = TextStyle(fontSize = 24.sp))
                             }
 
                         }
@@ -212,7 +213,7 @@ val gg = ""
                                 colors = ButtonDefaults.buttonColors(creatroom),
                                 modifier = Modifier.fillMaxSize()
                                   ) {
-                                Text(text = "Join in room: ${room.Placeinroom}", modifier = Modifier, style = TextStyle(fontSize = 24.sp))
+                                Text(text = "Join in room: ${room.placeInRoom}", modifier = Modifier, style = TextStyle(fontSize = 24.sp))
 
                             }
                         }
@@ -226,7 +227,7 @@ val gg = ""
                         .height(350.dp)
                         .clip(RoundedCornerShape(30.dp))
                     ){
-                        item {  Text(text = "${room.Aboutroom}", modifier = Modifier.padding( start = 10.dp), style = TextStyle(fontSize = 24.sp)) }
+                        item {  Text(text = "${room.aboutRoom}", modifier = Modifier.padding( start = 10.dp), style = TextStyle(fontSize = 24.sp)) }
                     }
 
                 }
@@ -239,10 +240,8 @@ val gg = ""
         val request: Request = Request.Builder()
             .url("https://getpost-ilya1.up.railway.app/chat/$roomId")
             .build()
-
         val listener = PieSocketListener()
         val ws: WebSocket = client.newWebSocket(request, listener)
-
 
     }
     fun goToChatActivity(roomId: String) {

@@ -10,7 +10,8 @@ import okhttp3.WebSocketListener
 
 
 
-class PieSocketListener() : WebSocketListener() {
+
+open class PieSocketListener() : WebSocketListener() {
 
     private lateinit var webSocket: WebSocket
     private val userId = "jdjj"

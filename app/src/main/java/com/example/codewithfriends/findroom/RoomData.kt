@@ -6,9 +6,8 @@ import kotlinx.serialization.Serializable
 
 data class Room(
     val id: String,
-    val Roomname: String,
-    val Lenguage: String,
-    val Placeinroom: Int,
-    val Aboutroom: String
-
+    val roomName: String,
+    val language: String,
+    val placeInRoom: Int,
+    val aboutRoom: String
 )
