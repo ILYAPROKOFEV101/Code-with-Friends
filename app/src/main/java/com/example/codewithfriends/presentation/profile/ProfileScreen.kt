@@ -96,6 +96,10 @@ fun ProfileName(userData: UserData?) {
 
 fun UID(userData: UserData?): String? {
     return userData?.username
+
+
+}fun IMG(userData: UserData?): String? {
+    return userData?.profilePictureUrl
 }
 
 

@@ -3,6 +3,7 @@ package com.example.codewithfriends.findroom.chats
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,12 +56,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.font.FontVariation.weight
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 
 import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
 import com.example.codewithfriends.datas.User
+import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.ProfileName
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
@@ -92,9 +100,13 @@ class Chat : ComponentActivity() {
             val name = UID(
                 userData = googleAuthUiClient.getSignedInUser()
             )
+            val img = IMG(
+                userData = googleAuthUiClient.getSignedInUser()
+            )
+
                 Creator()
             if (storedRoomId != null) {
-                setupWebSocket(storedRoomId!!, "$name")
+                setupWebSocket(storedRoomId!!, "$name", "$img")
             } else {
                 // roomId не сохранен, обработайте этот случай по вашему усмотрению
             }
@@ -104,9 +116,9 @@ class Chat : ComponentActivity() {
     }
 
 
-    private fun setupWebSocket(roomId: String, username: String) {
+    private fun setupWebSocket(roomId: String, username: String, url: String) {
         val request: Request = Request.Builder()
-            .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username")
+            .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url")
             .build()
 
         val listener = object : WebSocketListener() {
@@ -121,6 +133,11 @@ class Chat : ComponentActivity() {
         webSocket = client.newWebSocket(request, listener)
     }
 
+    fun extractUrlFromString(input: String): String? {
+        val pattern = "\\[(https?://[^\\]]+)\\]".toRegex()
+        val matchResult = pattern.find(input)
+        return matchResult?.groups?.get(1)?.value
+    }
 
     @Composable
     fun MessageList(messages: List<Message>) {
@@ -140,15 +157,43 @@ class Chat : ComponentActivity() {
                     elevation = 4.dp, // Задайте высоту поднятия (тени)
                     shape = RoundedCornerShape(8.dp) // Задайте скругление углов
                 ) {
-                    Text("${message.sender}: ${message.content}",
-                        textAlign = TextAlign.Center,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White) // Задайте цвет текста
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .requiredHeightIn(min = 50.dp) // Установите минимальную высоту
+                            .padding(8.dp), // Добавьте отступы
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val imageModifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(20.dp))
+
+                        val imageUrl = extractUrlFromString(message.content)
+                        if (imageUrl != null) {
+                            // Вывод изображения слева от сообщения, если есть imageUrl
+                            val painter: Painter = rememberAsyncImagePainter(model = imageUrl)
+                            Image(
+                                painter = painter,
+                                contentDescription = null,
+                                modifier = imageModifier
+                            )
+
+                            Spacer(modifier = Modifier.width(8.dp)) // Добавим промежуток между изображением и текстом
+                        }
+
+                        Text("${message.sender ?: ""}: ${message.content}",
+                            textAlign = TextAlign.Start,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White)
+                    }
                 }
             }
         }
     }
+
+
+
 
 
 
