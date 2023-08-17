@@ -133,6 +133,19 @@ class Chat : ComponentActivity() {
         webSocket = client.newWebSocket(request, listener)
     }
 
+    fun removeBrackets(input: String): String {
+        return input.replace(Regex("\\[|\\]"), "")
+    }
+
+    fun splitMessageContent(content: String): Pair<String, String> {
+        val pattern = "\\[(https?://[^\\]]+)\\]".toRegex()
+        val matchResult = pattern.find(content)
+        val beforeUrl = content.substring(0, matchResult?.range?.start ?: content.length)
+        val afterUrl = content.substring(matchResult?.range?.endInclusive?.plus(1) ?: content.length)
+        return Pair(beforeUrl, afterUrl)
+    }
+
+
     fun extractUrlFromString(input: String): String? {
         val pattern = "\\[(https?://[^\\]]+)\\]".toRegex()
         val matchResult = pattern.find(input)
@@ -169,6 +182,8 @@ class Chat : ComponentActivity() {
                             .clip(RoundedCornerShape(20.dp))
 
                         val imageUrl = extractUrlFromString(message.content)
+                        val (beforeUrl, afterUrl) = splitMessageContent(message.content)
+
                         if (imageUrl != null) {
                             // Вывод изображения слева от сообщения, если есть imageUrl
                             val painter: Painter = rememberAsyncImagePainter(model = imageUrl)
@@ -181,7 +196,9 @@ class Chat : ComponentActivity() {
                             Spacer(modifier = Modifier.width(8.dp)) // Добавим промежуток между изображением и текстом
                         }
 
-                        Text("${message.sender ?: ""}: ${message.content}",
+                        val cleanBeforeUrl = removeBrackets(beforeUrl)
+                        val cleanAfterUrl = removeBrackets(afterUrl)
+                        Text("${message.sender ?: ""}: $cleanBeforeUrl$cleanAfterUrl",
                             textAlign = TextAlign.Start,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -191,6 +208,7 @@ class Chat : ComponentActivity() {
             }
         }
     }
+
 
 
 
