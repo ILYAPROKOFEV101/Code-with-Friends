@@ -108,8 +108,9 @@ class Chat : ComponentActivity() {
                 userData = googleAuthUiClient.getSignedInUser()
             )
 
-
-                Creator()
+            MessageList(messages.value)
+            Spacer(modifier = Modifier.height(20.dp))
+            Creator()
             if (storedRoomId != null) {
                 setupWebSocket(storedRoomId!!, "$name", "$img", "$id")
             } else {
@@ -146,7 +147,8 @@ class Chat : ComponentActivity() {
         val pattern = "\\[(https?://[^\\]]+)\\]".toRegex()
         val matchResult = pattern.find(content)
         val beforeUrl = content.substring(0, matchResult?.range?.start ?: content.length)
-        val afterUrl = content.substring(matchResult?.range?.endInclusive?.plus(1) ?: content.length)
+        val afterUrl =
+            content.substring(matchResult?.range?.endInclusive?.plus(1) ?: content.length)
         return Pair(beforeUrl, afterUrl)
     }
 
@@ -201,22 +203,19 @@ class Chat : ComponentActivity() {
                             Spacer(modifier = Modifier.width(8.dp)) // Добавим промежуток между изображением и текстом
                         }
 
-                        Text("${message.sender ?: ""}: $beforeUrl$afterUrl",
+                        Text(
+                            "${message.sender ?: ""}: $beforeUrl$afterUrl",
                             textAlign = TextAlign.Start,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color.White)
+                            color = Color.White
+                        )
                     }
                 }
             }
         }
+        Spacer(modifier = Modifier.height(100.dp))
     }
-
-
-
-
-
-
 
 
     @Preview(showBackground = true)
@@ -232,21 +231,23 @@ class Chat : ComponentActivity() {
 
 
 
-            Column(
-                modifier = Modifier
-                    .padding(bottom = 2.dp)
-                    .fillMaxHeight(), // Занимает всю доступную вертикальную высоту
-                verticalArrangement = Arrangement.Bottom
-            ) {
-                MessageList(messages.value)
+        Column(
+            modifier = Modifier
+                .fillMaxSize(), // Занимает всю доступную вертикальную высоту
+            verticalArrangement = Arrangement.Bottom
+        ) {
 
-                Spacer(modifier = Modifier.height(20.dp))
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color.White)
                         .padding(start = 8.dp, end = 20.dp),
-                            verticalAlignment = Alignment.Bottom // Прижимаем содержимое к верхней части
+                    verticalAlignment = Alignment.Bottom // Прижимаем содержимое к верхней части
                 ) {
                     TextField(
                         modifier = Modifier.weight(0.9f),
