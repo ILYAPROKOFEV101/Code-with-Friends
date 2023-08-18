@@ -130,7 +130,8 @@ class FindRoom : ComponentActivity() {
     val joinroom: Color = colorResource(id = R.color.joinroom)
     val creatroom: Color = colorResource(id = R.color.creatroom)
 
-val gg = ""
+        val andin = room.Admin
+
         Spacer(modifier = Modifier.height(20.dp))
 
             Box(modifier = Modifier

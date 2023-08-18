@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import com.example.codewithfriends.datas.User
+import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.ProfileName
 import com.example.codewithfriends.presentation.profile.UID
@@ -103,10 +104,14 @@ class Chat : ComponentActivity() {
             val img = IMG(
                 userData = googleAuthUiClient.getSignedInUser()
             )
+            val id = ID(
+                userData = googleAuthUiClient.getSignedInUser()
+            )
+
 
                 Creator()
             if (storedRoomId != null) {
-                setupWebSocket(storedRoomId!!, "$name", "$img")
+                setupWebSocket(storedRoomId!!, "$name", "$img", "$id")
             } else {
                 // roomId не сохранен, обработайте этот случай по вашему усмотрению
             }
@@ -116,9 +121,9 @@ class Chat : ComponentActivity() {
     }
 
 
-    private fun setupWebSocket(roomId: String, username: String, url: String) {
+    private fun setupWebSocket(roomId: String, username: String, url: String, id: String) {
         val request: Request = Request.Builder()
-            .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url")
+            .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id")
             .build()
 
         val listener = object : WebSocketListener() {
@@ -145,12 +150,12 @@ class Chat : ComponentActivity() {
         return Pair(beforeUrl, afterUrl)
     }
 
-
     fun extractUrlFromString(input: String): String? {
-        val pattern = "\\[(https?://[^\\]]+)\\]".toRegex()
+        val pattern = "\\[(https?://[^\\]]*)\\]".toRegex()
         val matchResult = pattern.find(input)
         return matchResult?.groups?.get(1)?.value
     }
+
 
     @Composable
     fun MessageList(messages: List<Message>) {
@@ -196,9 +201,7 @@ class Chat : ComponentActivity() {
                             Spacer(modifier = Modifier.width(8.dp)) // Добавим промежуток между изображением и текстом
                         }
 
-                        val cleanBeforeUrl = removeBrackets(beforeUrl)
-                        val cleanAfterUrl = removeBrackets(afterUrl)
-                        Text("${message.sender ?: ""}: $cleanBeforeUrl$cleanAfterUrl",
+                        Text("${message.sender ?: ""}: $beforeUrl$afterUrl",
                             textAlign = TextAlign.Start,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -208,6 +211,7 @@ class Chat : ComponentActivity() {
             }
         }
     }
+
 
 
 
