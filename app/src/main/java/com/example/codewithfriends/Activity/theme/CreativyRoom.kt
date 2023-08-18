@@ -49,6 +49,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.codewithfriends.R
+import com.example.codewithfriends.presentation.profile.ID
+import com.example.codewithfriends.presentation.profile.UID
+import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
+import com.google.android.gms.auth.api.identity.Identity
 import kotlinx.coroutines.launch
 import java.net.URL
 import java.io.BufferedReader
@@ -65,8 +69,16 @@ import java.io.IOException
 
 class CreativyRoom : ComponentActivity() {
 
+    private val googleAuthUiClient by lazy {
+        GoogleAuthUiClient(
+            context = applicationContext,
+            oneTapClient = Identity.getSignInClient(applicationContext)
+        )
+    }
+
     var text by mutableStateOf("")
     var texts by mutableStateOf("")
+
 
 
     val languages = listOf(
@@ -83,7 +95,7 @@ class CreativyRoom : ComponentActivity() {
 
     var selectedPlace = 1
     val selectedNumber = 1
-
+  //  val uniqueAdmin = ""
 
     data class UserData(
         val selectedLanguage: String,
@@ -96,6 +108,8 @@ class CreativyRoom : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+
+
 
             LazyColumn {
                 item {
@@ -129,6 +143,7 @@ class CreativyRoom : ComponentActivity() {
                 item {
                     Spacer(modifier = Modifier.height(30.dp))
                 }
+
 
                 item {
                     WriteDb()
@@ -368,7 +383,11 @@ class CreativyRoom : ComponentActivity() {
 
 
 
-    private fun pushData() {
+    private fun pushData(
+         uniqueAdmin: String? = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+    ) {
         val baseUrl = "https://getpost-ilya1.up.railway.app/user"
         val uriBuilder = Uri.parse(baseUrl).buildUpon()
             .appendQueryParameter("id", uniqueId)
@@ -376,6 +395,7 @@ class CreativyRoom : ComponentActivity() {
             .appendQueryParameter("Placeinroom", selectedPlace.toString()) // Преобразуем число в строку
             .appendQueryParameter("Roomname", text)
             .appendQueryParameter("Aboutroom", texts)
+            .appendQueryParameter("Admin", uniqueAdmin)
             .build()
 
 
