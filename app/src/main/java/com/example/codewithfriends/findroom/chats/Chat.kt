@@ -73,6 +73,7 @@ import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.codewithfriends.presentation.sign_in.UserData
 import com.google.android.gms.auth.api.identity.Identity
+import okhttp3.Response
 
 
 class Chat : ComponentActivity() {
@@ -120,23 +121,37 @@ class Chat : ComponentActivity() {
 
 
     }
-
+    private var isConnected = false
 
     private fun setupWebSocket(roomId: String, username: String, url: String, id: String) {
-        val request: Request = Request.Builder()
-            .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id")
-            .build()
+        if (!isConnected) {
+            val request: Request = Request.Builder()
+                .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id")
+                .build()
 
-        val listener = object : WebSocketListener() {
-            // Переопределение методов WebSocketListener для обработки сообщений
-            override fun onMessage(webSocket: WebSocket, text: String) {
-                // Обработка полученного текстового сообщения
-                val newMessage = Message(sender = "", content = text)
-                messages.value = messages.value + newMessage // Добавление сообщения в список
+            val listener = object : WebSocketListener() {
+                // Override WebSocketListener methods to handle messages
+                override fun onMessage(webSocket: WebSocket, text: String) {
+                    // Handle received text message
+                    val newMessage = Message(sender = "", content = text)
+                    messages.value = messages.value + newMessage // Add message to the list
+                }
+
+                override fun onOpen(webSocket: WebSocket, response: Response) {
+                    isConnected = true
+                }
+
+                override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                    isConnected = false
+                }
+
+                override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                    isConnected = false
+                }
+                // ... other WebSocketListener methods ...
             }
-            // ... другие методы WebSocketListener ...
+            webSocket = client.newWebSocket(request, listener)
         }
-        webSocket = client.newWebSocket(request, listener)
     }
 
     fun removeBrackets(input: String): String {
@@ -161,10 +176,12 @@ class Chat : ComponentActivity() {
 
     @Composable
     fun MessageList(messages: List<Message>) {
+        val messagesLoaded = remember { mutableStateOf(false) }
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .wrapContentHeight(),
+                .height(600.dp),
             reverseLayout = false
         ) {
             items(messages) { message ->
