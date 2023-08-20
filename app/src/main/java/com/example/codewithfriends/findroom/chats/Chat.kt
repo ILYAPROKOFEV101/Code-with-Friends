@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -61,6 +62,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.font.FontVariation.weight
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
@@ -109,9 +111,14 @@ class Chat : ComponentActivity() {
                 userData = googleAuthUiClient.getSignedInUser()
             )
 
-            MessageList(messages.value)
+            if (storedRoomId != null) {
+                MessageList(messages.value, "$name", "$img", "$id")
+            }
+
             Spacer(modifier = Modifier.height(20.dp))
+
             Creator()
+
             if (storedRoomId != null) {
                 setupWebSocket(storedRoomId!!, "$name", "$img", "$id")
             } else {
@@ -130,9 +137,9 @@ class Chat : ComponentActivity() {
                 .build()
 
             val listener = object : WebSocketListener() {
-                // Override WebSocketListener methods to handle messages
+
                 override fun onMessage(webSocket: WebSocket, text: String) {
-                    // Handle received text message
+
                     val newMessage = Message(sender = "", content = text)
                     messages.value = messages.value + newMessage // Add message to the list
                 }
@@ -148,15 +155,13 @@ class Chat : ComponentActivity() {
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                     isConnected = false
                 }
-                // ... other WebSocketListener methods ...
+
             }
             webSocket = client.newWebSocket(request, listener)
         }
     }
 
-    fun removeBrackets(input: String): String {
-        return input.replace(Regex("\\[|\\]"), "")
-    }
+
 
     fun splitMessageContent(content: String): Pair<String, String> {
         val pattern = "\\[(https?://[^\\]]+)\\]".toRegex()
@@ -175,64 +180,83 @@ class Chat : ComponentActivity() {
 
 
     @Composable
-    fun MessageList(messages: List<Message>) {
-        val messagesLoaded = remember { mutableStateOf(false) }
+    fun MessageList(messages: List<Message>, username: String, url: String, id: String) {
+        val currentUserUrl = url.take(60) // Получаем первые 30 символов URL
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(600.dp),
+                .wrapContentHeight()
+                .padding(bottom = 80.dp),
             reverseLayout = false
         ) {
             items(messages) { message ->
-                Card(
+                val isMyMessage = message.sender == url
+                val isMyUrlMessage = message.content.contains(currentUserUrl)
+
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .requiredHeightIn(min = 50.dp) // Установите минимальную высоту
-                        .padding(8.dp), // Добавьте отступы
-                    backgroundColor = Color.Blue, // Задайте цвет фона
-                    elevation = 4.dp, // Задайте высоту поднятия (тени)
-                    shape = RoundedCornerShape(8.dp) // Задайте скругление углов
+                        .padding(8.dp),
+                    contentAlignment = if (isMyMessage || isMyUrlMessage) Alignment.CenterEnd else Alignment.CenterStart
                 ) {
-                    Row(
+                    Card(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .requiredHeightIn(min = 50.dp) // Установите минимальную высоту
-                            .padding(8.dp), // Добавьте отступы
-                        verticalAlignment = Alignment.CenterVertically
+                            .fillMaxWidth(0.7f)
+                            .padding(8.dp),
+                        backgroundColor = if (isMyMessage || isMyUrlMessage) Color.Green else Color.Blue,
+                        elevation = 4.dp,
+                        shape = RoundedCornerShape(8.dp)
                     ) {
-                        val imageModifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(20.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = if (isMyMessage || isMyUrlMessage) Arrangement.End else Arrangement.Start
+                        ) {
+                            val imageModifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(20.dp))
 
-                        val imageUrl = extractUrlFromString(message.content)
-                        val (beforeUrl, afterUrl) = splitMessageContent(message.content)
+                            val imageUrl = extractUrlFromString(message.content)
+                            val (beforeUrl, afterUrl) = splitMessageContent(message.content)
 
-                        if (imageUrl != null) {
-                            // Вывод изображения слева от сообщения, если есть imageUrl
-                            val painter: Painter = rememberAsyncImagePainter(model = imageUrl)
-                            Image(
-                                painter = painter,
-                                contentDescription = null,
-                                modifier = imageModifier
+                            if (imageUrl != null) {
+                                val painter: Painter = rememberAsyncImagePainter(model = imageUrl)
+                                Image(
+                                    painter = painter,
+                                    contentDescription = null,
+                                    modifier = imageModifier
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+
+                            Text(
+                                "${message.sender ?: ""}: $beforeUrl$afterUrl",
+                                textAlign = if (isMyMessage || isMyUrlMessage) TextAlign.End else TextAlign.Start,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White,
+                                modifier = Modifier
+                                    .padding(start = 8.dp),
+                                overflow = TextOverflow.Ellipsis
                             )
-
-                            Spacer(modifier = Modifier.width(8.dp)) // Добавим промежуток между изображением и текстом
                         }
-
-                        Text(
-                            "${message.sender ?: ""}: $beforeUrl$afterUrl",
-                            textAlign = TextAlign.Start,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White
-                        )
                     }
                 }
             }
         }
         Spacer(modifier = Modifier.height(100.dp))
     }
+
+
+
+
+
+
+
+
+
+
+
 
 
     @Preview(showBackground = true)
@@ -246,8 +270,6 @@ class Chat : ComponentActivity() {
         var submittedText by remember { mutableStateOf("") }
 
 
-
-
         Column(
             modifier = Modifier
                 .fillMaxSize(), // Занимает всю доступную вертикальную высоту
@@ -256,8 +278,6 @@ class Chat : ComponentActivity() {
 
 
             Spacer(modifier = Modifier.height(20.dp))
-
-
 
                 Row(
                     modifier = Modifier
