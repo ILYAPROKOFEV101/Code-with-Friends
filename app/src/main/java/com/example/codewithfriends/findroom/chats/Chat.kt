@@ -1,6 +1,8 @@
 package com.example.codewithfriends.findroom.chats
 
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -11,16 +13,13 @@ import androidx.compose.foundation.layout.Column
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,7 +30,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,8 +44,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.codewithfriends.R
-import com.example.codewithfriends.findroom.chats.PieSocketListener
-import com.example.reaction.logik.PreferenceHelper
 import com.example.reaction.logik.PreferenceHelper.getRoomId
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -55,30 +51,39 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
+import androidx.compose.material3.Button
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.text.font.FontVariation.weight
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 
-import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
-import com.example.codewithfriends.datas.User
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.IMG
-import com.example.codewithfriends.presentation.profile.ProfileName
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
-import com.example.codewithfriends.presentation.sign_in.UserData
 import com.google.android.gms.auth.api.identity.Identity
+
+import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import java.io.IOException
 
 
 class Chat : ComponentActivity() {
+
+    var show = mutableStateOf(false)
 
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -101,6 +106,7 @@ class Chat : ComponentActivity() {
 
 
         setContent {
+
             val name = UID(
                 userData = googleAuthUiClient.getSignedInUser()
             )
@@ -110,6 +116,19 @@ class Chat : ComponentActivity() {
             val id = ID(
                 userData = googleAuthUiClient.getSignedInUser()
             )
+
+
+
+            if (storedRoomId != null) {
+
+                getData(storedRoomId!!, "$id", "$name")
+
+
+                Join(storedRoomId!!, "$id", "$name", "$img", show.value)
+
+
+            }
+            Spacer(modifier = Modifier.height(100.dp))
 
             if (storedRoomId != null) {
                 MessageList(messages.value, "$name", "$img", "$id")
@@ -121,10 +140,12 @@ class Chat : ComponentActivity() {
 
             if (storedRoomId != null) {
                 setupWebSocket(storedRoomId!!, "$name", "$img", "$id")
+
             } else {
                 // roomId не сохранен, обработайте этот случай по вашему усмотрению
             }
-        }// Проверяем, что storedRoomId не равен null
+
+        }
 
 
     }
@@ -182,17 +203,53 @@ class Chat : ComponentActivity() {
     @Composable
     fun MessageList(messages: List<Message>, username: String, url: String, id: String) {
         val currentUserUrl = url.take(60) // Получаем первые 30 символов URL
+        val listState = rememberLazyListState()
+        val lastVisibleItemIndex = messages.size - 1
+        val coroutineScope = rememberCoroutineScope()
+        val hasScrolled = rememberSaveable { mutableStateOf(false) }
+
+        if (!hasScrolled.value || messages.last().sender == url) {
+            LaunchedEffect(messages) {
+                if (lastVisibleItemIndex >= 0) {
+                    coroutineScope.launch {
+                       // listState.animateScrollToItem(lastVisibleItemIndex)
+                        listState.scrollToItem(messages.size - 1)
+                        hasScrolled.value = true
+                    }
+                }
+            }
+        }
+
+
+            LaunchedEffect(messages) {
+                if (lastVisibleItemIndex >= 0) {
+                    coroutineScope.launch {
+                        // listState.animateScrollToItem(lastVisibleItemIndex)
+                        listState.scrollToItem(messages.size - 1)
+                        hasScrolled.value = true
+                    }
+                }
+            }
+
+
+
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(bottom = 80.dp),
-            reverseLayout = false
+                .padding(bottom = 60.dp,top = 100.dp )
+                .wrapContentHeight(),
+            reverseLayout = false,
+            state = listState
         ) {
+
+
             items(messages) { message ->
                 val isMyMessage = message.sender == url
                 val isMyUrlMessage = message.content.contains(currentUserUrl)
+
+
+
 
                 Box(
                     modifier = Modifier
@@ -200,25 +257,19 @@ class Chat : ComponentActivity() {
                         .padding(8.dp),
                     contentAlignment = if (isMyMessage || isMyUrlMessage) Alignment.CenterEnd else Alignment.CenterStart
                 ) {
-                    Card(
+                    Row(
                         modifier = Modifier
-                            .fillMaxWidth(0.7f)
-                            .padding(8.dp),
-                        backgroundColor = if (isMyMessage || isMyUrlMessage) Color.Green else Color.Blue,
-                        elevation = 4.dp,
-                        shape = RoundedCornerShape(8.dp)
+                            .fillMaxWidth()
+                            .padding(0.dp),
+                        horizontalArrangement = if (isMyMessage || isMyUrlMessage) Arrangement.End else Arrangement.Start
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = if (isMyMessage || isMyUrlMessage) Arrangement.End else Arrangement.Start
-                        ) {
-                            val imageModifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(20.dp))
+                        val imageModifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                        val imageUrl = extractUrlFromString(message.content)
+                        val (beforeUrl, afterUrl) = splitMessageContent(message.content)
 
-                            val imageUrl = extractUrlFromString(message.content)
-                            val (beforeUrl, afterUrl) = splitMessageContent(message.content)
-
+                        if (!(isMyMessage || isMyUrlMessage)) {
                             if (imageUrl != null) {
                                 val painter: Painter = rememberAsyncImagePainter(model = imageUrl)
                                 Image(
@@ -226,25 +277,32 @@ class Chat : ComponentActivity() {
                                     contentDescription = null,
                                     modifier = imageModifier
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(2.dp))
                             }
-
-                            Text(
-                                "${message.sender ?: ""}: $beforeUrl$afterUrl",
-                                textAlign = if (isMyMessage || isMyUrlMessage) TextAlign.End else TextAlign.Start,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White,
-                                modifier = Modifier
-                                    .padding(start = 8.dp),
-                                overflow = TextOverflow.Ellipsis
-                            )
+                        }
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .padding(2.dp),
+                            backgroundColor = if (isMyMessage || isMyUrlMessage) Color.Green else Color.Blue,
+                            elevation = 10.dp,
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Text(
+                                    text = "${message.sender}$beforeUrl$afterUrl",
+                                    textAlign = TextAlign.Start,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
                 }
             }
         }
-        Spacer(modifier = Modifier.height(100.dp))
     }
 
 
@@ -252,9 +310,108 @@ class Chat : ComponentActivity() {
 
 
 
+    @Preview(showBackground = true)
+    @Composable
+    fun UpBarNavigation() {
+
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .background(Color.Blue)
+
+        ){
+
+        }
+
+    }
+
+
+    @Composable
+    fun Join(roomId: String, id: String, username: String, url: String, show: Boolean) {
+        // Если show == true, ничего не рисуем (скрываем компонент)
+        if (show == false) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .clip(RoundedCornerShape(5.dp))
+            ) {
+                val coroutineScope = rememberCoroutineScope()
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            joininroom(roomId, id, username, url)
+                        }
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(Color.Red)
+                ) {
+                    Text(text = "If you want to join this project, join the room")
+                }
+            }
+        }
+    }
 
 
 
+    fun joininroom(roomId: String, id: String, username: String, url: String){
+        val baseUrl = "https://getpost-ilya1.up.railway.app/join"
+
+        val uriBuilder = Uri.parse(baseUrl).buildUpon()
+            .appendQueryParameter("roomId", roomId)
+            .appendQueryParameter("user_id", id)
+            .appendQueryParameter("username", username)
+            .appendQueryParameter("image_url", url)
+            .build()
+
+
+        val url = uriBuilder.toString()
+
+        val client = OkHttpClient()
+        val mediaType = "application/x-www-form-urlencoded".toMediaType()
+
+        val requestBody = "".toRequestBody(mediaType)
+
+        val request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                if (response.isSuccessful) {
+                    // Обработка успешного ответа сервера
+                }
+            }
+
+            override fun onFailure(call: okhttp3.Call, e: IOException) {
+                e.printStackTrace()
+            }
+        })
+
+    }
+
+
+
+
+    private fun getData(roomId: String, id: String, username: String) {
+        val url = "https://getpost-ilya1.up.railway.app/exists/$roomId/$id/$username"
+
+        val request = StringRequest(
+            com.android.volley.Request.Method.GET,
+            url,
+            { response ->
+                Log.d("Mylog", "Result: $response")
+                val trueOrFalse = response.toBoolean()
+                show.value = trueOrFalse // Обновляем значение MutableState<Boolean>
+            },
+            { error ->
+                Log.d("Mylog", "Error: $error")
+            }
+        )
+
+        val requestQueue = Volley.newRequestQueue(this)
+        requestQueue.add(request)
+    }
 
 
 

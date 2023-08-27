@@ -46,6 +46,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -60,13 +62,25 @@ import com.example.codewithfriends.findroom.chats.Chat
 
 
 import com.example.codewithfriends.findroom.chats.PieSocketListener
+import com.example.codewithfriends.presentation.profile.ID
+import com.example.codewithfriends.presentation.profile.IMG
+import com.example.codewithfriends.presentation.profile.UID
+import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.codewithfriends.presentation.sign_in.UserData
 import com.example.reaction.logik.PreferenceHelper
 import com.example.reaction.logik.PreferenceHelper.saveRoomId
+import com.google.android.gms.auth.api.identity.Identity
 import okhttp3.WebSocket
 
 
 class FindRoom : ComponentActivity() {
+
+    private val googleAuthUiClient by lazy {
+        GoogleAuthUiClient(
+            context = applicationContext,
+            oneTapClient = Identity.getSignInClient(applicationContext)
+        )
+    }
 
     private val client = OkHttpClient()
 
@@ -130,25 +144,40 @@ class FindRoom : ComponentActivity() {
     val joinroom: Color = colorResource(id = R.color.joinroom)
     val creatroom: Color = colorResource(id = R.color.creatroom)
 
+        val name = UID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        val img = IMG(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        val id = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+
         val andin = room.Admin
 
         Spacer(modifier = Modifier.height(20.dp))
 
-            Box(modifier = Modifier
-                .padding(start = 5.dp, end = 5.dp)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(30.dp))
+        Card(
+            elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+            modifier = Modifier
                 .height(500.dp)
+                .fillMaxWidth()
+                .padding(start = 5.dp, end = 5.dp)
+                .clip(RoundedCornerShape(30.dp))
+                .background(Color.Black)
                 .border(
                     border = BorderStroke(5.dp, SolidColor(joinroom)),
                     shape = RoundedCornerShape(30.dp)
-                )
-            ){
-                Column(modifier = Modifier.fillMaxSize())
-                {
+                ),
+
+        ) {
+            Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
                     Row(modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp))
+                        .background(Color.White)
+                        .height(150.dp),
+                    )
                     {
                         Box(
                             modifier = Modifier
@@ -172,26 +201,29 @@ class FindRoom : ComponentActivity() {
                                 .weight(0.7f)
                                 .padding(end = 5.dp)
                               ){
-                            Box(modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(5.dp)
-                                .height(65.dp)
-                                .clip(CircleShape)
-                                ) {
+                                Box(
+                                    modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 5.dp, start = 10.dp)
+                                    .height(65.dp)
+                                    .clip(CircleShape)
+                                    ) {
                                 Text(text = "${room.roomName}", modifier = Modifier.padding(top = 10.dp , start = 10.dp), style = TextStyle(fontSize = 24.sp))
-                            }
-                            
-                            Box(modifier = Modifier
+                                       }
+                            Box(
+                                modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(5.dp)
+                                .padding(top = 5.dp, start = 10.dp)
                                 .height(65.dp)
                                 .clip(CircleShape)
-                            ) {
+                               )
+                                {
                                 Text(text = "${room.language}", modifier = Modifier.padding( start = 10.dp), style = TextStyle(fontSize = 24.sp))
-                            }
+                                }
 
-                        }
+                             }
                     }
+
                     Spacer(modifier = Modifier.height(20.dp))
                     Row(modifier = Modifier
                         .height(65.dp)
@@ -218,8 +250,6 @@ class FindRoom : ComponentActivity() {
                         }
                     }
 
-
-
                     LazyColumn(modifier = Modifier
                         .padding(start = 5.dp, end = 5.dp)
                         .fillMaxWidth()
@@ -230,7 +260,10 @@ class FindRoom : ComponentActivity() {
                     }
 
                 }
+
             }
+        Spacer(modifier = Modifier.height(10.dp))
+
     }
 
 
