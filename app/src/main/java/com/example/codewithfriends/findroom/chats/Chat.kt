@@ -121,10 +121,10 @@ class Chat : ComponentActivity() {
 
             if (storedRoomId != null) {
 
-                getData(storedRoomId!!, "$id", "$name")
 
 
-                Join(storedRoomId!!, "$id", "$name", "$img", show.value)
+
+                Join(storedRoomId!!, "$id", "$name", "$img", show.value, "$name")
 
 
             }
@@ -327,7 +327,7 @@ class Chat : ComponentActivity() {
 
 
     @Composable
-    fun Join(roomId: String, id: String, username: String, url: String, show: Boolean) {
+    fun Join(roomId: String, id: String, username: String, url: String, show: Boolean, name: String ) {
         // Если show == true, ничего не рисуем (скрываем компонент)
         if (show == false) {
             Box(
@@ -340,6 +340,7 @@ class Chat : ComponentActivity() {
                 Button(
                     onClick = {
                         coroutineScope.launch {
+                            getData(storedRoomId!!, "$id", "$name")
                             joininroom(roomId, id, username, url)
                         }
                     },
