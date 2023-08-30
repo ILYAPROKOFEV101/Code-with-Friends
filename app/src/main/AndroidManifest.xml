@@ -10,7 +10,6 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -21,6 +20,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CodeWithFriends"
         tools:targetApi="31">
+        <activity
+            android:name=".roomsetting.Roomsetting"
+            android:exported="false"
+            android:label="@string/title_activity_roomsetting"
+            android:theme="@style/Theme.CodeWithFriends" />
         <activity
             android:name=".findroom.chats.Chat"
             android:exported="false"

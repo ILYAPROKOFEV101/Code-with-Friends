@@ -209,9 +209,6 @@ class  MainActivity: ComponentActivity() {
 
 
 
-
-
-
                                 IconButton(onClick = {
                                     onSignInClick()
                                     val gso =

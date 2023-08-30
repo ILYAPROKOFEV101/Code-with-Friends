@@ -1,5 +1,6 @@
 package com.example.codewithfriends.findroom.chats
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -7,12 +8,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -55,15 +59,18 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.window.Popup
 
 import coil.compose.rememberAsyncImagePainter
 import com.android.volley.toolbox.StringRequest
@@ -72,6 +79,7 @@ import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
+import com.example.codewithfriends.roomsetting.Roomsetting
 import com.google.android.gms.auth.api.identity.Identity
 
 import kotlinx.coroutines.launch
@@ -84,6 +92,8 @@ import java.io.IOException
 class Chat : ComponentActivity() {
 
     var show = mutableStateOf(false)
+    var developers
+    = mutableStateOf(false)
 
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -91,6 +101,7 @@ class Chat : ComponentActivity() {
             oneTapClient = Identity.getSignInClient(applicationContext)
         )
     }
+    var heidg = mutableStateOf(70.dp)
 
     private val pieSocketListener = PieSocketListener()
     private val client = OkHttpClient()
@@ -117,11 +128,9 @@ class Chat : ComponentActivity() {
                 userData = googleAuthUiClient.getSignedInUser()
             )
 
-
+            getData(storedRoomId!!, "$id" ,"$name",)
 
             if (storedRoomId != null) {
-
-
 
 
                 Join(storedRoomId!!, "$id", "$name", "$img", show.value, "$name")
@@ -149,6 +158,7 @@ class Chat : ComponentActivity() {
 
 
     }
+
     private var isConnected = false
 
     private fun setupWebSocket(roomId: String, username: String, url: String, id: String) {
@@ -183,7 +193,6 @@ class Chat : ComponentActivity() {
     }
 
 
-
     fun splitMessageContent(content: String): Pair<String, String> {
         val pattern = "\\[(https?://[^\\]]+)\\]".toRegex()
         val matchResult = pattern.find(content)
@@ -202,23 +211,24 @@ class Chat : ComponentActivity() {
 
     @Composable
     fun MessageList(messages: List<Message>, username: String, url: String, id: String) {
-        val currentUserUrl = url.take(60) // Получаем первые 30 символов URL
-        val listState = rememberLazyListState()
-        val lastVisibleItemIndex = messages.size - 1
-        val coroutineScope = rememberCoroutineScope()
-        val hasScrolled = rememberSaveable { mutableStateOf(false) }
+        if (messages.isNotEmpty()) { // Проверяем, что список не пуст
+            val currentUserUrl = url.take(60) // Получаем первые 30 символов URL
+            val listState = rememberLazyListState()
+            val lastVisibleItemIndex = messages.size - 1
+            val coroutineScope = rememberCoroutineScope()
+            val hasScrolled = rememberSaveable { mutableStateOf(false) }
 
-        if (!hasScrolled.value || messages.last().sender == url) {
-            LaunchedEffect(messages) {
-                if (lastVisibleItemIndex >= 0) {
-                    coroutineScope.launch {
-                       // listState.animateScrollToItem(lastVisibleItemIndex)
-                        listState.scrollToItem(messages.size - 1)
-                        hasScrolled.value = true
+            if (!hasScrolled.value || messages.last().sender == url) {
+                LaunchedEffect(messages) {
+                    if (lastVisibleItemIndex >= 0) {
+                        coroutineScope.launch {
+                            // listState.animateScrollToItem(lastVisibleItemIndex)
+                            listState.scrollToItem(messages.size - 1)
+                            hasScrolled.value = true
+                        }
                     }
                 }
             }
-        }
 
 
             LaunchedEffect(messages) {
@@ -234,69 +244,71 @@ class Chat : ComponentActivity() {
 
 
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 60.dp,top = 100.dp )
-                .wrapContentHeight(),
-            reverseLayout = false,
-            state = listState
-        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 60.dp, top = 100.dp)
+                    .wrapContentHeight(),
+                reverseLayout = false,
+                state = listState
+            ) {
 
 
-            items(messages) { message ->
-                val isMyMessage = message.sender == url
-                val isMyUrlMessage = message.content.contains(currentUserUrl)
+                items(messages) { message ->
+                    val isMyMessage = message.sender == url
+                    val isMyUrlMessage = message.content.contains(currentUserUrl)
 
 
 
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    contentAlignment = if (isMyMessage || isMyUrlMessage) Alignment.CenterEnd else Alignment.CenterStart
-                ) {
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(0.dp),
-                        horizontalArrangement = if (isMyMessage || isMyUrlMessage) Arrangement.End else Arrangement.Start
+                            .padding(8.dp),
+                        contentAlignment = if (isMyMessage || isMyUrlMessage) Alignment.CenterEnd else Alignment.CenterStart
                     ) {
-                        val imageModifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(20.dp))
-                        val imageUrl = extractUrlFromString(message.content)
-                        val (beforeUrl, afterUrl) = splitMessageContent(message.content)
-
-                        if (!(isMyMessage || isMyUrlMessage)) {
-                            if (imageUrl != null) {
-                                val painter: Painter = rememberAsyncImagePainter(model = imageUrl)
-                                Image(
-                                    painter = painter,
-                                    contentDescription = null,
-                                    modifier = imageModifier
-                                )
-                                Spacer(modifier = Modifier.width(2.dp))
-                            }
-                        }
-                        Card(
+                        Row(
                             modifier = Modifier
-                                .fillMaxWidth(0.8f)
-                                .padding(2.dp),
-                            backgroundColor = if (isMyMessage || isMyUrlMessage) Color.Green else Color.Blue,
-                            elevation = 10.dp,
-                            shape = RoundedCornerShape(8.dp)
+                                .fillMaxWidth()
+                                .padding(0.dp),
+                            horizontalArrangement = if (isMyMessage || isMyUrlMessage) Arrangement.End else Arrangement.Start
                         ) {
-                            Column(modifier = Modifier.padding(8.dp)) {
-                                Text(
-                                    text = "${message.sender}$beforeUrl$afterUrl",
-                                    textAlign = TextAlign.Start,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color.White,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                            val imageModifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                            val imageUrl = extractUrlFromString(message.content)
+                            val (beforeUrl, afterUrl) = splitMessageContent(message.content)
+
+                            if (!(isMyMessage || isMyUrlMessage)) {
+                                if (imageUrl != null) {
+                                    val painter: Painter =
+                                        rememberAsyncImagePainter(model = imageUrl)
+                                    Image(
+                                        painter = painter,
+                                        contentDescription = null,
+                                        modifier = imageModifier
+                                    )
+                                    Spacer(modifier = Modifier.width(2.dp))
+                                }
+                            }
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.8f)
+                                    .padding(2.dp),
+                                backgroundColor = if (isMyMessage || isMyUrlMessage) Color.Green else Color.Blue,
+                                elevation = 10.dp,
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    Text(
+                                        text = "${message.sender}$beforeUrl$afterUrl",
+                                        textAlign = TextAlign.Start,
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color.White,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
                         }
                     }
@@ -307,35 +319,28 @@ class Chat : ComponentActivity() {
 
 
 
-
-
-
-    @Preview(showBackground = true)
     @Composable
-    fun UpBarNavigation() {
+    fun Join(
+        roomId: String,
+        id: String,
+        username: String,
+        url: String,
+        show: Boolean,
+        name: String,
+    ) {
 
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .background(Color.Blue)
+        var showPopup by remember { mutableStateOf(false) }
 
-        ){
+        val density = LocalDensity.current.density
+        val tooltipModifier = Modifier.padding(density.dp, 0.dp)
 
-        }
-
-    }
-
-
-    @Composable
-    fun Join(roomId: String, id: String, username: String, url: String, show: Boolean, name: String ) {
-        // Если show == true, ничего не рисуем (скрываем компонент)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp)
+                .background(Color.Blue)
+        ) {
         if (show == false) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-                    .clip(RoundedCornerShape(5.dp))
-            ) {
                 val coroutineScope = rememberCoroutineScope()
                 Button(
                     onClick = {
@@ -344,13 +349,29 @@ class Chat : ComponentActivity() {
                             joininroom(roomId, id, username, url)
                         }
                     },
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(Color.Red)
-                ) {
-                    Text(text = "If you want to join this project, join the room")
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(Color.Green), modifier = Modifier
+                        .fillMaxSize()
+                        .padding(5.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                      )
+                {
+                    Text(text = "If you want make  this project, join in the room")
                 }
+
+        } else {
+                Button(
+                    onClick = {
+                         val intent = Intent(this@Chat, Roomsetting::class.java)
+                         startActivity(intent)
+
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(Color.Green)
+                    ) {}
             }
+
         }
-    }
+}
+
 
 
 
