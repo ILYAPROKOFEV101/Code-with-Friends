@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -37,6 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.volley.Request
+import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.codewithfriends.R
@@ -46,11 +48,15 @@ import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.codewithfriends.roomsetting.ui.theme.CodeWithFriendsTheme
+import com.example.codewithfriends.roomsetting.ui.theme.Participant
 import com.example.reaction.logik.PreferenceHelper
 import com.example.reaction.logik.PreferenceHelper.getRoomId
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
+
+
 
 class Roomsetting : ComponentActivity() {
 
@@ -69,7 +75,12 @@ class Roomsetting : ComponentActivity() {
 
 
         setContent {
+
             val rooms = remember { mutableStateOf(emptyList<Room>()) }
+
+            val participants = remember { mutableStateOf(emptyList<Participant>()) }
+
+
             // Проверяем, есть ли данные комнаты
             val firstRoom = rooms.value.firstOrNull()
 
@@ -84,6 +95,9 @@ class Roomsetting : ComponentActivity() {
             )
 
             getData(storedRoomId!!, rooms)
+
+
+            whoinroom(storedRoomId!!, participants)
 
             LazyColumn {
                 item {
@@ -100,9 +114,10 @@ class Roomsetting : ComponentActivity() {
 
 
                 item {
-                    userinroom()
+                    userinroom(participants.value) // Передаем participants.value
                     Spacer(modifier = Modifier.height(30.dp))
                 }
+
 
                 item {
                     tasks()
@@ -169,6 +184,37 @@ class Roomsetting : ComponentActivity() {
 
 
 
+    private fun whoinroom(roomId: String, participantsState: MutableState<List<Participant>>) {
+        val url = "https://getpost-ilya1.up.railway.app/participants/$roomId"
+
+        val request = JsonArrayRequest(
+            Request.Method.GET,
+            url,
+            null,
+            { response ->
+                Log.d("Mylog", "Result: $response")
+                val gson = Gson()
+                val participantListType = object : TypeToken<List<Participant>>() {}.type
+
+                try {
+                    val newParticipants: List<Participant> = gson.fromJson(response.toString(), participantListType)
+                    participantsState.value = newParticipants
+                } catch (e: JsonSyntaxException) {
+                    Log.e("Mylog", "Error parsing JSON: $e")
+                }
+            },
+            { error ->
+                Log.d("Mylog", "Error: $error")
+            }
+        )
+
+        val requestQueue = Volley.newRequestQueue(this)
+        requestQueue.add(request)
+    }
+
+
+
+
 
     @Composable
     fun roomname(roomName: String) {
@@ -186,7 +232,7 @@ class Roomsetting : ComponentActivity() {
 
 
     @Composable
-    fun userinroom() {
+    fun userinroom(participantsState: List<Participant>) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -198,13 +244,15 @@ class Roomsetting : ComponentActivity() {
                 .clip(RoundedCornerShape(10.dp))
         ) {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(10) { index ->
-                    // Здесь вы можете создать содержимое для каждого элемента списка
-                    Text(text = "Item $index")
+                items(participantsState) { participant ->
+                    // Здесь вы можете создать элемент списка для каждого участника
+                    Text(text = participant.username)
+                    // Вывод других данных участника, например, изображения (participant.imageUrl)
                 }
             }
         }
     }
+
 
     @Composable
     fun tasks() {
