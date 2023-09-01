@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberImagePainter
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.StringRequest
@@ -246,12 +248,24 @@ class Roomsetting : ComponentActivity() {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(participantsState) { participant ->
                     // Здесь вы можете создать элемент списка для каждого участника
-                    Text(text = participant.username)
-                    // Вывод других данных участника, например, изображения (participant.imageUrl)
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = participant.username)
+                        // Выводим изображение аватарки с помощью библиотеки Coil
+                        Image(
+                            painter = rememberImagePainter(data = participant.imageUrl),
+                            contentDescription = null, // Устанавливаем null для contentDescription
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
+                    }
                 }
             }
         }
     }
+
 
 
     @Composable
