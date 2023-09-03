@@ -1,5 +1,6 @@
 package com.example.codewithfriends.roomsetting
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -8,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +20,8 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +38,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,6 +50,7 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.codewithfriends.R
 import com.example.codewithfriends.findroom.Room
+import com.example.codewithfriends.firebase.Addtask
 import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.UID
@@ -125,6 +131,11 @@ class Roomsetting : ComponentActivity() {
                     tasks()
                     Spacer(modifier = Modifier.height(30.dp))
                 }
+                item {
+                    addtask()
+                    Spacer(modifier = Modifier.height(30.dp))
+                }
+
             }
         }
 
@@ -227,14 +238,14 @@ class Roomsetting : ComponentActivity() {
                 .padding(start = 10.dp, end = 10.dp)
                 .clip(RoundedCornerShape(10.dp))
         ) {
-            Text(text = roomName, fontSize = 24.sp, textAlign = TextAlign.Center)
+            Text(text = roomName, fontSize = 24.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(start = 10.dp, end = 10.dp))
         }
     }
 
 
 
     @Composable
-    fun userinroom(participantsState: List<Participant>) {
+    fun userinroom(participantsState: List<Participant>) {  // this fun mean how match users in room
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -248,18 +259,21 @@ class Roomsetting : ComponentActivity() {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(participantsState) { participant ->
                     // Здесь вы можете создать элемент списка для каждого участника
-                    Column(
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(text = participant.username)
+
                         // Выводим изображение аватарки с помощью библиотеки Coil
                         Image(
                             painter = rememberImagePainter(data = participant.imageUrl),
                             contentDescription = null, // Устанавливаем null для contentDescription
                             modifier = Modifier
-                                .size(50.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .size(100.dp)
+                                .padding(10.dp)
+                                .clip(RoundedCornerShape(30.dp))
                         )
+                        Text(text = participant.username, fontSize = 24.sp, modifier = Modifier.padding(top = 30.dp))
                     }
                 }
             }
@@ -286,6 +300,26 @@ class Roomsetting : ComponentActivity() {
                     Text(text = "Task $index")
                 }
             }
+        }
+    }
+
+    @Composable
+    fun addtask(){
+        Button(
+            colors = ButtonDefaults.buttonColors(Color.Blue),
+            onClick = {
+                val intent = Intent(this@Roomsetting, Addtask::class.java)
+                startActivity(intent)
+
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp)
+                //.background(creatroom)
+
+                .clip(RoundedCornerShape(1.dp))
+        ) {
+            Text(text = stringResource(id = R.string.Addtask),fontSize = 24.sp)
         }
     }
 

@@ -2,6 +2,12 @@
     <string name="app_name">Code with Friends</string>
     <string name="web_client_id">723880678401-e36qj2dcmalhhnp8brc81r5kaiqgr6lb.apps.googleusercontent.com</string>
     <string name="title_activity_main_menu">Main_menu</string>
+    <string name="DataBase">https://code-with-friends-73cde-default-rtdb.europe-west1.firebasedatabase.app/</string>
+    <string name="breanch">Укажи ветку git репозитория </string>
+    <string name="filename">укажите в кам фаёле есть работа </string>
+    <string name="mission">что нужно сделать</string>
+    <string name="Addtask">добавить задания </string>
+
     <string name="reactionresult">Reaction Result</string>
     <string name="singout">Sign out</string>
     <string name="bestresult">Best Result</string>
@@ -75,4 +81,5 @@
     <string name="title_activity_find_room">FindRoom</string>
     <string name="title_activity_chat">Chat</string>
     <string name="title_activity_roomsetting">Roomsetting</string>
+    <string name="title_activity_addtask">Addtask</string>
 </resources>

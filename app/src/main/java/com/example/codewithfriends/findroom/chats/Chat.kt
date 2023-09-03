@@ -128,10 +128,10 @@ class Chat : ComponentActivity() {
                 userData = googleAuthUiClient.getSignedInUser()
             )
 
-            getData(storedRoomId!!, "$id" ,"$name",)
+
 
             if (storedRoomId != null) {
-
+                getData(storedRoomId!!, "$id" ,"$name",)
 
                 Join(storedRoomId!!, "$id", "$name", "$img", show.value, "$name")
 
@@ -507,6 +507,7 @@ class Chat : ComponentActivity() {
                 }
             }
         }
+
     }
 
 
