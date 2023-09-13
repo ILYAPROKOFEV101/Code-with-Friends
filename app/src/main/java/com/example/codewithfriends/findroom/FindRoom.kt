@@ -3,9 +3,16 @@ package com.example.codewithfriends.findroom
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -43,11 +50,16 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -61,12 +73,14 @@ import com.example.codewithfriends.R
 import com.example.codewithfriends.findroom.chats.Chat
 
 
-import com.example.codewithfriends.findroom.chats.PieSocketListener
+import com.example.codewithfriends.findroom.chats.WebSocketClient
+import com.example.codewithfriends.findroom.chats.WebSocketManager
 import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.codewithfriends.presentation.sign_in.UserData
+import com.example.codewithfriends.roomsetting.TaskData
 import com.example.reaction.logik.PreferenceHelper
 import com.example.reaction.logik.PreferenceHelper.saveRoomId
 import com.google.android.gms.auth.api.identity.Identity
@@ -81,6 +95,7 @@ class FindRoom : ComponentActivity() {
             oneTapClient = Identity.getSignInClient(applicationContext)
         )
     }
+    var showCircle by mutableStateOf(false)
 
     private val client = OkHttpClient()
 
@@ -91,13 +106,23 @@ class FindRoom : ComponentActivity() {
 
         setContent {
 
-            val rooms = remember { mutableStateOf(emptyList<Room>()) }
-            Box(modifier = Modifier.fillMaxSize()) {
 
+
+
+
+            val rooms = remember { mutableStateOf(emptyList<Room>()) }
+
+
+            // Задержка перехода на новую страницу через 3 секунды
+               Handler(Looper.getMainLooper()).postDelayed({
+                       getData(rooms)
+               }, 500) // 3000 миллисекунд (3 секунды)
+            // Вызывайте getData только после установки ContentView
+
+            // Ваш код Composable
+            Box(modifier = Modifier.fillMaxSize()) {
                 RoomList(rooms.value)
             }
-            getData(rooms)
-
 
         }
     }
@@ -237,9 +262,14 @@ class FindRoom : ComponentActivity() {
                         {
                             Button(onClick = {
                                 goToChatActivity(room.id)
-                                openWebSocket(room.id)
-                                val intent = Intent(this@FindRoom, Chat::class.java)
-                                startActivity(intent)
+                                showCircle = !showCircle
+
+                                // Задержка перехода на новую страницу через 3 секунды
+                             //   Handler(Looper.getMainLooper()).postDelayed({
+                                    val intent = Intent(this@FindRoom, Chat::class.java)
+                                    startActivity(intent)
+                                //}, 2000) // 3000 миллисекунд (3 секунды)
+
                             },
                                 colors = ButtonDefaults.buttonColors(creatroom),
                                 modifier = Modifier.fillMaxSize()
@@ -267,15 +297,6 @@ class FindRoom : ComponentActivity() {
     }
 
 
-
-    private fun openWebSocket(roomId: String) {
-        val request: Request = Request.Builder()
-            .url("https://getpost-ilya1.up.railway.app/chat/$roomId")
-            .build()
-        val listener = PieSocketListener()
-        val ws: WebSocket = client.newWebSocket(request, listener)
-
-    }
     fun goToChatActivity(roomId: String) {
 
         saveRoomId(this, roomId)

@@ -2,10 +2,14 @@ package com.example.codewithfriends.findroom.chats
 
 import android.content.Intent
 import android.net.Uri
+import android.net.http.HttpResponseCache.install
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -60,6 +64,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.rememberCoroutineScope
@@ -71,29 +76,42 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Popup
+import androidx.lifecycle.MutableLiveData
 
 import coil.compose.rememberAsyncImagePainter
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.example.codewithfriends.findroom.chats.ui.theme.TestActivity
 import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.codewithfriends.roomsetting.Roomsetting
 import com.google.android.gms.auth.api.identity.Identity
+import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.HttpClient
+import com.google.protobuf.ByteString
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import okhttp3.internal.http.HttpMethod
 import java.io.IOException
+import java.util.concurrent.TimeUnit
+
+
 
 
 class Chat : ComponentActivity() {
+    private lateinit var webSocketClient: WebSocketClient
 
+
+
+  //  val pieSocketListener = PieSocketListener()
     var show = mutableStateOf(false)
-    var developers
-    = mutableStateOf(false)
+    var developers = mutableStateOf(false)
 
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -101,20 +119,33 @@ class Chat : ComponentActivity() {
             oneTapClient = Identity.getSignInClient(applicationContext)
         )
     }
-    var heidg = mutableStateOf(70.dp)
 
-    private val pieSocketListener = PieSocketListener()
-    private val client = OkHttpClient()
-    private lateinit var webSocket: WebSocket
+
+    private var webSocket: WebSocket? = null // Добавьте переменную для отслеживания состояния соединения
+
+    private val client = OkHttpClient.Builder()
+        .pingInterval(30, TimeUnit.SECONDS) // Устанавливаем интервал отправки пинг-запросов
+        .build()
+
+        ///  private lateinit var webSocket: WebSocket
     private var storedRoomId: String? = null // Объявляем на уровне класса
-    private val messages = mutableStateOf(listOf<Message>()) // Хранение сообщений
+    private val messages = mutableStateOf(listOf<Message>()) // Хранение
+   // private val messagesLiveData = MutableLiveData<List<Message>>()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
+        // Настройте WebSocket с помощью pieSocketListener
+
+
         storedRoomId = getRoomId(this)
 
 
+
+
+            //  pieSocketListener.setupWebSocket(roomId, username, url, id)
 
         setContent {
 
@@ -131,11 +162,14 @@ class Chat : ComponentActivity() {
 
 
             if (storedRoomId != null) {
-                getData(storedRoomId!!, "$id" ,"$name",)
 
                 Join(storedRoomId!!, "$id", "$name", "$img", show.value, "$name")
 
 
+            }
+
+            if (storedRoomId != null) {
+            //    openWebSocket(storedRoomId!!, "$name", "$img","$id" )
             }
             Spacer(modifier = Modifier.height(100.dp))
 
@@ -144,22 +178,30 @@ class Chat : ComponentActivity() {
             }
 
             Spacer(modifier = Modifier.height(20.dp))
-
-            Creator()
-
             if (storedRoomId != null) {
-                setupWebSocket(storedRoomId!!, "$name", "$img", "$id")
-
+                Creator()
+            }
+            if (storedRoomId != null) {
+                    //setupWebSocket(storedRoomId!!, "$name", "$img", "$id")
             } else {
                 // roomId не сохранен, обработайте этот случай по вашему усмотрению
             }
 
+
+
+
+
+
+
         }
+
 
 
     }
 
     private var isConnected = false
+
+
 
     private fun setupWebSocket(roomId: String, username: String, url: String, id: String) {
         if (!isConnected) {
@@ -193,6 +235,8 @@ class Chat : ComponentActivity() {
     }
 
 
+
+
     fun splitMessageContent(content: String): Pair<String, String> {
         val pattern = "\\[(https?://[^\\]]+)\\]".toRegex()
         val matchResult = pattern.find(content)
@@ -210,15 +254,28 @@ class Chat : ComponentActivity() {
 
 
     @Composable
-    fun MessageList(messages: List<Message>, username: String, url: String, id: String) {
-        if (messages.isNotEmpty()) { // Проверяем, что список не пуст
-            val currentUserUrl = url.take(60) // Получаем первые 30 символов URL
-            val listState = rememberLazyListState()
-            val lastVisibleItemIndex = messages.size - 1
-            val coroutineScope = rememberCoroutineScope()
-            val hasScrolled = rememberSaveable { mutableStateOf(false) }
+    fun MessageList(messages: List<Message>?, username: String, url: String, id: String) {
+        if (messages != null && messages.isNotEmpty()) {
+            if (messages.isNotEmpty()) { // Проверяем, что список не пуст
+                val currentUserUrl = url.take(60) // Получаем первые 30 символов URL
+                val listState = rememberLazyListState()
+                val lastVisibleItemIndex = messages.size - 1
+                val coroutineScope = rememberCoroutineScope()
+                val hasScrolled = rememberSaveable { mutableStateOf(false) }
 
-            if (!hasScrolled.value || messages.last().sender == url) {
+                if (!hasScrolled.value || messages.last().sender == url) {
+                    LaunchedEffect(messages) {
+                        if (lastVisibleItemIndex >= 0) {
+                            coroutineScope.launch {
+                                // listState.animateScrollToItem(lastVisibleItemIndex)
+                                listState.scrollToItem(messages.size - 1)
+                                hasScrolled.value = true
+                            }
+                        }
+                    }
+                }
+
+
                 LaunchedEffect(messages) {
                     if (lastVisibleItemIndex >= 0) {
                         coroutineScope.launch {
@@ -228,86 +285,75 @@ class Chat : ComponentActivity() {
                         }
                     }
                 }
-            }
-
-
-            LaunchedEffect(messages) {
-                if (lastVisibleItemIndex >= 0) {
-                    coroutineScope.launch {
-                        // listState.animateScrollToItem(lastVisibleItemIndex)
-                        listState.scrollToItem(messages.size - 1)
-                        hasScrolled.value = true
-                    }
-                }
-            }
 
 
 
 
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 60.dp, top = 100.dp)
-                    .wrapContentHeight(),
-                reverseLayout = false,
-                state = listState
-            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 60.dp, top = 100.dp)
+                        .wrapContentHeight(),
+                    reverseLayout = false,
+                    state = listState
+                ) {
 
 
-                items(messages) { message ->
-                    val isMyMessage = message.sender == url
-                    val isMyUrlMessage = message.content.contains(currentUserUrl)
+                    items(messages) { message ->
+                        val isMyMessage = message.sender == url
+                        val isMyUrlMessage = message.content.contains(currentUserUrl)
 
 
 
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        contentAlignment = if (isMyMessage || isMyUrlMessage) Alignment.CenterEnd else Alignment.CenterStart
-                    ) {
-                        Row(
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(0.dp),
-                            horizontalArrangement = if (isMyMessage || isMyUrlMessage) Arrangement.End else Arrangement.Start
+                                .padding(8.dp),
+                            contentAlignment = if (isMyMessage || isMyUrlMessage) Alignment.CenterEnd else Alignment.CenterStart
                         ) {
-                            val imageModifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                            val imageUrl = extractUrlFromString(message.content)
-                            val (beforeUrl, afterUrl) = splitMessageContent(message.content)
-
-                            if (!(isMyMessage || isMyUrlMessage)) {
-                                if (imageUrl != null) {
-                                    val painter: Painter =
-                                        rememberAsyncImagePainter(model = imageUrl)
-                                    Image(
-                                        painter = painter,
-                                        contentDescription = null,
-                                        modifier = imageModifier
-                                    )
-                                    Spacer(modifier = Modifier.width(2.dp))
-                                }
-                            }
-                            Card(
+                            Row(
                                 modifier = Modifier
-                                    .fillMaxWidth(0.8f)
-                                    .padding(2.dp),
-                                backgroundColor = if (isMyMessage || isMyUrlMessage) Color.Green else Color.Blue,
-                                elevation = 10.dp,
-                                shape = RoundedCornerShape(8.dp)
+                                    .fillMaxWidth()
+                                    .padding(0.dp),
+                                horizontalArrangement = if (isMyMessage || isMyUrlMessage) Arrangement.End else Arrangement.Start
                             ) {
-                                Column(modifier = Modifier.padding(8.dp)) {
-                                    Text(
-                                        text = "${message.sender}$beforeUrl$afterUrl",
-                                        textAlign = TextAlign.Start,
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = Color.White,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
+                                val imageModifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(20.dp))
+                                val imageUrl = extractUrlFromString(message.content)
+                                val (beforeUrl, afterUrl) = splitMessageContent(message.content)
+
+                                if (!(isMyMessage || isMyUrlMessage)) {
+                                    if (imageUrl != null) {
+                                        val painter: Painter =
+                                            rememberAsyncImagePainter(model = imageUrl)
+                                        Image(
+                                            painter = painter,
+                                            contentDescription = null,
+                                            modifier = imageModifier
+                                        )
+                                        Spacer(modifier = Modifier.width(2.dp))
+                                    }
+                                }
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.8f)
+                                        .padding(2.dp),
+                                    backgroundColor = if (isMyMessage || isMyUrlMessage) Color.Green else Color.Blue,
+                                    elevation = 10.dp,
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Column(modifier = Modifier.padding(8.dp)) {
+                                        Text(
+                                            text = "${message.sender}$beforeUrl$afterUrl",
+                                            textAlign = TextAlign.Start,
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color.White,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -316,7 +362,6 @@ class Chat : ComponentActivity() {
             }
         }
     }
-
 
 
     @Composable
@@ -345,8 +390,13 @@ class Chat : ComponentActivity() {
                 Button(
                     onClick = {
                         coroutineScope.launch {
-                            getData(storedRoomId!!, "$id", "$name")
-                            joininroom(roomId, id, username, url)
+
+                            // Задержка перехода на новую страницу через 3 секунды
+                            Handler(Looper.getMainLooper()).postDelayed({
+                                getData(storedRoomId!!, "$id", "$name")
+                                joininroom(roomId, id, username, url)
+                            }, 500) // 3000 миллисекунд (3 секунды)
+
                         }
                     },
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(Color.Green), modifier = Modifier
@@ -361,7 +411,7 @@ class Chat : ComponentActivity() {
         } else {
                 Button(
                     onClick = {
-                         val intent = Intent(this@Chat, Roomsetting::class.java)
+                         val intent = Intent(this@Chat, TestActivity::class.java)
                          startActivity(intent)
 
                     },
@@ -496,7 +546,11 @@ class Chat : ComponentActivity() {
                             text = ""
 
                             val messageToSend = "$submittedText"
-                            pieSocketListener.sendMessage(webSocket, messageToSend)
+                            // Отправка сообщения через WebSocket
+                                // webSocketClient.send(messageToSend)
+// Добавляем сообщение в список сообщений
+
+
                         }
                     ) {
                         Icon(
@@ -508,7 +562,19 @@ class Chat : ComponentActivity() {
             }
         }
 
-    }
+
+
+
+    /*override fun onDestroy() {
+        super.onDestroy()
+
+        // Закрываем WebSocket соединение при завершении активности
+        pieSocketListener.onClosing()
+    }*/
+
+
+
+}
 
 
 

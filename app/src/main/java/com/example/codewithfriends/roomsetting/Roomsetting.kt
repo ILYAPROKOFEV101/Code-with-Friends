@@ -1,7 +1,10 @@
 package com.example.codewithfriends.roomsetting
 
 import android.content.Intent
+import android.net.http.HttpResponseCache.install
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,15 +22,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonArrayRequest
@@ -61,12 +68,15 @@ import com.example.reaction.logik.PreferenceHelper
 import com.example.reaction.logik.PreferenceHelper.getRoomId
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.common.reflect.TypeToken
+import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.HttpClient
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
-
+import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.json.Json
 
 
 class Roomsetting : ComponentActivity() {
+
 
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -83,6 +93,19 @@ class Roomsetting : ComponentActivity() {
 
 
         setContent {
+
+            // Полученные данные с сервера
+            val serverData = listOf(
+                TaskData(
+                    gitbranch = "Master",
+                    filename = "MAinActivity",
+                    photo = "https://th.bing.com/th/id/OIP.FXH7Knh_9MyszJsfVnEW_wHaE5?w=272&h=180&c=7&r=0&o=5&pid=1.7",
+                    mession = "Fix this bugs and change design"
+                ),
+                // Добавьте другие объекты TaskData по мере необходимости
+            )
+
+            val Task = remember { mutableStateOf(emptyList<TaskData>()) }
 
             val rooms = remember { mutableStateOf(emptyList<Room>()) }
 
@@ -101,11 +124,17 @@ class Roomsetting : ComponentActivity() {
             val id = ID(
                 userData = googleAuthUiClient.getSignedInUser()
             )
+// Задержка перехода на новую страницу через 3 секунды
+            Handler(Looper.getMainLooper()).postDelayed({
+                getData(storedRoomId!!, rooms)
+                whoinroom(storedRoomId!!, participants)
+                getmession(storedRoomId!!, Task)
 
-            getData(storedRoomId!!, rooms)
+            }, 500) // 3000 миллисекунд (3 секунды)
 
 
-            whoinroom(storedRoomId!!, participants)
+
+
 
             LazyColumn {
                 item {
@@ -128,8 +157,10 @@ class Roomsetting : ComponentActivity() {
 
 
                 item {
-                    tasks()
-                    Spacer(modifier = Modifier.height(30.dp))
+
+                    tasks(Task = serverData)  // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
+                        Spacer(modifier = Modifier.height(30.dp))
+
                 }
                 item {
                     addtask()
@@ -226,6 +257,37 @@ class Roomsetting : ComponentActivity() {
     }
 
 
+    private fun getmession(roomId: String, tasksState: MutableState<List<TaskData>>) {
+        val url = "https://getpost-ilya1.up.railway.app/participants/$roomId"
+
+        val request = StringRequest(
+            com.android.volley.Request.Method.GET,
+            url,
+            { response ->
+                Log.d("Mylog", "Result: $response")
+                try {
+                    val gson = Gson()
+                    val taskListType = object : TypeToken<List<TaskData>>() {}.type
+                    val utf8Response = String(response.toByteArray(Charsets.ISO_8859_1), Charsets.UTF_8)
+                    val newTasks: List<TaskData> = gson.fromJson(utf8Response, taskListType)
+
+                    tasksState.value = newTasks // Обновляем состояние с полученными данными
+                    Log.d("Mylog", "Received data: $newTasks") // Добавьте это
+                } catch (e: JsonSyntaxException) {
+                    Log.e("Mylog", "Error parsing JSON: $e")
+                    Log.d("Mylog", "Server response: $response")
+                }
+            },
+
+            { error ->
+                Log.d("Mylog", "Error: $error")
+            }
+        )
+
+        val requestQueue = Volley.newRequestQueue(this)
+        requestQueue.add(request)
+    }
+
 
 
 
@@ -280,28 +342,51 @@ class Roomsetting : ComponentActivity() {
         }
     }
 
+    @Composable
+    fun tasks(Task: List<TaskData>) {
+        Log.d("Mylog", "Tasks: $Task") // Добавьте это
+        LazyColumn( modifier = Modifier.height(700.dp)) {
+            items(Task) { task ->
+                TaskCard(task = task)
+            }
+        }
+    }
+
+
 
 
     @Composable
-    fun tasks() {
+    fun TaskCard(task: TaskData) {
+        Log.d("Mylog", "TaskCard: $task") // Добавьте это
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(500.dp)
-                .padding(
-                    start = 10.dp,
-                    end = 10.dp
-                )
+                .padding(10.dp)
                 .clip(RoundedCornerShape(10.dp))
         ) {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(5) { index ->
-                    // Здесь вы можете создать содержимое для каждого элемента списка
-                    Text(text = "Task $index")
-                }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Text(text = "Git Branch: ${task.gitbranch}")
+                Text(text = "Filename: ${task.filename}")
+                Text(text = "Mission: ${task.mession}")
+
+                Image(
+                    painter = rememberAsyncImagePainter(model = task.photo),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(shape = CircleShape)
+                )
             }
         }
     }
+
+
+
 
     @Composable
     fun addtask(){
@@ -322,6 +407,10 @@ class Roomsetting : ComponentActivity() {
             Text(text = stringResource(id = R.string.Addtask),fontSize = 24.sp)
         }
     }
+
+
+
+
 
 
 }

@@ -82,4 +82,5 @@
     <string name="title_activity_chat">Chat</string>
     <string name="title_activity_roomsetting">Roomsetting</string>
     <string name="title_activity_addtask">Addtask</string>
+    <string name="title_activity_test">TestActivity</string>
 </resources>

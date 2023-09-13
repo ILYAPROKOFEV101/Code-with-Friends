@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,28 +45,51 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.volley.Request
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.example.codewithfriends.R
 import com.example.codewithfriends.findroom.FindRoom
+import com.example.codewithfriends.findroom.Room
+
 import com.example.codewithfriends.firebase.ui.theme.CodeWithFriendsTheme
+import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.reaction.logik.PreferenceHelper
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.common.reflect.TypeToken
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
+import com.google.gson.Gson
+import okhttp3.OkHttpClient
+import okhttp3.WebSocket
 import java.util.UUID
 
 class Addtask : ComponentActivity() {
+
+    private val client = OkHttpClient()
 
 
     var gitbreanch by mutableStateOf("")
     var filename by mutableStateOf("")
     var mession by mutableStateOf("")
 
+    // Глобальная переменная для хранения URL
+    private var imageUrl: Uri? = null
+
+    private val googleAuthUiClient by lazy {
+        GoogleAuthUiClient(
+            context = applicationContext,
+            oneTapClient = Identity.getSignInClient(applicationContext)
+        )
+    }
+
         private var storedRoomId: String? = null // Объявляем на уровне класса
 
     private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { selectedImageUri ->
             // Здесь вы можете загрузить изображение в Firebase Storage
-            uploadImageToFirebaseStorage(selectedImageUri, "gs://code-with-friends-73cde.appspot.com")
+            uploadImageToFirebaseStorage(selectedImageUri, storedRoomId!!)
         }
     }
 
@@ -73,11 +97,11 @@ class Addtask : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
+
         storedRoomId = PreferenceHelper.getRoomId(this)
 
         setContent {
             CodeWithFriendsTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -96,7 +120,7 @@ class Addtask : ComponentActivity() {
                             whatineedtodo()
                         }
                         item {
-                            addtask(storedRoomId!!)
+                            addtask(storedRoomId!!, "$imageUrl")
                         }
 
                     }
@@ -302,19 +326,18 @@ class Addtask : ComponentActivity() {
 
 
     @Composable
-    fun addtask(roomid: String){
+    fun addtask(roomid: String, imageUrl: String){
         Button(
             colors = ButtonDefaults.buttonColors(Color.Blue),
             onClick = {
-
-
                  val database = Firebase.database("https://code-with-friends-73cde-default-rtdb.europe-west1.firebasedatabase.app/")
                // val database = Firebase.database(stringResource(id = R.string.DataBase))
-                val myRef = database.getReference("tasks").child("$roomid")
+                val myRef = database.getReference("$roomid")
 
                 val values = mapOf(
                     "gitbranch" to gitbreanch,
                     "filename" to filename,
+                    "photo" to imageUrl,
                     "mession" to mession
                 )
 
@@ -329,37 +352,37 @@ class Addtask : ComponentActivity() {
                 .clip(RoundedCornerShape(1.dp))
         ) {
             Text(text = stringResource(id = R.string.Addtask),fontSize = 24.sp)
-        }
+          }
     }
+
+
 
     private fun uploadImageToFirebaseStorage(selectedImageUri: Uri, roomid: String) {
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
 
-        // Создайте уникальное имя для изображения, чтобы избежать перезаписи
+        // Create a unique name for the image to avoid overwriting
         val imageName = UUID.randomUUID().toString()
-        val imageRef = storageRef.child("images/$imageName")
+
+        // Path to store the image: "images/{roomid}/{imageName}"
+        val imageRef = storageRef.child("images/$roomid/$imageName")
 
         val uploadTask = imageRef.putFile(selectedImageUri)
 
-        uploadTask.continueWithTask { task ->
-            if (!task.isSuccessful) {
-                task.exception?.let {
-                    throw it
-                }
-            }
-            // Получите URL загруженного изображения
-            imageRef.downloadUrl
-        }.addOnCompleteListener { task ->
+        // Add a listener to handle successful or unsuccessful upload
+        uploadTask.addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                val downloadUri = task.result
-                // Теперь вы можете сохранить этот URL в базе данных Firebase Realtime Database
-                // или использовать его по своему усмотрению
+                // Get the download URL from the task result
+                imageRef.downloadUrl.addOnSuccessListener { uri ->
+                    imageUrl = uri
+                    // Do something with the URL, such as save it to Firestore
+                }
             } else {
-                // Обработка ошибок загрузки
+                // Handle unsuccessful upload
             }
         }
     }
+
 
 
 
