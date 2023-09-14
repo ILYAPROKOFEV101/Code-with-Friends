@@ -51,8 +51,6 @@ class TestActivity : ComponentActivity() {
         )
     }
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -60,29 +58,39 @@ class TestActivity : ComponentActivity() {
 
         setContent {
 
-            val name = UID(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
-            val img = IMG(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
-            val ids = ID(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
 
 
             WebSocketChatScreen(
-                messages = messages.value,
-                isConnected = isConnected,
-                onConnect = { roomId, username, url, id ->
-                    setupWebSocket(storedRoomId!!, "$ids", "$img", "$name")
-                }
-            ) {
-                webSocket?.close(1000, "User initiated disconnect")
-            }
+                 messages.value,
+
+            )
 
 
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        val name = UID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        val img = IMG(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        val ids = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+
+        // Автоматическое подключение при входе в активность
+        setupWebSocket(storedRoomId!!, "$ids", "$img", "$name")
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        // Автоматическое отключение при выходе из активности
+        webSocket?.close(1000, "User initiated disconnect")
     }
 
     private fun setupWebSocket(roomId: String, username: String, url: String, id: String) {
@@ -100,7 +108,6 @@ class TestActivity : ComponentActivity() {
                     )
                     messages.value = messages.value + newMessage // Add message to the list
                 }
-
 
                 override fun onMessage(webSocket: WebSocket, bytes: okio.ByteString) {
                     // Handle binary messages if needed
@@ -127,36 +134,13 @@ class TestActivity : ComponentActivity() {
 @Composable
 fun WebSocketChatScreen(
     messages: List<com.example.codewithfriends.findroom.chats.Message>,
-    isConnected: Boolean,
-    onConnect: (roomId: String, username: String, url: String, id: String) -> Unit,
-    onDisconnect: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // UI for connecting to WebSocket
-
-        Button(
-            onClick = {
-                onConnect("roomId", "username", "url", "id")
-            },
-            enabled = !isConnected
-        ) {
-            Text(text = "Connect")
-        }
-
-        Button(
-            onClick = {
-                onDisconnect()
-            },
-            enabled = isConnected
-        ) {
-            Text(text = "Disconnect")
-        }
-
-        // Display messages here using LazyColumn
+        // UI for displaying messages using LazyColumn
         LazyColumn {
             items(messages) { message ->
                 MessageItem(message = message)
@@ -164,7 +148,6 @@ fun WebSocketChatScreen(
         }
     }
 }
-
 
 @Composable
 fun MessageItem(message: com.example.codewithfriends.findroom.chats.Message) {
@@ -177,5 +160,3 @@ fun MessageItem(message: com.example.codewithfriends.findroom.chats.Message) {
         overflow = TextOverflow.Ellipsis
     )
 }
-
-
