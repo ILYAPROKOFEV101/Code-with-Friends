@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -87,6 +88,7 @@ import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.codewithfriends.roomsetting.Roomsetting
+import com.example.codewithfriends.ui.theme.Main_menu
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.HttpClient
 import com.google.protobuf.ByteString
@@ -94,10 +96,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.internal.http.HttpMethod
+import org.java_websocket.client.WebSocketClient
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -105,11 +109,10 @@ import java.util.concurrent.TimeUnit
 
 
 class Chat : ComponentActivity() {
+
+    private var messageIdCounter = 0
+
     private lateinit var webSocketClient: WebSocketClient
-
-
-
-  //  val pieSocketListener = PieSocketListener()
     var show = mutableStateOf(false)
     var developers = mutableStateOf(false)
 
@@ -120,34 +123,25 @@ class Chat : ComponentActivity() {
         )
     }
 
-
-    private var webSocket: WebSocket? = null // Добавьте переменную для отслеживания состояния соединения
-
-    private val client = OkHttpClient.Builder()
-        .pingInterval(30, TimeUnit.SECONDS) // Устанавливаем интервал отправки пинг-запросов
-        .build()
-
-        ///  private lateinit var webSocket: WebSocket
-    private var storedRoomId: String? = null // Объявляем на уровне класса
     private val messages = mutableStateOf(listOf<Message>()) // Хранение
-   // private val messagesLiveData = MutableLiveData<List<Message>>()
-
-
+    private val client = OkHttpClient()
+    private var webSocket: WebSocket? = null
+    private var isConnected by mutableStateOf(false)
+    private var storedRoomId: String? = null // Объявляем на уровне класса
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
 
-        // Настройте WebSocket с помощью pieSocketListener
+
 
 
         storedRoomId = getRoomId(this)
 
 
 
-
-            //  pieSocketListener.setupWebSocket(roomId, username, url, id)
-
         setContent {
+
+
 
             val name = UID(
                 userData = googleAuthUiClient.getSignedInUser()
@@ -159,18 +153,14 @@ class Chat : ComponentActivity() {
                 userData = googleAuthUiClient.getSignedInUser()
             )
 
-
+            upbar()
 
             if (storedRoomId != null) {
-
-                Join(storedRoomId!!, "$id", "$name", "$img", show.value, "$name")
-
+           //     getData(storedRoomId!!, "$id", "$name")
+               // Join()
 
             }
 
-            if (storedRoomId != null) {
-            //    openWebSocket(storedRoomId!!, "$name", "$img","$id" )
-            }
             Spacer(modifier = Modifier.height(100.dp))
 
             if (storedRoomId != null) {
@@ -178,17 +168,13 @@ class Chat : ComponentActivity() {
             }
 
             Spacer(modifier = Modifier.height(20.dp))
+
             if (storedRoomId != null) {
-                Creator()
+                Creator { message ->
+                    // Здесь вы можете добавить логику для отправки сообщения через WebSocket
+                    sendMessage(message)
+                }
             }
-            if (storedRoomId != null) {
-                    //setupWebSocket(storedRoomId!!, "$name", "$img", "$id")
-            } else {
-                // roomId не сохранен, обработайте этот случай по вашему усмотрению
-            }
-
-
-
 
 
 
@@ -197,42 +183,130 @@ class Chat : ComponentActivity() {
 
 
 
+
     }
 
-    private var isConnected = false
+    private fun sendMessage(message: String) {
+        // Проверяем, что WebSocket подключен
+        if (webSocket != null) {
+            val messageId = messageIdCounter++
+            val messageWithId = "$message" // Добавляем ID к сообщению
+            webSocket?.send(messageWithId)
+        } else {
+            // WebSocket не подключен, возможно, нужно выполнить повторное подключение
+            // setupWebSocket(...)
+        }
+    }
 
+    private fun onMessageReceived(text: String) {
+        val messageIdSeparatorIndex = text.indexOf(':')
+        if (messageIdSeparatorIndex >= 0) {
+            val messageId = text.substring(0, messageIdSeparatorIndex).toIntOrNull()
+            val messageContent = text.substring(messageIdSeparatorIndex + 1)
 
-
-    private fun setupWebSocket(roomId: String, username: String, url: String, id: String) {
-        if (!isConnected) {
-            val request: Request = Request.Builder()
-                .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id")
-                .build()
-
-            val listener = object : WebSocketListener() {
-
-                override fun onMessage(webSocket: WebSocket, text: String) {
-
-                    val newMessage = Message(sender = "", content = text)
+            if (messageId != null) {
+                // Проверяем, что сообщение с таким ID не было получено ранее
+                if (!hasReceivedMessageWithId(messageId)) {
+                    val newMessage = com.example.codewithfriends.findroom.chats.Message(
+                        sender = "",
+                        content = messageContent
+                    )
                     messages.value = messages.value + newMessage // Add message to the list
-                }
 
-                override fun onOpen(webSocket: WebSocket, response: Response) {
-                    isConnected = true
+                    // Добавьте лог для отслеживания прихода новых сообщений
+                    Log.d("WebSocket", "Received message: $messageContent")
                 }
-
-                override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                    isConnected = false
-                }
-
-                override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                    isConnected = false
-                }
-
             }
-            webSocket = client.newWebSocket(request, listener)
         }
     }
+
+    private fun hasReceivedMessageWithId(messageId: Int): Boolean {
+        // Проверяем, есть ли сообщение с таким ID в списке
+        return messages.value.any { message ->
+            val messageIdSeparatorIndex = message.content.indexOf(':')
+            if (messageIdSeparatorIndex >= 0) {
+                val messageReceivedId =
+                    message.content.substring(0, messageIdSeparatorIndex).toIntOrNull()
+                return messageReceivedId == messageId
+            }
+            return false
+        }
+    }
+
+
+
+    override fun onResume() {
+        super.onResume()
+
+        val name = UID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        val img = IMG(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        val ids = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+
+        // Автоматическое подключение при входе в активность
+        setupWebSocket(storedRoomId!!, "$ids", "$img", "$name")
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        // Автоматическое отключение при выходе из активности
+        webSocket?.close(1000, "User initiated disconnect")
+    }
+
+    private  fun setupWebSocket(roomId: String, username: String, url: String, id: String) {
+        if (!isConnected) {
+            try {
+                val request: Request = Request.Builder()
+                    .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id")
+                    .build()
+
+                webSocket = client.newWebSocket(request, object : WebSocketListener() {
+                    override fun onMessage(webSocket: WebSocket, text: String) {
+                        val newMessage = com.example.codewithfriends.findroom.chats.Message(
+                            sender = "",
+                            content = text
+                        )
+                        messages.value = messages.value + newMessage // Add message to the list
+
+                        // Добавьте лог для отслеживания прихода новых сообщений
+                        Log.d("WebSocket", "Received message: $text")
+                    }
+
+                    override fun onOpen(webSocket: WebSocket, response: Response) {
+                        isConnected = true
+                    }
+
+                    override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                        isConnected = false
+                    }
+
+                    override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                        isConnected = false
+
+                        // Добавьте лог для отслеживания ошибок WebSocket
+                        Log.e("WebSocket", "WebSocket failure: ${t.message}")
+                    }
+                })
+            } catch (e: Exception) {
+                // Обработка ошибок при создании WebSocket
+                // Можно добавить логирование или другие действия по обработке ошибок
+                showToast("Ошибка при создании WebSocket: ${e.message}")
+            }
+        }
+    }
+
+    private fun showToast(message: String) {
+        // Вывести Toast с заданным сообщением
+        Toast.makeText(this@Chat, message, Toast.LENGTH_SHORT).show()
+    }
+
+
 
 
 
@@ -320,7 +394,7 @@ class Chat : ComponentActivity() {
                             ) {
                                 val imageModifier = Modifier
                                     .size(40.dp)
-                                    .clip(RoundedCornerShape(20.dp))
+                                    .clip(RoundedCornerShape(40.dp))
                                 val imageUrl = extractUrlFromString(message.content)
                                 val (beforeUrl, afterUrl) = splitMessageContent(message.content)
 
@@ -342,7 +416,7 @@ class Chat : ComponentActivity() {
                                         .padding(2.dp),
                                     backgroundColor = if (isMyMessage || isMyUrlMessage) Color.Green else Color.Blue,
                                     elevation = 10.dp,
-                                    shape = RoundedCornerShape(8.dp)
+                                    shape = RoundedCornerShape(12.dp)
                                 ) {
                                     Column(modifier = Modifier.padding(8.dp)) {
                                         Text(
@@ -356,7 +430,9 @@ class Chat : ComponentActivity() {
                                     }
                                 }
                             }
+
                         }
+
                     }
                 }
             }
@@ -364,108 +440,11 @@ class Chat : ComponentActivity() {
     }
 
 
-    @Composable
-    fun Join(
-        roomId: String,
-        id: String,
-        username: String,
-        url: String,
-        show: Boolean,
-        name: String,
-    ) {
-
-        var showPopup by remember { mutableStateOf(false) }
-
-        val density = LocalDensity.current.density
-        val tooltipModifier = Modifier.padding(density.dp, 0.dp)
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
-                .background(Color.Blue)
-        ) {
-        if (show == false) {
-                val coroutineScope = rememberCoroutineScope()
-                Button(
-                    onClick = {
-                        coroutineScope.launch {
-
-                            // Задержка перехода на новую страницу через 3 секунды
-                            Handler(Looper.getMainLooper()).postDelayed({
-                                getData(storedRoomId!!, "$id", "$name")
-                                joininroom(roomId, id, username, url)
-                            }, 500) // 3000 миллисекунд (3 секунды)
-
-                        }
-                    },
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(Color.Green), modifier = Modifier
-                        .fillMaxSize()
-                        .padding(5.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                      )
-                {
-                    Text(text = "If you want make  this project, join in the room")
-                }
-
-        } else {
-                Button(
-                    onClick = {
-                         val intent = Intent(this@Chat, TestActivity::class.java)
-                         startActivity(intent)
-
-                    },
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(Color.Green)
-                    ) {}
-            }
-
-        }
-}
 
 
 
 
-    fun joininroom(roomId: String, id: String, username: String, url: String){
-        val baseUrl = "https://getpost-ilya1.up.railway.app/join"
-
-        val uriBuilder = Uri.parse(baseUrl).buildUpon()
-            .appendQueryParameter("roomId", roomId)
-            .appendQueryParameter("user_id", id)
-            .appendQueryParameter("username", username)
-            .appendQueryParameter("image_url", url)
-            .build()
-
-
-        val url = uriBuilder.toString()
-
-        val client = OkHttpClient()
-        val mediaType = "application/x-www-form-urlencoded".toMediaType()
-
-        val requestBody = "".toRequestBody(mediaType)
-
-        val request = Request.Builder()
-            .url(url)
-            .post(requestBody)
-            .build()
-
-        client.newCall(request).enqueue(object : okhttp3.Callback {
-            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
-                if (response.isSuccessful) {
-                    // Обработка успешного ответа сервера
-                }
-            }
-
-            override fun onFailure(call: okhttp3.Call, e: IOException) {
-                e.printStackTrace()
-            }
-        })
-
-    }
-
-
-
-
-    private fun getData(roomId: String, id: String, username: String) {
+    /*private fun getData(roomId: String, id: String, username: String) {
         val url = "https://getpost-ilya1.up.railway.app/exists/$roomId/$id/$username"
 
         val request = StringRequest(
@@ -484,93 +463,120 @@ class Chat : ComponentActivity() {
         val requestQueue = Volley.newRequestQueue(this)
         requestQueue.add(request)
     }
+*/
 
 
 
 
-    @Preview(showBackground = true)
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
     @Composable
-    fun Creator() {
-        val roomId = intent.getStringExtra("roomId")
+    fun Creator(
+        onSendMessage: (String) -> Unit // Функция для отправки сообщения
+    ) {
         val keyboardController = LocalSoftwareKeyboardController.current
         var textSize by remember { mutableStateOf(20.sp) }
         var text by remember { mutableStateOf("") }
         var submittedText by remember { mutableStateOf("") }
-
 
         Column(
             modifier = Modifier
                 .fillMaxSize(), // Занимает всю доступную вертикальную высоту
             verticalArrangement = Arrangement.Bottom
         ) {
-
-
             Spacer(modifier = Modifier.height(20.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .padding(start = 8.dp, end = 20.dp),
-                    verticalAlignment = Alignment.Bottom // Прижимаем содержимое к верхней части
-                ) {
-                    TextField(
-                        modifier = Modifier.weight(0.9f),
-                        value = text,
-                        onValueChange = { text = it },
-                        textStyle = TextStyle(fontSize = textSize),
-                        colors = TextFieldDefaults.textFieldColors(
-                            focusedIndicatorColor = Color.White,
-                            unfocusedIndicatorColor = Color.White,
-                            disabledIndicatorColor = Color.White,
-                            containerColor = Color.White
-                        ),
-
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                keyboardController?.hide()
-                            }
-                        ),
-                        maxLines = 10 // Устанавливаем максимальное количество строк, чтобы TextField мог увеличиваться по высоте
-                    )
-
-
-                    IconButton(
-                        modifier = Modifier
-                            .weight(0.1f)
-                            .align(Alignment.CenterVertically), // Выравнивание по центру вертикально
-
-                        onClick = {
-                            submittedText = text
-                            text = ""
-
-                            val messageToSend = "$submittedText"
-                            // Отправка сообщения через WebSocket
-                                // webSocketClient.send(messageToSend)
-// Добавляем сообщение в список сообщений
-
-
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(start = 8.dp, end = 20.dp),
+                verticalAlignment = Alignment.Bottom // Прижимаем содержимое к верхней части
+            ) {
+                TextField(
+                    modifier = Modifier.weight(0.9f),
+                    value = text,
+                    onValueChange = { text = it },
+                    textStyle = TextStyle(fontSize = textSize),
+                    colors = TextFieldDefaults.textFieldColors(
+                        focusedIndicatorColor = Color.White,
+                        unfocusedIndicatorColor = Color.White,
+                        disabledIndicatorColor = Color.White,
+                        containerColor = Color.White
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            keyboardController?.hide()
                         }
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.send),
-                            contentDescription = "Send"
-                        )
+                    ),
+                    maxLines = 10 // Устанавливаем максимальное количество строк, чтобы TextField мог увеличиваться по высоте
+                )
+                IconButton(
+                    modifier = Modifier
+                        .weight(0.1f)
+                        .align(Alignment.CenterVertically), // Выравнивание по центру вертикально
+                    onClick = {
+                        submittedText = text
+                        text = ""
+                        onSendMessage(submittedText) // Вызываем функцию для отправки сообщения
                     }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.send),
+                        contentDescription = "Send"
+                    )
                 }
             }
         }
+    }
+    @Preview(showBackground = true)
+    @Composable
+    fun upbar(){
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+            ) {
+                if (show.value) {
+                    Button(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.Red),
+                        onClick = {
+                            val intent = Intent(this@Chat, Roomsetting::class.java)
+                            startActivity(intent)
+                        }
+                    ) {
+                        // Содержимое кнопки
+                    }
+                } else {
+
+                    Row(modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)) {
+
+                        Button(onClick = {
+                            val intent = Intent(this@Chat, Roomsetting::class.java)
+                            startActivity(intent)
+                        }) {
+
+                        }
+
+                    }
+
+                    // Другие элементы, которые вы хотите отобразить вместо кнопки,
+                    // когда showButton равно false
+                }
+            }
+        }
+    }
 
 
 
 
-    /*override fun onDestroy() {
-        super.onDestroy()
-
-        // Закрываем WebSocket соединение при завершении активности
-        pieSocketListener.onClosing()
-    }*/
 
 
 

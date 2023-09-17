@@ -8,7 +8,7 @@ import com.google.protobuf.ByteString
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
-
+import okhttp3.OkHttpClient
 
 
 
@@ -22,87 +22,61 @@ import java.util.concurrent.TimeUnit
 
 
 
-object WebSocketManager {
-    private var webSocketClient: WebSocketClient? = null
-
-    fun getClient(roomId: String, username: String, avatarUrl: String, uid: String, messageCallback: (String) -> Unit): WebSocketClient {
-        if (webSocketClient == null) {
-            webSocketClient = WebSocketClient(roomId, username, avatarUrl, uid, messageCallback)
-        }
-        return webSocketClient!!
-    }
-}
-
-
-class WebSocketClient(
-    private val roomId: String,
-    private val username: String,
-    private val avatarUrl: String,
-    private val uid: String,
-    private val messageCallback: (String) -> Unit // Колбэк для обработки полученных сообщений
-) {
+class WebSocketManager private constructor() {
     private var webSocket: WebSocket? = null
-    private var isConnected = false // Флаг состояния подключения
+    private var isConnected = false
+    val client = OkHttpClient()
+    companion object {
+        private var instance: WebSocketManager? = null
 
-    fun connect() {
+        fun getInstance(): WebSocketManager {
+            if (instance == null) {
+                instance = WebSocketManager()
+            }
+            return instance!!
+        }
+    }
+
+    fun connectWebSocket(roomId: String, username: String, url: String, id: String) {
+        if (!isConnected) {
+            try {
+                val request: Request = Request.Builder()
+                    .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id")
+                    .build()
+
+                webSocket = client.newWebSocket(request, object : WebSocketListener() {
+                    override fun onMessage(webSocket: WebSocket, text: String) {
+                        // Обработка входящих сообщений
+                    }
+
+                    override fun onOpen(webSocket: WebSocket, response: Response) {
+                        isConnected = true
+                    }
+
+                    override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                        isConnected = false
+                    }
+
+                    override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                        isConnected = false
+                        // Обработка ошибок WebSocket
+                    }
+                })
+            } catch (e: Exception) {
+                // Обработка ошибок при создании WebSocket
+            }
+        }
+    }
+
+    fun disconnectWebSocket() {
+        webSocket?.close(1000, "User initiated disconnect")
+        isConnected = false
+    }
+
+    fun sendMessage(message: String) {
+        // Проверяем, что WebSocket подключен
         if (isConnected) {
-            return // Если уже подключены, то не делаем ничего
+            webSocket?.send(message)
         }
-
-        val request = Request.Builder()
-            .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$avatarUrl&uid=$uid")
-            .build()
-
-        val listener = object : WebSocketListener() {
-            override fun onOpen(webSocket: WebSocket, response: Response) {
-                // WebSocket успешно подключен
-                this@WebSocketClient.webSocket = webSocket
-                isConnected = true // Устанавливаем флаг подключения
-                // Отправить данные при подключении
-                send("Привет, сервер!")
-
-            }
-
-            override fun onMessage(webSocket: WebSocket, text: String) {
-                // Обработка полученного текстового сообщения
-                // Вызываем колбэк для обработки сообщения
-                messageCallback(text)
-            }
-
-
-
-            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                // Закрытие соединения
-                webSocket.close(1000, "User disconnected")
-                this@WebSocketClient.webSocket = null
-            }
-
-            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                // Обработка ошибок WebSocket-соединения
-            }
-        }
-
-        val client = OkHttpClient.Builder()
-            .readTimeout(0, TimeUnit.MILLISECONDS)
-            .build()
-
-        webSocket = client.newWebSocket(request, listener)
     }
-
-    fun send(message: String) {
-        webSocket?.send(message)
-    }
-
-    val client = OkHttpClient.Builder()
-        .readTimeout(0, TimeUnit.MILLISECONDS)
-        .build()
-
-
-    fun close() {
-        webSocket?.close(1000, "User disconnected")
-        webSocket = null
-    }
-
-
-
 }

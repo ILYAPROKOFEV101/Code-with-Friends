@@ -2,6 +2,7 @@ package com.example.codewithfriends.findroom.chats.ui.theme
 
 import android.os.Bundle
 import android.os.Message
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ class TestActivity : ComponentActivity() {
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
     private var isConnected by mutableStateOf(false)
+
     private val messages = mutableStateOf(listOf<com.example.codewithfriends.findroom.chats.Message>()) // Хранение
 
     private var storedRoomId: String? = null // Объявляем на уровне класса
@@ -62,7 +64,6 @@ class TestActivity : ComponentActivity() {
 
             WebSocketChatScreen(
                  messages.value,
-
             )
 
 
@@ -107,6 +108,9 @@ class TestActivity : ComponentActivity() {
                         content = text
                     )
                     messages.value = messages.value + newMessage // Add message to the list
+
+                    // Добавьте лог для отслеживания прихода новых сообщений
+                    Log.d("WebSocket", "Received message: $text")
                 }
 
                 override fun onMessage(webSocket: WebSocket, bytes: okio.ByteString) {
@@ -123,6 +127,9 @@ class TestActivity : ComponentActivity() {
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                     isConnected = false
+
+                    // Добавьте лог для отслеживания ошибок WebSocket
+                    Log.e("WebSocket", "WebSocket failure: ${t.message}")
                 }
 
             }
@@ -133,7 +140,7 @@ class TestActivity : ComponentActivity() {
 
 @Composable
 fun WebSocketChatScreen(
-    messages: List<com.example.codewithfriends.findroom.chats.Message>,
+    messages: List<com.example.codewithfriends.findroom.chats.Message>?,
 ) {
     Column(
         modifier = Modifier
@@ -142,12 +149,13 @@ fun WebSocketChatScreen(
     ) {
         // UI for displaying messages using LazyColumn
         LazyColumn {
-            items(messages) { message ->
+            items(messages ?: emptyList()) { message ->
                 MessageItem(message = message)
             }
         }
     }
 }
+
 
 @Composable
 fun MessageItem(message: com.example.codewithfriends.findroom.chats.Message) {

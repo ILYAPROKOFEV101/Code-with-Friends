@@ -46,6 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.volley.Request
+import com.android.volley.toolbox.HttpResponse
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.codewithfriends.R
@@ -57,13 +58,30 @@ import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.reaction.logik.PreferenceHelper
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.common.reflect.TypeToken
+import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.HttpClient
+import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.entity.ContentType
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.WebSocket
 import java.util.UUID
+
+
+import kotlinx.coroutines.withContext
+
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
 
 class Addtask : ComponentActivity() {
 
@@ -73,6 +91,7 @@ class Addtask : ComponentActivity() {
     var gitbreanch by mutableStateOf("")
     var filename by mutableStateOf("")
     var mession by mutableStateOf("")
+    var photo by mutableStateOf("")
 
     // Глобальная переменная для хранения URL
     private var imageUrl: Uri? = null
@@ -120,7 +139,7 @@ class Addtask : ComponentActivity() {
                             whatineedtodo()
                         }
                         item {
-                            addtask(storedRoomId!!, "$imageUrl")
+                            addtask(storedRoomId!!)
                         }
 
                     }
@@ -326,7 +345,7 @@ class Addtask : ComponentActivity() {
 
 
     @Composable
-    fun addtask(roomid: String, imageUrl: String){
+    fun addtask(roomid: String){
         Button(
             colors = ButtonDefaults.buttonColors(Color.Blue),
             onClick = {
@@ -337,17 +356,17 @@ class Addtask : ComponentActivity() {
                 val values = mapOf(
                     "gitbranch" to gitbreanch,
                     "filename" to filename,
-                    "photo" to imageUrl,
+                    "photo" to photo,
                     "mession" to mession
                 )
-
+                     sendPostRequest("$roomid", photo, gitbreanch, filename, mession)
                 myRef.setValue(values)
                       }
             ,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp)
-                //.background(creatroom)
+
 
                 .clip(RoundedCornerShape(1.dp))
         ) {
@@ -374,7 +393,7 @@ class Addtask : ComponentActivity() {
             if (task.isSuccessful) {
                 // Get the download URL from the task result
                 imageRef.downloadUrl.addOnSuccessListener { uri ->
-                    imageUrl = uri
+                    photo = uri.toString()
                     // Do something with the URL, such as save it to Firestore
                 }
             } else {
@@ -382,6 +401,42 @@ class Addtask : ComponentActivity() {
             }
         }
     }
+
+
+
+    fun sendPostRequest(roomId: String, imageUrl: String, gitbranch: String, filename: String, mession: String) {
+        // Создайте экземпляр Retrofit
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://getpost-ilya1.up.railway.app/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        // Создайте экземпляр службы API
+        val apiService = retrofit.create(ApiService::class.java)
+
+        // Создайте объект TaskRequest
+        val request = TaskRequest(gitbranch, filename, imageUrl, mession)
+
+        // Отправьте POST-запрос с передачей roomId в качестве параметра пути
+        val call = apiService.sendTaskRequest(roomId, request)
+        call.enqueue(object : retrofit2.Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: retrofit2.Response<Void>) {
+                if (response.isSuccessful) {
+                    // Запрос успешно отправлен
+                    // Можете выполнить какие-либо дополнительные действия здесь
+                } else {
+                    // Обработайте ошибку, если есть
+                }
+            }
+
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                // Обработайте ошибку при отправке запроса
+            }
+        })
+    }
+
+
+
 
 
 

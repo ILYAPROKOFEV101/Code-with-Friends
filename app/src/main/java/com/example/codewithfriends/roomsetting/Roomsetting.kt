@@ -124,7 +124,7 @@ class Roomsetting : ComponentActivity() {
             val id = ID(
                 userData = googleAuthUiClient.getSignedInUser()
             )
-// Задержка перехода на новую страницу через 3 секунды
+
             Handler(Looper.getMainLooper()).postDelayed({
                 getData(storedRoomId!!, rooms)
                 whoinroom(storedRoomId!!, participants)
