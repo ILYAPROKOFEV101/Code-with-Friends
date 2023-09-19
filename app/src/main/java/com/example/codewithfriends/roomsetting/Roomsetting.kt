@@ -57,6 +57,7 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.codewithfriends.R
 import com.example.codewithfriends.findroom.Room
+import com.example.codewithfriends.findroom.chats.Message
 import com.example.codewithfriends.firebase.Addtask
 import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.IMG
@@ -73,6 +74,9 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
+import retrofit2.Call
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 
 class Roomsetting : ComponentActivity() {
@@ -85,6 +89,7 @@ class Roomsetting : ComponentActivity() {
         )
     }
     private var storedRoomId: String? = null // Объявляем на уровне класса
+     var task = mutableStateOf(listOf<TaskData>())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,7 +110,7 @@ class Roomsetting : ComponentActivity() {
                 // Добавьте другие объекты TaskData по мере необходимости
             )
 
-            val Task = remember { mutableStateOf(emptyList<TaskData>()) }
+
 
             val rooms = remember { mutableStateOf(emptyList<Room>()) }
 
@@ -128,7 +133,7 @@ class Roomsetting : ComponentActivity() {
             Handler(Looper.getMainLooper()).postDelayed({
                 getData(storedRoomId!!, rooms)
                 whoinroom(storedRoomId!!, participants)
-                getmession(storedRoomId!!, Task)
+
 
             }, 500) // 3000 миллисекунд (3 секунды)
 
@@ -157,8 +162,8 @@ class Roomsetting : ComponentActivity() {
 
 
                 item {
-
-                    tasks(Task = serverData)  // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
+                    TaskList(task.value)
+                  // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
                         Spacer(modifier = Modifier.height(30.dp))
 
                 }
@@ -169,6 +174,7 @@ class Roomsetting : ComponentActivity() {
 
             }
         }
+        getTasks(storedRoomId!!)
 
     }
 
@@ -257,36 +263,49 @@ class Roomsetting : ComponentActivity() {
     }
 
 
-    private fun getmession(roomId: String, tasksState: MutableState<List<TaskData>>) {
-        val url = "https://getpost-ilya1.up.railway.app/participants/$roomId"
+    fun getTasks(roomId: String) {
+        // Создайте экземпляр Retrofit
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://getpost-ilya1.up.railway.app/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
 
-        val request = StringRequest(
-            com.android.volley.Request.Method.GET,
-            url,
-            { response ->
-                Log.d("Mylog", "Result: $response")
-                try {
-                    val gson = Gson()
-                    val taskListType = object : TypeToken<List<TaskData>>() {}.type
-                    val utf8Response = String(response.toByteArray(Charsets.ISO_8859_1), Charsets.UTF_8)
-                    val newTasks: List<TaskData> = gson.fromJson(utf8Response, taskListType)
+        // Создайте экземпляр службы API
+        val apiService = retrofit.create(ApiService::class.java)
 
-                    tasksState.value = newTasks // Обновляем состояние с полученными данными
-                    Log.d("Mylog", "Received data: $newTasks") // Добавьте это
-                } catch (e: JsonSyntaxException) {
-                    Log.e("Mylog", "Error parsing JSON: $e")
-                    Log.d("Mylog", "Server response: $response")
+        // Вызовите GET-запрос
+        val call = apiService.getTasks(roomId)
+        call.enqueue(object : retrofit2.Callback<List<TaskResponse>> {
+            override fun onResponse(call: Call<List<TaskResponse>>, response: retrofit2.Response<List<TaskResponse>>) {
+                if (response.isSuccessful) {
+                    val taskList = response.body()
+                    if (taskList != null) {
+                        // Преобразуйте данные из taskList в список TaskData
+                        val taskDataList: List<TaskData> = taskList.map { taskResponse ->
+                            TaskData(
+                                gitbranch = taskResponse.gitbranch,
+                                filename = taskResponse.filename,
+                                photo = taskResponse.photo,
+                                mession = taskResponse.mession
+                            )
+                        }
+
+                        // Установите значение Task.value
+                        task.value = taskDataList
+                    }
+                } else {
+                    // Обработайте ошибку, если есть
                 }
-            },
-
-            { error ->
-                Log.d("Mylog", "Error: $error")
             }
-        )
 
-        val requestQueue = Volley.newRequestQueue(this)
-        requestQueue.add(request)
+            override fun onFailure(call: Call<List<TaskResponse>>, t: Throwable) {
+                // Обработайте ошибку при отправке запроса
+            }
+        })
     }
+
+
+
 
 
 
@@ -343,21 +362,23 @@ class Roomsetting : ComponentActivity() {
     }
 
     @Composable
-    fun tasks(Task: List<TaskData>) {
-        Log.d("Mylog", "Tasks: $Task") // Добавьте это
-        LazyColumn( modifier = Modifier.height(700.dp)) {
-            items(Task) { task ->
-                TaskCard(task = task)
+    fun tasks() {
+
+    }
+
+    @Composable
+    fun TaskList(tasks: List<TaskData>) {
+        LazyColumn(modifier = Modifier.fillMaxWidth().height(500.dp)) {
+            items(tasks) { task ->
+                TaskCard(task)
             }
         }
     }
 
 
-
-
     @Composable
     fun TaskCard(task: TaskData) {
-        Log.d("Mylog", "TaskCard: $task") // Добавьте это
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -370,17 +391,21 @@ class Roomsetting : ComponentActivity() {
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                Text(text = "Git Branch: ${task.gitbranch}")
-                Text(text = "Filename: ${task.filename}")
-                Text(text = "Mission: ${task.mession}")
+                Text(text = "Git Branch: ${task.gitbranch}", fontSize = 24.sp)
+                Text(text = "Filename: ${task.filename}", fontSize = 24.sp)
 
                 Image(
-                    painter = rememberAsyncImagePainter(model = task.photo),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(shape = CircleShape)
-                )
+                painter = rememberAsyncImagePainter(model = task.photo),
+                contentDescription = null,
+                modifier = Modifier
+
+                    .size(300.dp)
+                    .clip(RoundedCornerShape(10.dp))
+            )
+
+                Text(text = "Mission: ${task.mession}", fontSize = 24.sp)
+
+
             }
         }
     }

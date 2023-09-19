@@ -4,15 +4,28 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -20,6 +33,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -32,6 +46,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -92,6 +108,8 @@ class Addtask : ComponentActivity() {
     var filename by mutableStateOf("")
     var mession by mutableStateOf("")
     var photo by mutableStateOf("")
+    var h = 80.dp
+    var showCircle by mutableStateOf(true)
 
     // Глобальная переменная для хранения URL
     private var imageUrl: Uri? = null
@@ -103,7 +121,7 @@ class Addtask : ComponentActivity() {
         )
     }
 
-        private var storedRoomId: String? = null // Объявляем на уровне класса
+    private var storedRoomId: String? = null // Объявляем на уровне класса
 
     private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { selectedImageUri ->
@@ -258,7 +276,7 @@ class Addtask : ComponentActivity() {
 
                     }
                 ),
-                )
+            )
         }
 
     }
@@ -266,22 +284,87 @@ class Addtask : ComponentActivity() {
 
     @Composable
     fun AddImage() {
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp)
+        ) {
         Button(
             colors = ButtonDefaults.buttonColors(Color.Blue),
             onClick = {
                 // Запуск активности выбора изображения
                 pickImage.launch("image/*")
+                showCircle = !showCircle
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp)
                 .clip(RoundedCornerShape(1.dp))
         ) {
-            Text(text = stringResource(id = R.string.Addtask), fontSize = 24.sp)
+            if(showCircle){
+                Text(text = stringResource(id = R.string.Photo), fontSize = 24.sp)
+            } else {
+
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    Text(text = " Дождитесь загрузки !! ", fontSize = 24.sp)
+                    Spacer(modifier = Modifier.width(10.dp))
+                    LoadingCircle()
+                }
+            }
+
+
+
         }
+            /*if(!showCircle){
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    .align(CenterHorizontally)){
+                    h = 40.dp
+
+
+                }
+
+
+            }
+*/
     }
 
+    }
 
+    @Preview(showBackground = true)
+    @Composable
+    fun LoadingCircle() {
+        Box(  modifier = Modifier
+            .height(40.dp)
+
+
+            .wrapContentSize(Alignment.Center)
+        ) {
+
+
+            val rotation = rememberInfiniteTransition().animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 1000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart
+                )
+            )
+
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(40.dp)
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color.Blue)
+                    //.rotate(rotation.value)
+                )
+            }
+        }
+    }
 
     @Preview(showBackground = true)
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -349,8 +432,8 @@ class Addtask : ComponentActivity() {
         Button(
             colors = ButtonDefaults.buttonColors(Color.Blue),
             onClick = {
-                 val database = Firebase.database("https://code-with-friends-73cde-default-rtdb.europe-west1.firebasedatabase.app/")
-               // val database = Firebase.database(stringResource(id = R.string.DataBase))
+                val database = Firebase.database("https://code-with-friends-73cde-default-rtdb.europe-west1.firebasedatabase.app/")
+                // val database = Firebase.database(stringResource(id = R.string.DataBase))
                 val myRef = database.getReference("$roomid")
 
                 val values = mapOf(
@@ -359,9 +442,11 @@ class Addtask : ComponentActivity() {
                     "photo" to photo,
                     "mession" to mession
                 )
-                     sendPostRequest("$roomid", photo, gitbreanch, filename, mession)
+
+                    sendPostRequest("$roomid", photo, gitbreanch, filename, mession)
+                
                 myRef.setValue(values)
-                      }
+            }
             ,
             modifier = Modifier
                 .fillMaxWidth()
@@ -371,12 +456,14 @@ class Addtask : ComponentActivity() {
                 .clip(RoundedCornerShape(1.dp))
         ) {
             Text(text = stringResource(id = R.string.Addtask),fontSize = 24.sp)
-          }
+        }
     }
 
 
 
     private fun uploadImageToFirebaseStorage(selectedImageUri: Uri, roomid: String) {
+
+
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
 
@@ -395,12 +482,26 @@ class Addtask : ComponentActivity() {
                 imageRef.downloadUrl.addOnSuccessListener { uri ->
                     photo = uri.toString()
                     // Do something with the URL, such as save it to Firestore
+
+                    // Покажите Toast об успешной загрузке
+                    showToast("Фотография успешно загружена!")
+                    showCircle = true
+                          h = 80.dp
                 }
             } else {
                 // Handle unsuccessful upload
+
+                // Покажите Toast об ошибке загрузки
+                showToast("Ошибка при загрузке фотографии. Пожалуйста, попробуйте еще раз.")
             }
         }
     }
+
+    private fun showToast(message: String) {
+        // Вывести Toast с заданным сообщением
+        Toast.makeText(this@Addtask, message, Toast.LENGTH_SHORT).show()
+    }
+
 
 
 

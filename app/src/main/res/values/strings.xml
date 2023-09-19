@@ -4,9 +4,10 @@
     <string name="title_activity_main_menu">Main_menu</string>
     <string name="DataBase">https://code-with-friends-73cde-default-rtdb.europe-west1.firebasedatabase.app/</string>
     <string name="breanch">Укажи ветку git репозитория </string>
-    <string name="filename">укажите в кам фаёле есть работа </string>
+    <string name="filename">укажите в кам файле есть работа </string>
     <string name="mission">что нужно сделать</string>
     <string name="Addtask">добавить задания </string>
+    <string name="Photo">добавить фото</string>
 
     <string name="reactionresult">Reaction Result</string>
     <string name="singout">Sign out</string>
