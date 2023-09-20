@@ -8,6 +8,7 @@
     <string name="mission">что нужно сделать</string>
     <string name="Addtask">добавить задания </string>
     <string name="Photo">добавить фото</string>
+    <string name="Teamspek">создать TeamSpeak</string>
 
     <string name="reactionresult">Reaction Result</string>
     <string name="singout">Sign out</string>
@@ -84,4 +85,5 @@
     <string name="title_activity_roomsetting">Roomsetting</string>
     <string name="title_activity_addtask">Addtask</string>
     <string name="title_activity_test">TestActivity</string>
+    <string name="title_activity_team_speak">TeamSpeak</string>
 </resources>

@@ -22,6 +22,11 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".createamspeck.TeamSpeak"
+            android:exported="false"
+            android:label="@string/title_activity_team_speak"
+            android:theme="@style/Theme.CodeWithFriends" />
+        <activity
             android:name=".findroom.chats.ui.theme.TestActivity"
             android:exported="false"
             android:label="@string/title_activity_test"

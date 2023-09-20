@@ -307,7 +307,7 @@ class Addtask : ComponentActivity() {
             } else {
 
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(text = " Дождитесь загрузки !! ", fontSize = 24.sp)
+                    Text(text = " Дождитесь загрузки !!! ", fontSize = 24.sp)
                     Spacer(modifier = Modifier.width(10.dp))
                     LoadingCircle()
                 }

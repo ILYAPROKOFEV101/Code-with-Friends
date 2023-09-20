@@ -56,6 +56,7 @@ import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.codewithfriends.R
+import com.example.codewithfriends.createamspeck.TeamSpeak
 import com.example.codewithfriends.findroom.Room
 import com.example.codewithfriends.findroom.chats.Message
 import com.example.codewithfriends.firebase.Addtask
@@ -169,6 +170,10 @@ class Roomsetting : ComponentActivity() {
                 }
                 item {
                     addtask()
+                    Spacer(modifier = Modifier.height(30.dp))
+                }
+                item {
+                    Teamspeack()
                     Spacer(modifier = Modifier.height(30.dp))
                 }
 
@@ -368,7 +373,9 @@ class Roomsetting : ComponentActivity() {
 
     @Composable
     fun TaskList(tasks: List<TaskData>) {
-        LazyColumn(modifier = Modifier.fillMaxWidth().height(500.dp)) {
+        LazyColumn(modifier = Modifier
+            .fillMaxWidth()
+            .height(500.dp)) {
             items(tasks) { task ->
                 TaskCard(task)
             }
@@ -412,9 +419,17 @@ class Roomsetting : ComponentActivity() {
 
 
 
-
+@Preview(showBackground = true)
     @Composable
     fun addtask(){
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(80.dp)
+    ) {
+
+
         Button(
             colors = ButtonDefaults.buttonColors(Color.Blue),
             onClick = {
@@ -423,15 +438,43 @@ class Roomsetting : ComponentActivity() {
 
             },
             modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
-                //.background(creatroom)
-
-                .clip(RoundedCornerShape(1.dp))
+                .fillMaxSize()
+                .padding(start = 2.dp, end = 2.dp)
+                .clip(RoundedCornerShape(100.dp))
         ) {
             Text(text = stringResource(id = R.string.Addtask),fontSize = 24.sp)
         }
     }
+}
+
+
+    @Preview(showBackground = true)
+    @Composable
+    fun Teamspeack() {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp)
+        ) {
+
+
+            Button(
+                colors = ButtonDefaults.buttonColors(Color.Green),
+                onClick = {
+                    val intent = Intent(this@Roomsetting, TeamSpeak::class.java)
+                    startActivity(intent)
+
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = 2.dp, end = 2.dp)
+                    .clip(RoundedCornerShape(100.dp))
+            ) {
+                Text(text = stringResource(id = R.string.Teamspek), fontSize = 24.sp)
+            }
+        }
+    }
+
 
 
 
