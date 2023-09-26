@@ -9,5 +9,9 @@
     <color name="white">#FFFFFFFF</color>
     <color name="creatroom">#2FFF31</color>
     <color name="joinroom">#258EFF</color>
+    <color name="push">#0DE2FF</color>
+    <color name="customPurple">#AD23F6</color>
+
+
 
 </resources>

@@ -486,7 +486,7 @@ class Addtask : ComponentActivity() {
                     // Покажите Toast об успешной загрузке
                     showToast("Фотография успешно загружена!")
                     showCircle = true
-                          h = 80.dp
+
                 }
             } else {
                 // Handle unsuccessful upload

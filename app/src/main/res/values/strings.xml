@@ -9,6 +9,7 @@
     <string name="Addtask">добавить задания </string>
     <string name="Photo">добавить фото</string>
     <string name="Teamspek">создать TeamSpeak</string>
+    <string name="nameTeamspek">Название комнаты </string>
 
     <string name="reactionresult">Reaction Result</string>
     <string name="singout">Sign out</string>
@@ -33,7 +34,7 @@
 
     <string name="login">Log in with Google</string>
     <string name="username">Username</string>
-    <string name="password">Password</string>
+    <string name="password">Пароль</string>
     <string name="submit">Submit</string>
     <string name="cancel">Cancel</string>
     <string name="error">Error</string>

@@ -1,5 +1,6 @@
 package com.example.codewithfriends.findroom.chats
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.net.http.HttpResponseCache.install
@@ -97,12 +98,18 @@ import kotlinx.coroutines.Dispatchers
 
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.internal.http.HttpMethod
 import org.java_websocket.client.WebSocketClient
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
+import java.io.OutputStream
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.concurrent.TimeUnit
 
 
@@ -153,11 +160,12 @@ class Chat : ComponentActivity() {
                 userData = googleAuthUiClient.getSignedInUser()
             )
 
-            upbar()
+            upbar(storedRoomId!!,"$id", "$name","$img")
 
             if (storedRoomId != null) {
-           //     getData(storedRoomId!!, "$id", "$name")
-               // Join()
+               getData(storedRoomId!!, "$id", "$name")
+
+
 
             }
 
@@ -252,12 +260,7 @@ class Chat : ComponentActivity() {
         setupWebSocket(storedRoomId!!, "$ids", "$img", "$name")
     }
 
-    override fun onPause() {
-        super.onPause()
 
-        // Автоматическое отключение при выходе из активности
-        webSocket?.close(1000, "User initiated disconnect")
-    }
 
     private  fun setupWebSocket(roomId: String, username: String, url: String, id: String) {
         if (!isConnected) {
@@ -272,11 +275,17 @@ class Chat : ComponentActivity() {
                             sender = "",
                             content = text
                         )
-                        messages.value = messages.value + newMessage // Add message to the list
+
+                        // Вызов метода onMessageReceived для обработки нового сообщения
+                        onMessageReceived(text)
+
+                        // Добавить новое сообщение к вашему списку сообщений
+                        messages.value = messages.value + newMessage
 
                         // Добавьте лог для отслеживания прихода новых сообщений
                         Log.d("WebSocket", "Received message: $text")
                     }
+
 
                     override fun onOpen(webSocket: WebSocket, response: Response) {
                         isConnected = true
@@ -366,7 +375,7 @@ class Chat : ComponentActivity() {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 60.dp, top = 100.dp)
+                        .padding(bottom = 60.dp, top = 50.dp)
                         .wrapContentHeight(),
                     reverseLayout = false,
                     state = listState
@@ -444,7 +453,7 @@ class Chat : ComponentActivity() {
 
 
 
-    /*private fun getData(roomId: String, id: String, username: String) {
+    private fun getData(roomId: String, id: String, username: String) {
         val url = "https://getpost-ilya1.up.railway.app/exists/$roomId/$id/$username"
 
         val request = StringRequest(
@@ -463,7 +472,49 @@ class Chat : ComponentActivity() {
         val requestQueue = Volley.newRequestQueue(this)
         requestQueue.add(request)
     }
-*/
+
+
+
+
+
+    private fun pushData(
+        roomId: String, user_id: String, username: String, image_url: String
+    ) {
+        val baseUrl = "https://getpost-ilya1.up.railway.app/join"
+        val uriBuilder = Uri.parse(baseUrl).buildUpon()
+            .appendQueryParameter("roomId", roomId)
+            .appendQueryParameter("user_id", user_id)
+            .appendQueryParameter("username", username)
+            .appendQueryParameter("image_url", image_url)
+            .build()
+
+
+        val url = uriBuilder.toString()
+
+        val client = OkHttpClient()
+        val mediaType = "application/x-www-form-urlencoded".toMediaType()
+
+        val requestBody = "".toRequestBody(mediaType)
+
+        val request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                if (response.isSuccessful) {
+                    // Обработка успешного ответа сервера
+                }
+            }
+
+            override fun onFailure(call: okhttp3.Call, e: IOException) {
+                e.printStackTrace()
+            }
+        })
+    }
+
+
 
 
 
@@ -514,9 +565,11 @@ class Chat : ComponentActivity() {
                         .weight(0.1f)
                         .align(Alignment.CenterVertically), // Выравнивание по центру вертикально
                     onClick = {
-                        submittedText = text
-                        text = ""
-                        onSendMessage(submittedText) // Вызываем функцию для отправки сообщения
+                        if (show.value) {
+                            submittedText = text
+                            text = ""
+                            onSendMessage(submittedText) // Вызываем функцию для отправки сообщения
+                        }
                     }
                 ) {
                     Icon(
@@ -527,9 +580,12 @@ class Chat : ComponentActivity() {
             }
         }
     }
-    @Preview(showBackground = true)
+
+
+
+
     @Composable
-    fun upbar(){
+    fun upbar(roomId: String, id: String, name: String, img: String){
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -542,9 +598,10 @@ class Chat : ComponentActivity() {
             ) {
                 if (show.value) {
                     Button(
+                        colors = ButtonDefaults.buttonColors(Color.Green),
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.Red),
+                            .fillMaxWidth(),
+                        shape = RoundedCornerShape(30.dp),
                         onClick = {
                             val intent = Intent(this@Chat, Roomsetting::class.java)
                             startActivity(intent)
@@ -558,11 +615,16 @@ class Chat : ComponentActivity() {
                         .fillMaxWidth()
                         .height(100.dp)) {
 
-                        Button(onClick = {
-                            val intent = Intent(this@Chat, Roomsetting::class.java)
-                            startActivity(intent)
-                        }) {
-
+                        Button(
+                            colors = ButtonDefaults.buttonColors(Color.Blue),
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            shape = RoundedCornerShape(30.dp),
+                            onClick = {
+                                pushData(roomId,"$id", "$name","$img",)
+                            }
+                        ) {
+                            // Содержимое кнопки
                         }
 
                     }
