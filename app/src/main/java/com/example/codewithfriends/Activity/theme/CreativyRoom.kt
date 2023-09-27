@@ -2,19 +2,31 @@ package com.example.codewithfriends.Activity.theme
 
 import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -22,6 +34,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -52,7 +65,11 @@ import com.example.codewithfriends.R
 import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
+import com.example.reaction.logik.PreferenceHelper
 import com.google.android.gms.auth.api.identity.Identity
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
 import java.net.URL
 import java.io.BufferedReader
@@ -66,6 +83,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
+import java.util.UUID
+data class JsonRequest(val url: String)
+
+
 
 class CreativyRoom : ComponentActivity() {
 
@@ -78,6 +99,9 @@ class CreativyRoom : ComponentActivity() {
 
     var text by mutableStateOf("")
     var texts by mutableStateOf("")
+    var photo by mutableStateOf("")
+    var showCircle by mutableStateOf(true)
+
 
 
 
@@ -97,16 +121,21 @@ class CreativyRoom : ComponentActivity() {
     val selectedNumber = 1
   //  val uniqueAdmin = ""
 
-    data class UserData(
-        val selectedLanguage: String,
-        val places: List<Int>,
-        val text: String,
-        val uniqueId: String
-    )
+    private var storedRoomId: String? = null // Объявляем на уровне класса
+
+    private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let { selectedImageUri ->
+            // Здесь вы можете загрузить изображение в Firebase Storage
+            uploadImageToFirebaseStorage(selectedImageUri, storedRoomId!!)
+        }
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        storedRoomId = PreferenceHelper.getRoomId(this)
+
         setContent {
 
 
@@ -147,6 +176,11 @@ class CreativyRoom : ComponentActivity() {
 
                 item {
                     WriteDb()
+                    Spacer(modifier = Modifier.height(30.dp))
+                }
+                item {
+                    AddImage()
+                    Spacer(modifier = Modifier.height(20.dp))
                 }
             }
 
@@ -384,27 +418,23 @@ class CreativyRoom : ComponentActivity() {
 
 
     private fun pushData(
-         uniqueAdmin: String? = ID(
+        uniqueAdmin: String? = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )
     ) {
         val baseUrl = "https://getpost-ilya1.up.railway.app/user"
-        val uriBuilder = Uri.parse(baseUrl).buildUpon()
-            .appendQueryParameter("id", uniqueId)
-            .appendQueryParameter("Lenguage", selectedLanguage)
-            .appendQueryParameter("Placeinroom", selectedPlace.toString()) // Преобразуем число в строку
-            .appendQueryParameter("Roomname", text)
-            .appendQueryParameter("Aboutroom", texts)
-            .appendQueryParameter("Admin", uniqueAdmin)
-            .build()
-
-
-        val url = uriBuilder.toString()
+        val url = "$baseUrl?id=$uniqueId&Lenguage=$selectedLanguage&Placeinroom=$selectedPlace&Roomname=$text&Aboutroom=$texts&Admin=$uniqueAdmin"
 
         val client = OkHttpClient()
-        val mediaType = "application/x-www-form-urlencoded".toMediaType()
+        val mediaType = "application/json; charset=utf-8".toMediaType()
 
-        val requestBody = "".toRequestBody(mediaType)
+        val json = """
+        {
+            "url": "$photo"
+        }
+    """.trimIndent()
+
+        val requestBody = json.toRequestBody(mediaType)
 
         val request = Request.Builder()
             .url(url)
@@ -427,6 +457,8 @@ class CreativyRoom : ComponentActivity() {
 
 
 
+
+
     @Composable
     fun WriteDb(){
         val coroutineScope = rememberCoroutineScope()
@@ -445,6 +477,130 @@ class CreativyRoom : ComponentActivity() {
 
 
 
+    }
+    @Composable
+    fun AddImage() {
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp)
+        ) {
+            Button(
+                colors = ButtonDefaults.buttonColors(Color.Blue),
+                onClick = {
+                    // Запуск активности выбора изображения
+                    pickImage.launch("image/*")
+                    showCircle = !showCircle
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .clip(RoundedCornerShape(1.dp))
+            ) {
+                if(showCircle){
+                    Text(text = stringResource(id = R.string.Icon), fontSize = 24.sp)
+                } else {
+
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Text(text = " Дождитесь загрузки !!! ", fontSize = 24.sp)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        LoadingCircle()
+                    }
+                }
+
+
+
+            }
+            /*if(!showCircle){
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    .align(CenterHorizontally)){
+                    h = 40.dp
+
+
+                }
+
+
+            }
+*/
+        }
+
+    }
+    private fun uploadImageToFirebaseStorage(selectedImageUri: Uri, roomid: String) {
+
+
+        val storage = FirebaseStorage.getInstance()
+        val storageRef = storage.reference
+
+        // Create a unique name for the image to avoid overwriting
+        val imageName = UUID.randomUUID().toString()
+
+        // Path to store the image: "images/{roomid}/{imageName}"
+        val imageRef = storageRef.child("images/$roomid/$imageName")
+
+        val uploadTask = imageRef.putFile(selectedImageUri)
+
+        // Add a listener to handle successful or unsuccessful upload
+        uploadTask.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                // Get the download URL from the task result
+                imageRef.downloadUrl.addOnSuccessListener { uri ->
+                    photo = uri.toString()
+                    // Do something with the URL, such as save it to Firestore
+
+                    // Покажите Toast об успешной загрузке
+                    showToast("Фотография успешно загружена!")
+                    showCircle = true
+
+                }
+            } else {
+                // Handle unsuccessful upload
+
+                // Покажите Toast об ошибке загрузки
+                showToast("Ошибка при загрузке фотографии. Пожалуйста, попробуйте еще раз.")
+            }
+        }
+    }
+
+    private fun showToast(message: String) {
+        // Вывести Toast с заданным сообщением
+        Toast.makeText(this@CreativyRoom, message, Toast.LENGTH_SHORT).show()
+    }
+
+
+    @Preview(showBackground = true)
+    @Composable
+    fun LoadingCircle() {
+        Box(  modifier = Modifier
+            .height(40.dp)
+
+
+            .wrapContentSize(Alignment.Center)
+        ) {
+
+
+            val rotation = rememberInfiniteTransition().animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 1000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart
+                )
+            )
+
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(40.dp)
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color.Blue)
+                    //.rotate(rotation.value)
+                )
+            }
+        }
     }
 
 }

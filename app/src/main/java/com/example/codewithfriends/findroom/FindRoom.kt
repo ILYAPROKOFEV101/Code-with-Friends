@@ -64,11 +64,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberImagePainter
 import com.example.codewithfriends.R
 import com.example.codewithfriends.findroom.chats.Chat
 
@@ -206,24 +208,32 @@ class FindRoom : ComponentActivity() {
                     {
                         Box(
                             modifier = Modifier
-                                .weight(0.3f)
+                                .weight(0.4f)
                                 .align(Alignment.CenterVertically)
                         )
                         {
                             Image(
-                                painter = painterResource(id = R.drawable.android),
+                                painter = if (room.url.isNotEmpty()) {
+                                    // Load image from URL
+                                    rememberImagePainter(data = room.url)
+                                } else {
+                                    // Load a default image when URL is empty
+                                    painterResource(id = R.drawable.android) // Replace with your default image resource
+                                },
                                 contentDescription = null,
                                 modifier = Modifier
-                                    .padding(start = 5.dp, end = 5.dp)
-                                    .size(100.dp)
-                                    .clip(RoundedCornerShape(50.dp))
-                                    .align(Alignment.Center)
+                                    .size(150.dp)
+                                    .padding(start = 10.dp, end = 5.dp, top = 10.dp)
+                                    .clip(CircleShape),
+                               contentScale = ContentScale.Crop
                             )
+
+
                         }
                         Column(
                             modifier = Modifier
                                 .fillMaxHeight()
-                                .weight(0.7f)
+                                .weight(0.6f)
                                 .padding(end = 5.dp)
                               ){
                                 Box(

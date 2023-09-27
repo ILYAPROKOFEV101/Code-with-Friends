@@ -10,5 +10,6 @@ data class Room(
     val language: String,
     val placeInRoom: Int,
     val aboutRoom: String,
-    val Admin: String
+    val Admin: String,
+    val url: String
 )
