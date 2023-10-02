@@ -1,4 +1,4 @@
-package com.example.codewithfriends.findroom.chats.ui.theme
+package com.example.codewithfriends.chats.ui.theme
 
 import android.os.Bundle
 import android.os.Message
@@ -43,7 +43,7 @@ class TestActivity : ComponentActivity() {
     private var webSocket: WebSocket? = null
     private var isConnected by mutableStateOf(false)
 
-    private val messages = mutableStateOf(listOf<com.example.codewithfriends.findroom.chats.Message>()) // Хранение
+    private val messages = mutableStateOf(listOf<com.example.codewithfriends.chats.Message>()) // Хранение
 
     private var storedRoomId: String? = null // Объявляем на уровне класса
     private val googleAuthUiClient by lazy {
@@ -103,7 +103,7 @@ class TestActivity : ComponentActivity() {
             val listener = object : WebSocketListener() {
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
-                    val newMessage = com.example.codewithfriends.findroom.chats.Message(
+                    val newMessage = com.example.codewithfriends.chats.Message(
                         sender = "",
                         content = text
                     )
@@ -140,7 +140,7 @@ class TestActivity : ComponentActivity() {
 
 @Composable
 fun WebSocketChatScreen(
-    messages: List<com.example.codewithfriends.findroom.chats.Message>?,
+    messages: List<com.example.codewithfriends.chats.Message>?,
 ) {
     Column(
         modifier = Modifier
@@ -158,7 +158,7 @@ fun WebSocketChatScreen(
 
 
 @Composable
-fun MessageItem(message: com.example.codewithfriends.findroom.chats.Message) {
+fun MessageItem(message: com.example.codewithfriends.chats.Message) {
     Text(
         text = "${message.sender}: ${message.content}",
         textAlign = TextAlign.Start,

@@ -1,4 +1,4 @@
-package com.example.codewithfriends.ui.theme.ui.theme
+package com.example.codewithfriends.chats.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

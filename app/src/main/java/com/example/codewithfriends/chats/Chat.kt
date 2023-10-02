@@ -1,27 +1,20 @@
-package com.example.codewithfriends.findroom.chats
+package com.example.codewithfriends.chats
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import android.net.http.HttpResponseCache.install
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 
 
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,7 +43,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.codewithfriends.R
@@ -66,53 +58,35 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.window.Popup
-import androidx.lifecycle.MutableLiveData
 
 import coil.compose.rememberAsyncImagePainter
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.example.codewithfriends.findroom.chats.ui.theme.TestActivity
+import com.example.codewithfriends.createamspeck.ui.theme.CodeWithFriendsTheme
 import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.codewithfriends.roomsetting.Roomsetting
-import com.example.codewithfriends.ui.theme.Main_menu
 import com.google.android.gms.auth.api.identity.Identity
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.HttpClient
-import com.google.protobuf.ByteString
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import okhttp3.internal.http.HttpMethod
 import org.java_websocket.client.WebSocketClient
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
-import java.io.OutputStream
-import java.net.HttpURLConnection
-import java.net.URL
-import java.util.concurrent.TimeUnit
-
-
 
 
 class Chat : ComponentActivity() {
@@ -149,44 +123,46 @@ class Chat : ComponentActivity() {
         setContent {
 
 
-
-            val name = UID(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
-            val img = IMG(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
-            val id = ID(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
-
-            upbar(storedRoomId!!,"$id", "$name","$img")
-
-            if (storedRoomId != null) {
-               getData(storedRoomId!!, "$id", "$name")
+            CodeWithFriendsTheme {
+                // A surface container using the 'background' color from the theme
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
 
 
+                    val name = UID(
+                        userData = googleAuthUiClient.getSignedInUser()
+                    )
+                    val img = IMG(
+                        userData = googleAuthUiClient.getSignedInUser()
+                    )
+                    val id = ID(
+                        userData = googleAuthUiClient.getSignedInUser()
+                    )
 
-            }
+                    upbar(storedRoomId!!, "$id", "$name", "$img")
 
-            Spacer(modifier = Modifier.height(100.dp))
+                    if (storedRoomId != null) {
+                        getData(storedRoomId!!, "$id", "$name")
+                    }
 
-            if (storedRoomId != null) {
-                MessageList(messages.value, "$name", "$img", "$id")
-            }
+                    Spacer(modifier = Modifier.height(100.dp))
 
-            Spacer(modifier = Modifier.height(20.dp))
+                    if (storedRoomId != null) {
+                        MessageList(messages.value, "$name", "$img", "$id")
+                    }
 
-            if (storedRoomId != null) {
-                Creator { message ->
-                    // Здесь вы можете добавить логику для отправки сообщения через WebSocket
-                    sendMessage(message)
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    if (storedRoomId != null) {
+                        Creator { message ->
+                            // Здесь вы можете добавить логику для отправки сообщения через WebSocket
+                            sendMessage(message)
+                        }
+                    }
                 }
             }
-
-
-
-
         }
 
 
@@ -215,7 +191,7 @@ class Chat : ComponentActivity() {
             if (messageId != null) {
                 // Проверяем, что сообщение с таким ID не было получено ранее
                 if (!hasReceivedMessageWithId(messageId)) {
-                    val newMessage = com.example.codewithfriends.findroom.chats.Message(
+                    val newMessage = Message(
                         sender = "",
                         content = messageContent
                     )
@@ -271,7 +247,7 @@ class Chat : ComponentActivity() {
 
                 webSocket = client.newWebSocket(request, object : WebSocketListener() {
                     override fun onMessage(webSocket: WebSocket, text: String) {
-                        val newMessage = com.example.codewithfriends.findroom.chats.Message(
+                        val newMessage = Message(
                             sender = "",
                             content = text
                         )
@@ -461,7 +437,7 @@ class Chat : ComponentActivity() {
             url,
             { response ->
                 Log.d("Mylog", "Result: $response")
-                val trueOrFalse = response.toBoolean()
+                val trueOrFalse = response.toBoolean()// Получает пораметры с сервера есть литакой пользователь в базе данных
                 show.value = trueOrFalse // Обновляем значение MutableState<Boolean>
             },
             { error ->
@@ -590,12 +566,8 @@ class Chat : ComponentActivity() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(100.dp)
+                .padding(start = 5.dp, end = 5.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp)
-            ) {
                 if (show.value) {
                     Button(
                         colors = ButtonDefaults.buttonColors(Color.Green),
@@ -607,7 +579,7 @@ class Chat : ComponentActivity() {
                             startActivity(intent)
                         }
                     ) {
-                        // Содержимое кнопки
+                        Text(text = stringResource(id = R.string.outroom), fontSize = 24.sp)
                     }
                 } else {
 
@@ -624,7 +596,7 @@ class Chat : ComponentActivity() {
                                 pushData(roomId,"$id", "$name","$img",)
                             }
                         ) {
-                            // Содержимое кнопки
+                            Text(text = stringResource(id = R.string.room), fontSize = 24.sp)
                         }
 
                     }
@@ -634,7 +606,7 @@ class Chat : ComponentActivity() {
                 }
             }
         }
-    }
+
 
 
 

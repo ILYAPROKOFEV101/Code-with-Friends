@@ -1,4 +1,4 @@
-package com.example.codewithfriends.findroom.chats
+package com.example.codewithfriends.chats
 
     data class ChatMessage(
         val text: String,

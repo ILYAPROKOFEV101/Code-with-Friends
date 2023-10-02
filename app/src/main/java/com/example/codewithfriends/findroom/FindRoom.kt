@@ -72,7 +72,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
 import com.example.codewithfriends.R
-import com.example.codewithfriends.findroom.chats.Chat
+import com.example.codewithfriends.chats.Chat
 
 
 
@@ -223,8 +223,8 @@ class FindRoom : ComponentActivity() {
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(150.dp)
-                                    .padding(start = 10.dp, end = 5.dp, top = 10.dp)
-                                    .clip(CircleShape),
+                                    .padding(start = 15.dp, end = 5.dp, top = 15.dp)
+                                    .clip(RoundedCornerShape(40.dp)),
                                contentScale = ContentScale.Crop
                             )
 
@@ -261,33 +261,28 @@ class FindRoom : ComponentActivity() {
 
                     Spacer(modifier = Modifier.height(20.dp))
                     Row(modifier = Modifier
+                        .padding(start = 8.dp, end = 8.dp)
                         .height(65.dp)
                         .fillMaxWidth())
                     {
-                        Box(modifier = Modifier
-                            .padding(start = 5.dp, end = 5.dp)
-                            .fillMaxWidth()
-                            .clip(CircleShape)
-                            .fillMaxHeight(1f))
-                        {
-                            Button(onClick = {
+                            Button(
+                                onClick = {
                                 goToChatActivity(room.id)
                                 showCircle = !showCircle
 
-                                // Задержка перехода на новую страницу через 3 секунды
-                             //   Handler(Looper.getMainLooper()).postDelayed({
                                     val intent = Intent(this@FindRoom, Chat::class.java)
                                     startActivity(intent)
-                                //}, 2000) // 3000 миллисекунд (3 секунды)
+
 
                             },
                                 colors = ButtonDefaults.buttonColors(creatroom),
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize(),
+                                shape = RoundedCornerShape(20.dp),
+
                                   ) {
                                 Text(text = "Join in room: ${room.placeInRoom}", modifier = Modifier, style = TextStyle(fontSize = 24.sp))
+                                }
 
-                            }
-                        }
                     }
 
                     LazyColumn(modifier = Modifier

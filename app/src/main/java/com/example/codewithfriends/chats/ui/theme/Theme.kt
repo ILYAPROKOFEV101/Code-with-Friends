@@ -1,4 +1,4 @@
-package com.example.codewithfriends.findroom.chats.ui.theme
+package com.example.codewithfriends.chats.ui.theme
 
 import android.app.Activity
 import android.os.Build

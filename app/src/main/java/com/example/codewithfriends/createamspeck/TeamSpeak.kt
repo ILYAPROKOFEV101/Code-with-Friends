@@ -61,13 +61,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.codewithfriends.R
 import com.example.codewithfriends.createamspeck.ui.theme.CodeWithFriendsTheme
+import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.roomsetting.TaskData
+import com.example.reaction.logik.PreferenceHelper
 import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.calendar.CalendarDialog
 import com.maxkeppeler.sheets.calendar.models.CalendarConfig
 import com.maxkeppeler.sheets.calendar.models.CalendarSelection
 import com.maxkeppeler.sheets.clock.ClockDialog
 import com.maxkeppeler.sheets.clock.models.ClockSelection
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.IOException
 import java.util.Date
 
 
@@ -83,14 +90,19 @@ class TeamSpeak : ComponentActivity() {
 
     var selectedSeatCount by mutableStateOf<Int?>(null)
 
+    val locar = 3
 
     var nameteamspeck by mutableStateOf("")
 
     var password by mutableStateOf("")
 
+    private var storedRoomId: String? = null // Объявляем на уровне класса
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        storedRoomId = PreferenceHelper.getRoomId(this)
+
         setContent {
             CodeWithFriendsTheme {
                 // A surface container using the 'background' color from the theme
@@ -409,11 +421,51 @@ class TeamSpeak : ComponentActivity() {
                     modifier = Modifier.fillMaxSize()
                     ,
                     shape = RoundedCornerShape(30.dp),
-                    onClick = { /*TODO*/ }) {
+                    onClick = {
+
+                        Create()
+                    }) {
                     Text(text = "Create Teamspeak", fontSize = 24.sp)
                 }
             }
         }
+
+    private fun Create() {
+        val baseUrl = "https://getpost-ilya1.up.railway.app/teamspeack/kdniovirgoi"
+        val url = "$baseUrl"
+
+        val client = OkHttpClient()
+        val mediaType = "application/json; charset=utf-8".toMediaType()
+
+        val json = """
+        {
+            "data": "$selectedDate"
+            "time": "$selectedTime"
+            "name": "$nameteamspeck"
+            "password": "$password"
+            "localtime": $locar
+        }
+    """.trimIndent()
+
+        val requestBody = json.toRequestBody(mediaType)
+
+        val request = Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                if (response.isSuccessful) {
+                    // Обработка успешного ответа сервера
+                }
+            }
+
+            override fun onFailure(call: okhttp3.Call, e: IOException) {
+                e.printStackTrace()
+            }
+        })
+    }
 
 
 

@@ -2,6 +2,7 @@ package com.example.codewithfriends.presentation.profile
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 
@@ -68,7 +69,7 @@ fun ProfileIcon(userData: UserData?) {
                 modifier = Modifier
                     .size(90.dp)
                     .fillMaxHeight()
-                    .clip(CircleShape),
+                    .clip(RoundedCornerShape(30.dp)),
                 contentScale = ContentScale.Crop
             )
         }

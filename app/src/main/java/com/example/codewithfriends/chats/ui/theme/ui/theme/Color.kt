@@ -1,4 +1,4 @@
-package com.example.codewithfriends.findroom.chats.ui.theme.ui.theme
+package com.example.codewithfriends.chats.ui.theme.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

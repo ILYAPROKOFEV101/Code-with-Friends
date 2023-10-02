@@ -14,12 +14,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -55,10 +58,11 @@ import com.android.volley.Request
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.example.codewithfriends.Aboutusers.Aboutuser
 import com.example.codewithfriends.R
 import com.example.codewithfriends.createamspeck.TeamSpeak
 import com.example.codewithfriends.findroom.Room
-import com.example.codewithfriends.findroom.chats.Message
+import com.example.codewithfriends.chats.Message
 import com.example.codewithfriends.firebase.Addtask
 import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.IMG
@@ -199,7 +203,8 @@ class Roomsetting : ComponentActivity() {
                 contentDescription = null,
                 contentScale = ContentScale.Fit, // Здесь задается contentScale
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxHeight()
+                    .width(200.dp)
                     .padding(40.dp)
             )
         }
@@ -360,6 +365,24 @@ class Roomsetting : ComponentActivity() {
                                 .clip(RoundedCornerShape(30.dp))
                         )
                         Text(text = participant.username, fontSize = 24.sp, modifier = Modifier.padding(top = 30.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Box(modifier = Modifier)
+                        Button(
+                            colors = ButtonDefaults.buttonColors(Color.Yellow),
+                            modifier = Modifier
+                                .padding(top = 20.dp)
+                                .wrapContentWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(30.dp),
+                            onClick = {
+                                val intent = Intent(this@Roomsetting, Aboutuser::class.java)
+                                intent.putExtra("userId", participant.userId) // Здесь вы добавляете данные в Intent
+                                startActivity(intent)
+                            }) {
+                            Text(text = "Who ")
+                                //{participant.userId} это надо передать
+                        }
+
                     }
                 }
             }

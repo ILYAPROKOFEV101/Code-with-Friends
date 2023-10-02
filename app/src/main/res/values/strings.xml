@@ -11,6 +11,8 @@
     <string name="Teamspek">создать TeamSpeak</string>
     <string name="nameTeamspek">Название комнаты </string>
     <string name="Icon">Загрузить фото комнаты </string>
+    <string name="room">Зайти в комнату</string>
+    <string name="outroom">задания</string>
 
     <string name="reactionresult">Reaction Result</string>
     <string name="singout">Sign out</string>
@@ -88,4 +90,5 @@
     <string name="title_activity_addtask">Addtask</string>
     <string name="title_activity_test">TestActivity</string>
     <string name="title_activity_team_speak">TeamSpeak</string>
+    <string name="title_activity_aboutuser">Aboutuser</string>
 </resources>

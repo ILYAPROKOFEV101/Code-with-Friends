@@ -20,27 +20,19 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.IconButton
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -54,34 +46,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import coil.compose.AsyncImage
 import com.example.reaction.logik.PreferenceHelper
 import com.example.codewithfriends.presentation.profile.ProfileScreen
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
-import com.example.codewithfriends.presentation.sign_in.SignInScreen
 import com.example.codewithfriends.presentation.sign_in.SignInState
 import com.example.codewithfriends.presentation.sign_in.SignInViewModel
 import com.example.codewithfriends.presentation.sign_in.UserData
 import com.example.codewithfriends.ui.theme.ComposeGoogleSignInCleanArchitectureTheme
-import com.example.codewithfriends.ui.theme.Main_menu
+import com.example.codewithfriends.Startmenu.Main_menu
 
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -93,13 +78,11 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlin.math.sign
+
 @Suppress("DEPRECATION", "UNREACHABLE_CODE")
 class  MainActivity: ComponentActivity() {
 
 
-//val intent = Intent(this@tester, Main_menu::class.java)
-//startActivity(intent)
 
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -112,8 +95,8 @@ class  MainActivity: ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
 
-           // val intent = Intent(this@MainActivity, Main_menu::class.java)
-           // startActivity(intent)
+            val intent = Intent(this@MainActivity, Main_menu::class.java)
+           startActivity(intent)
 
             toshear(userData = googleAuthUiClient.getSignedInUser())
 

@@ -1,4 +1,4 @@
-package com.example.codewithfriends.ui.theme
+package com.example.codewithfriends.Startmenu
 
 import android.content.Intent
 import android.os.Bundle
@@ -207,9 +207,8 @@ class Main_menu : ComponentActivity() {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(80.dp)
-                            //.background(creatroom)
-
-                            .clip(RoundedCornerShape(1.dp))
+                        ,
+                        shape = RoundedCornerShape(20.dp),
                     ) {
                         Text(text = stringResource(id = R.string.creatroom),fontSize = 24.sp)
                     }
@@ -223,11 +222,8 @@ class Main_menu : ComponentActivity() {
                                   },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(80.dp)
-                            .clip(
-                                RoundedCornerShape(10.dp),
-
-                                )
+                            .height(80.dp),
+                                shape = RoundedCornerShape(20.dp),
                     ) {
                         Text(text = stringResource(id = R.string.joinroom),fontSize = 24.sp,)
 

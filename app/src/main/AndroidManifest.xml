@@ -22,12 +22,17 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".Aboutusers.Aboutuser"
+            android:exported="false"
+            android:label="@string/title_activity_aboutuser"
+            android:theme="@style/Theme.CodeWithFriends" />
+        <activity
             android:name=".createamspeck.TeamSpeak"
             android:exported="false"
             android:label="@string/title_activity_team_speak"
             android:theme="@style/Theme.CodeWithFriends" />
         <activity
-            android:name=".findroom.chats.ui.theme.TestActivity"
+            android:name=".chats.ui.theme.TestActivity"
             android:exported="false"
             android:label="@string/title_activity_test"
             android:theme="@style/Theme.CodeWithFriends" />
@@ -42,7 +47,7 @@
             android:label="@string/title_activity_roomsetting"
             android:theme="@style/Theme.CodeWithFriends" />
         <activity
-            android:name=".findroom.chats.Chat"
+            android:name=".chats.Chat"
             android:exported="false"
             android:label="@string/title_activity_chat"
             android:theme="@style/Theme.CodeWithFriends" />
@@ -57,7 +62,7 @@
             android:label="@string/title_activity_creativy_room"
             android:theme="@style/Theme.CodeWithFriends" />
         <activity
-            android:name=".ui.theme.Main_menu"
+            android:name=".Startmenu.Main_menu"
             android:exported="false"
             android:label="@string/title_activity_main_menu"
             android:theme="@style/Theme.CodeWithFriends" />

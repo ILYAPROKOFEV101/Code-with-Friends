@@ -1,4 +1,4 @@
-package com.example.codewithfriends.findroom.chats.ui.theme
+package com.example.codewithfriends.Startmenu.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
