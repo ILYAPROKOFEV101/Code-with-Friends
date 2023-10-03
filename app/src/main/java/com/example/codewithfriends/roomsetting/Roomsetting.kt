@@ -8,8 +8,10 @@ import android.os.Looper
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,11 +29,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -79,10 +84,19 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.IOException
 
+
+import retrofit2.http.DELETE
+import retrofit2.http.Path
 
 class Roomsetting : ComponentActivity() {
 
@@ -155,7 +169,7 @@ class Roomsetting : ComponentActivity() {
                 // Вызываем roomname() только если есть данные комнаты
 
                     item {
-                        firstRoom?.let { roomname(roomName = it.roomName) }
+                        firstRoom?.let { roomname(roomName = it.roomName, "$id", storedRoomId!!) }
                         Spacer(modifier = Modifier.height(30.dp))
                     }
 
@@ -321,7 +335,7 @@ class Roomsetting : ComponentActivity() {
 
 
     @Composable
-    fun roomname(roomName: String) {
+    fun roomname(roomName: String,uid: String, roomId: String) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -329,9 +343,56 @@ class Roomsetting : ComponentActivity() {
                 .padding(start = 10.dp, end = 10.dp)
                 .clip(RoundedCornerShape(10.dp))
         ) {
-            Text(text = roomName, fontSize = 24.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(start = 10.dp, end = 10.dp))
+            Row(modifier = Modifier.fillMaxSize()) {
+                Text(text = roomName, fontSize = 24.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(start = 10.dp, end = 10.dp))
+                Spacer(modifier = Modifier.width(100.dp))
+                Icon(
+                    Icons.Filled.Logout,
+                    contentDescription = "Logout",
+                    modifier = Modifier
+                        .size(90.dp)
+                        .padding(start = 10.dp, end = 10.dp)
+                        .clickable { // TODO: Implement logout functionality }
+                            deleteRequest("$uid", "$roomId")
+                        }
+                )
+            }
         }
     }
+
+    fun deleteRequest(uid: String, roomId: String) {
+        // Создаем Retrofit клиент
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://getpost-ilya1.up.railway.app/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        // Создаем API интерфейс
+        val api = retrofit.create(Api::class.java)
+
+        // Создаем запрос
+        val request = api.deleteRoom(uid, roomId)
+
+        // Выполняем запрос
+        request.enqueue(object : Callback<Unit> {
+            override fun onFailure(call: Call<Unit>, t: Throwable) {
+                // Ошибка
+                Log.e("deleteRequest", t.message ?: "Неизвестная ошибка")
+            }
+
+            override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+                // Успех
+                if (response.isSuccessful) {
+                    // Комната удалена
+                    Log.d("deleteRequest", "Комната удалена")
+                } else {
+                    // Ошибка
+                    Log.e("deleteRequest", "Ошибка удаления комнаты: ")
+                }
+            }
+        })
+    }
+
 
 
 
@@ -389,10 +450,7 @@ class Roomsetting : ComponentActivity() {
         }
     }
 
-    @Composable
-    fun tasks() {
 
-    }
 
     @Composable
     fun TaskList(tasks: List<TaskData>) {
