@@ -87,6 +87,11 @@ import com.example.reaction.logik.PreferenceHelper
 import com.example.reaction.logik.PreferenceHelper.saveRoomId
 import com.google.android.gms.auth.api.identity.Identity
 import okhttp3.WebSocket
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 
 class FindRoom : ComponentActivity() {
@@ -130,27 +135,46 @@ class FindRoom : ComponentActivity() {
     }
 
     private fun getData(rooms: MutableState<List<Room>>) {
-        val url = "https://getpost-ilya1.up.railway.app/data"
+        // Создаем Retrofit клиент
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://getpost-ilya1.up.railway.app/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
 
-        val request = StringRequest(
-            com.android.volley.Request.Method.GET,
-            url,
-            { response ->
-                Log.d("Mylog", "Result: $response")
-                val gson = Gson()
-                val roomListType = object : TypeToken<List<Room>>() {}.type
-                val utf8Response = String(response.toByteArray(Charsets.ISO_8859_1), Charsets.UTF_8)
-                val newRooms: List<Room> = gson.fromJson(utf8Response, roomListType)
+        // Создаем API интерфейс
+        val api = retrofit.create(Api::class.java)
 
-                rooms.value = newRooms
-            },
-            { error ->
-                Log.d("Mylog", "Error: $error")
+        // Создаем запрос
+        val request = api.getRooms()
+
+        // Выполняем запрос
+        request.enqueue(object : Callback<List<Room>> {
+            override fun onFailure(call: Call<List<Room>>, t: Throwable) {
+                // Ошибка
+                Log.e("getData", t.message ?: "Неизвестная ошибка")
+
+                // Курятина
+                if (t.message?.contains("404") ?: false) {
+                    Log.d("getData", "Данные не найдены")
+                } else {
+                    Log.d("getData", "Неизвестная ошибка")
+                }
             }
-        )
 
-        val requestQueue = Volley.newRequestQueue(this)
-        requestQueue.add(request)
+            override fun onResponse(call: Call<List<Room>>, response: Response<List<Room>>) {
+                // Успех
+                if (response.isSuccessful) {
+                    // Получаем данные
+                    val newRooms = response.body() ?: emptyList()
+
+                    // Обновляем состояние
+                    rooms.value = newRooms
+                } else {
+                    // Ошибка
+                    Log.e("getData", "Ошибка получения данных: ")
+                }
+            }
+        })
     }
 
 
@@ -171,17 +195,7 @@ class FindRoom : ComponentActivity() {
     val joinroom: Color = colorResource(id = R.color.joinroom)
     val creatroom: Color = colorResource(id = R.color.creatroom)
 
-        val name = UID(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
-        val img = IMG(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
-        val id = ID(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
 
-        val andin = room.Admin
 
         Spacer(modifier = Modifier.height(20.dp))
 

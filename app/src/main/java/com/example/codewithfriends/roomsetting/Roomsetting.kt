@@ -1,17 +1,21 @@
 package com.example.codewithfriends.roomsetting
 
+import android.content.Context
 import android.content.Intent
 import android.net.http.HttpResponseCache.install
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,6 +33,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.Button
@@ -40,17 +45,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -65,6 +74,7 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.codewithfriends.Aboutusers.Aboutuser
 import com.example.codewithfriends.R
+import com.example.codewithfriends.Startmenu.Main_menu
 import com.example.codewithfriends.createamspeck.TeamSpeak
 import com.example.codewithfriends.findroom.Room
 import com.example.codewithfriends.chats.Message
@@ -110,6 +120,7 @@ class Roomsetting : ComponentActivity() {
     private var storedRoomId: String? = null // Объявляем на уровне класса
      var task = mutableStateOf(listOf<TaskData>())
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -118,16 +129,9 @@ class Roomsetting : ComponentActivity() {
 
         setContent {
 
-            // Полученные данные с сервера
-            val serverData = listOf(
-                TaskData(
-                    gitbranch = "Master",
-                    filename = "MAinActivity",
-                    photo = "https://th.bing.com/th/id/OIP.FXH7Knh_9MyszJsfVnEW_wHaE5?w=272&h=180&c=7&r=0&o=5&pid=1.7",
-                    mession = "Fix this bugs and change design"
-                ),
-                // Добавьте другие объекты TaskData по мере необходимости
-            )
+
+
+
 
 
 
@@ -139,15 +143,15 @@ class Roomsetting : ComponentActivity() {
             // Проверяем, есть ли данные комнаты
             val firstRoom = rooms.value.firstOrNull()
 
-            val name = UID(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
-            val img = IMG(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
-            val id = ID(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
+                    val name = UID(
+                        userData = googleAuthUiClient.getSignedInUser()
+                    )
+                    val img = IMG(
+                        userData = googleAuthUiClient.getSignedInUser()
+                    )
+                    val id = ID(
+                        userData = googleAuthUiClient.getSignedInUser()
+                    )
 
             Handler(Looper.getMainLooper()).postDelayed({
                 getData(storedRoomId!!, rooms)
@@ -335,7 +339,15 @@ class Roomsetting : ComponentActivity() {
 
 
     @Composable
-    fun roomname(roomName: String,uid: String, roomId: String) {
+    fun roomname(roomName: String, uid: String, roomId: String) {
+
+
+        var shows by remember {
+            mutableStateOf(false)
+        }
+        if(shows == true){
+            ComposeAlertDialog(roomName, uid, roomId)
+        }
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -346,19 +358,70 @@ class Roomsetting : ComponentActivity() {
             Row(modifier = Modifier.fillMaxSize()) {
                 Text(text = roomName, fontSize = 24.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(start = 10.dp, end = 10.dp))
                 Spacer(modifier = Modifier.width(100.dp))
-                Icon(
-                    Icons.Filled.Logout,
-                    contentDescription = "Logout",
-                    modifier = Modifier
-                        .size(90.dp)
-                        .padding(start = 10.dp, end = 10.dp)
-                        .clickable { // TODO: Implement logout functionality }
-                            deleteRequest("$uid", "$roomId")
-                        }
-                )
+                Button(onClick = {
+
+                    shows = true
+                }) {
+
+
+                }
             }
         }
     }
+
+
+    @Composable
+    fun ComposeAlertDialog(roomName: String, uid: String, roomId: String) {
+
+        var show by remember {
+            mutableStateOf(true)
+        }
+
+        if(show) {
+            AlertDialog(
+                onDismissRequest = { /* ... */ },
+                title = { Text(text = "Подтверждение") },
+                text = { Text(text = "Вы действительно хотите удалиться из комнаты '$roomName'?") },
+                buttons = {
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 10.dp),
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Button(
+                            onClick = { show = !show
+
+                                deleteRequest(uid, roomId)// вызываю функцию для удоления пользователя из комнаты
+
+                                val intent = Intent(this@Roomsetting, Main_menu::class.java)
+                                 startActivity(intent)
+                                      },
+                            colors = ButtonDefaults.buttonColors(Color.Red),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(15.dp))
+                        ) {
+                            Text("Удалиться", color = Color.White)
+                        }
+                        Button(
+                            onClick = { show = !show  },
+                            colors = ButtonDefaults.buttonColors(Color.LightGray),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(15.dp))
+                        ) {
+                            Text("Отмена", color = Color.DarkGray)
+                        }
+                    }
+                }
+            )
+        }
+    }
+
+
+
 
     fun deleteRequest(uid: String, roomId: String) {
         // Создаем Retrofit клиент
@@ -378,6 +441,13 @@ class Roomsetting : ComponentActivity() {
             override fun onFailure(call: Call<Unit>, t: Throwable) {
                 // Ошибка
                 Log.e("deleteRequest", t.message ?: "Неизвестная ошибка")
+
+                // Курятина
+                if (t.message?.contains("404") ?: false) {
+                    Log.d("deleteRequest", "Комната не найдена")
+                } else {
+                    Log.d("deleteRequest", "Неизвестная ошибка")
+                }
             }
 
             override fun onResponse(call: Call<Unit>, response: Response<Unit>) {

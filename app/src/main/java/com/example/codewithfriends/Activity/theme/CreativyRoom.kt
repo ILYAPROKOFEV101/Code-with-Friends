@@ -512,18 +512,7 @@ class CreativyRoom : ComponentActivity() {
 
 
             }
-            /*if(!showCircle){
-                Box(modifier = Modifier
-                    .fillMaxWidth()
-                    .align(CenterHorizontally)){
-                    h = 40.dp
 
-
-                }
-
-
-            }
-*/
         }
 
     }

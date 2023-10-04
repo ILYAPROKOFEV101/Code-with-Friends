@@ -86,6 +86,11 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.java_websocket.client.WebSocketClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
 import java.io.IOException
 
 
@@ -430,25 +435,36 @@ class Chat : ComponentActivity() {
 
 
     private fun getData(roomId: String, id: String, username: String) {
-        val url = "https://getpost-ilya1.up.railway.app/exists/$roomId/$id/$username"
+        // Создаем клиент OkHttp
+        val client = OkHttpClient()
 
-        val request = StringRequest(
-            com.android.volley.Request.Method.GET,
-            url,
-            { response ->
-                Log.d("Mylog", "Result: $response")
-                val trueOrFalse = response.toBoolean()// Получает пораметры с сервера есть литакой пользователь в базе данных
-                show.value = trueOrFalse // Обновляем значение MutableState<Boolean>
-            },
-            { error ->
-                Log.d("Mylog", "Error: $error")
+        // Создаем запрос
+        val request = Request.Builder()
+            .url("https://getpost-ilya1.up.railway.app/exists/$roomId/$id/$username")
+            .build()
+
+        // Выполняем запрос
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                // Ошибка
+                Log.e("getData", e.message ?: "Неизвестная ошибка")
             }
-        )
 
-        val requestQueue = Volley.newRequestQueue(this)
-        requestQueue.add(request)
+            override fun onResponse(call: okhttp3.Call, response: Response) {
+                if (response.isSuccessful) {
+                    // Получаем данные
+                    val data = response.body!!.string()
+                    val trueOrFalse = data.toBoolean()
+
+                    // Обновляем значение MutableState<Boolean>
+                    show.value = trueOrFalse
+                } else {
+                    // Ошибка
+                    Log.e("getData", "Ошибка получения данных: ${response.code}")
+                }
+            }
+        })
     }
-
 
 
 
