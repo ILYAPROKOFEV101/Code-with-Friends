@@ -30,11 +30,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.AlertDialog
+import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -92,7 +96,9 @@ import com.google.common.reflect.TypeToken
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.HttpClient
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -103,6 +109,8 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
+
+
 
 
 import retrofit2.http.DELETE
@@ -185,7 +193,7 @@ class Roomsetting : ComponentActivity() {
 
 
                 item {
-                    TaskList(task.value)
+                    TaskList(task.value, storedRoomId!!)
                   // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
                         Spacer(modifier = Modifier.height(30.dp))
 
@@ -314,7 +322,9 @@ class Roomsetting : ComponentActivity() {
                                 gitbranch = taskResponse.gitbranch,
                                 filename = taskResponse.filename,
                                 photo = taskResponse.photo,
-                                mession = taskResponse.mession
+                                mession = taskResponse.mession,
+                                id = taskResponse.id
+
                             )
                         }
 
@@ -356,13 +366,22 @@ class Roomsetting : ComponentActivity() {
                 .clip(RoundedCornerShape(10.dp))
         ) {
             Row(modifier = Modifier.fillMaxSize()) {
-                Text(text = roomName, fontSize = 24.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(start = 10.dp, end = 10.dp))
+                Box(modifier = Modifier.fillMaxHeight(),
+                    contentAlignment = Alignment.Center){
+                    Text(text = roomName, fontSize = 24.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(start = 10.dp, end = 10.dp))
+                }
+
                 Spacer(modifier = Modifier.width(100.dp))
-                Button(onClick = {
+                Button(modifier = Modifier
+                    .width(200.dp)
+                    .fillMaxHeight()
+                    , shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(Color.Red),
+                    onClick = {
 
                     shows = true
                 }) {
-
+                Text(text = "выйти из комнаты ", fontSize = 18.sp, textAlign = TextAlign.Center)
 
                 }
             }
@@ -468,52 +487,65 @@ class Roomsetting : ComponentActivity() {
 
     @Composable
     fun userinroom(participantsState: List<Participant>) {  // this fun mean how match users in room
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(500.dp)
-                .padding(
-                    start = 10.dp,
-                    end = 10.dp
-                )
-                .clip(RoundedCornerShape(10.dp))
-        ) {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(participantsState) { participant ->
-                    // Здесь вы можете создать элемент списка для каждого участника
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+        LazyRow(modifier = Modifier
+            .fillMaxWidth()
+            .height(500.dp)) {
+            item {
+                Card(
+                    modifier = Modifier
 
-                        // Выводим изображение аватарки с помощью библиотеки Coil
-                        Image(
-                            painter = rememberImagePainter(data = participant.imageUrl),
-                            contentDescription = null, // Устанавливаем null для contentDescription
-                            modifier = Modifier
-                                .size(100.dp)
-                                .padding(10.dp)
-                                .clip(RoundedCornerShape(30.dp))
+                        .padding(
+                            start = 10.dp,
+                            end = 10.dp
                         )
-                        Text(text = participant.username, fontSize = 24.sp, modifier = Modifier.padding(top = 30.dp))
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Box(modifier = Modifier)
-                        Button(
-                            colors = ButtonDefaults.buttonColors(Color.Yellow),
-                            modifier = Modifier
-                                .padding(top = 20.dp)
-                                .wrapContentWidth()
-                                .height(50.dp),
-                            shape = RoundedCornerShape(30.dp),
-                            onClick = {
-                                val intent = Intent(this@Roomsetting, Aboutuser::class.java)
-                                intent.putExtra("userId", participant.userId) // Здесь вы добавляете данные в Intent
-                                startActivity(intent)
-                            }) {
-                            Text(text = "Who ")
-                                //{participant.userId} это надо передать
-                        }
+                        .clip(RoundedCornerShape(10.dp))
+                ) {
+                    //
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(participantsState) { participant ->
+                            // Здесь вы можете создать элемент списка для каждого участника
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
 
+                                // Выводим изображение аватарки с помощью библиотеки Coil
+                                Image(
+                                    painter = rememberImagePainter(data = participant.imageUrl),
+                                    contentDescription = null, // Устанавливаем null для contentDescription
+                                    modifier = Modifier
+                                        .size(100.dp)
+                                        .padding(10.dp)
+                                        .clip(RoundedCornerShape(30.dp))
+                                )
+                                Text(
+                                    text = participant.username,
+                                    fontSize = 24.sp,
+                                    modifier = Modifier.padding(top = 30.dp)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Box(modifier = Modifier)
+                                Button(
+                                    colors = ButtonDefaults.buttonColors(Color.Blue),
+                                    modifier = Modifier
+                                        .padding(top = 20.dp)
+                                        .wrapContentWidth()
+                                        .height(50.dp),
+                                    shape = RoundedCornerShape(30.dp),
+                                    onClick = {
+                                        val intent = Intent(this@Roomsetting, Aboutuser::class.java)
+                                        intent.putExtra(
+                                            "userId",
+                                            participant.userId
+                                        ) // Здесь вы добавляете данные в Intent
+                                        startActivity(intent)
+                                    }) {
+                                    Text(text = "about user")
+                                    //{participant.userId} это надо передать
+                                }
+
+                            }
+                        }
                     }
                 }
             }
@@ -522,55 +554,154 @@ class Roomsetting : ComponentActivity() {
 
 
 
+
+
     @Composable
-    fun TaskList(tasks: List<TaskData>) {
+    fun TaskList(tasks: List<TaskData>,roomId: String) {
         LazyColumn(modifier = Modifier
             .fillMaxWidth()
             .height(500.dp)) {
             items(tasks) { task ->
-                TaskCard(task)
+                TaskCard(task, roomId)
             }
         }
     }
 
 
     @Composable
-    fun TaskCard(task: TaskData) {
+    fun TaskCard(task: TaskData,roomId: String) {
+        var uptext  = 500.dp
+
+            if (task.mession.length > 100){
+                 uptext = 1070.dp
+            }
+        if (task.mession.length > 10){
+             uptext = 670.dp
+        }
 
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(500.dp)
+                .height(uptext)
                 .padding(10.dp)
                 .clip(RoundedCornerShape(10.dp))
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .height(uptext - 100.dp)
                     .padding(16.dp)
             ) {
                 Text(text = "Git Branch: ${task.gitbranch}", fontSize = 24.sp)
                 Text(text = "Filename: ${task.filename}", fontSize = 24.sp)
 
                 Image(
-                painter = rememberAsyncImagePainter(model = task.photo),
-                contentDescription = null,
-                modifier = Modifier
+                    painter = rememberAsyncImagePainter(model = task.photo),
+                    contentDescription = null,
+                    modifier = Modifier
 
-                    .size(300.dp)
-                    .clip(RoundedCornerShape(10.dp))
-            )
+                        .size(300.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                )
 
                 Text(text = "Mission: ${task.mession}", fontSize = 24.sp)
 
+            }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                )
+                {
+
+                    IconButton(
+                        modifier = Modifier.padding(top = 3.dp),
+                        onClick = {
+                            deleteData("$roomId", "${task.id}" )
+                          //  deleteUserFromRoomAsync
+                        },
+                    ){
+                        Icon(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .width(60.dp),
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete",
+                            tint = Color.Red // Цвет иконки
+                        )
+                    }
+
+
+                    Text(text = "Delete", fontSize = 24.sp, modifier = Modifier.padding(top = 10.dp))
+
+                    IconButton(
+                        modifier = Modifier.padding(top = 15.dp),
+                        onClick = {
+                            deleteData("$roomId", "${task.id}" )
+                            // Ваш код, который будет выполнен при нажатии кнопки
+                        },
+
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .width(60.dp),
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Delete",
+                            tint = Color.Green // Цвет иконки
+                        )
+
+                    }
+                    Text(text = "finished", fontSize = 24.sp, modifier = Modifier.padding(top = 20.dp))
+
+                }
 
             }
         }
-    }
 
 
 
-@Preview(showBackground = true)
+
+
+
+        fun deleteData(id: String, roomId: String) {
+            // Запускаем корутину
+            CoroutineScope(Dispatchers.IO).launch {
+                // Создаем Retrofit клиент
+                val retrofit = Retrofit.Builder()
+                    .baseUrl("https://getpost-ilya1.up.railway.app/")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build()
+
+                // Создаем API интерфейс
+                val api = retrofit.create(Apidelte::class.java)
+
+                // Вызываем suspend функцию внутри корутины
+                try {
+                    val response = api.delete(id, roomId)
+                    if (response.isSuccessful) {
+                        // Комната удалена
+                        Log.d("deleteRequest", "Комната удалена")
+                    } else {
+                        // Ошибка
+                        Log.e("deleteRequest", "Ошибка удаления комнаты: ${response.message()}")
+                    }
+                } catch (e: Exception) {
+                    // Ошибка
+                    Log.e("deleteRequest", "Ошибка удаления комнаты: ${e.message}")
+                }
+            }
+        }
+
+        // ... }
+
+
+
+
+
+
+
+    @Preview(showBackground = true)
     @Composable
     fun addtask(){
 

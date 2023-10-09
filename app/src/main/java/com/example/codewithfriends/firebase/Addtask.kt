@@ -145,18 +145,24 @@ class Addtask : ComponentActivity() {
                 ) {
                     LazyColumn(modifier = Modifier.fillMaxSize()){
                         item {
+                            Spacer(modifier = Modifier.height(10.dp))
                             addgitbreanch()
                         }
                         item {
+                            Spacer(modifier = Modifier.height(20.dp))
                             filename()
                         }
                         item {
+                            Spacer(modifier = Modifier.height(20.dp))
                             AddImage()
+
                         }
                         item {
+                            Spacer(modifier = Modifier.height(20.dp))
                             whatineedtodo()
                         }
                         item {
+                            Spacer(modifier = Modifier.height(20.dp))
                             addtask(storedRoomId!!)
                         }
 
@@ -425,7 +431,12 @@ class Addtask : ComponentActivity() {
 
 
     }
+    fun generateUniqueId(): String {
+        val characters = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+        return List(10) { characters.random() }.joinToString("")
+    }
 
+    val uniqueId = generateUniqueId()
 
     @Composable
     fun addtask(roomid: String){
@@ -440,10 +451,11 @@ class Addtask : ComponentActivity() {
                     "gitbranch" to gitbreanch,
                     "filename" to filename,
                     "photo" to photo,
-                    "mession" to mession
+                    "mession" to mession,
+                    "id" to uniqueId
                 )
 
-                    sendPostRequest("$roomid", photo, gitbreanch, filename, mession)
+                    sendPostRequest("$roomid", photo, gitbreanch, filename, mession, uniqueId)
                 
                 myRef.setValue(values)
             }
@@ -462,8 +474,6 @@ class Addtask : ComponentActivity() {
 
 
     private fun uploadImageToFirebaseStorage(selectedImageUri: Uri, roomid: String) {
-
-
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
 
@@ -480,13 +490,16 @@ class Addtask : ComponentActivity() {
             if (task.isSuccessful) {
                 // Get the download URL from the task result
                 imageRef.downloadUrl.addOnSuccessListener { uri ->
-                    photo = uri.toString()
+                    val downloadUrl = uri.toString()
+
+                    // Сохраняем URL изображения в глобальной переменной photo
+                    photo = downloadUrl
+
                     // Do something with the URL, such as save it to Firestore
 
                     // Покажите Toast об успешной загрузке
                     showToast("Фотография успешно загружена!")
                     showCircle = true
-
                 }
             } else {
                 // Handle unsuccessful upload
@@ -497,6 +510,7 @@ class Addtask : ComponentActivity() {
         }
     }
 
+
     private fun showToast(message: String) {
         // Вывести Toast с заданным сообщением
         Toast.makeText(this@Addtask, message, Toast.LENGTH_SHORT).show()
@@ -505,7 +519,7 @@ class Addtask : ComponentActivity() {
 
 
 
-    fun sendPostRequest(roomId: String, imageUrl: String, gitbranch: String, filename: String, mession: String) {
+    fun sendPostRequest(roomId: String, imageUrl: String, gitbranch: String, filename: String, mession: String, id: String) {
         // Создайте экземпляр Retrofit
         val retrofit = Retrofit.Builder()
             .baseUrl("https://getpost-ilya1.up.railway.app/")
@@ -516,7 +530,7 @@ class Addtask : ComponentActivity() {
         val apiService = retrofit.create(ApiService::class.java)
 
         // Создайте объект TaskRequest
-        val request = TaskRequest(gitbranch, filename, imageUrl, mession)
+        val request = TaskRequest(gitbranch, filename, imageUrl, mession, id)
 
         // Отправьте POST-запрос с передачей roomId в качестве параметра пути
         val call = apiService.sendTaskRequest(roomId, request)
