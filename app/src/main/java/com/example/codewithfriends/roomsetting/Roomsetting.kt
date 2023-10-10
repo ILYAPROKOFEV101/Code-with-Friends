@@ -79,6 +79,7 @@ import com.android.volley.toolbox.Volley
 import com.example.codewithfriends.Aboutusers.Aboutuser
 import com.example.codewithfriends.R
 import com.example.codewithfriends.Startmenu.Main_menu
+import com.example.codewithfriends.chats.Chat
 import com.example.codewithfriends.createamspeck.TeamSpeak
 import com.example.codewithfriends.findroom.Room
 import com.example.codewithfriends.chats.Message
@@ -132,11 +133,15 @@ class Roomsetting : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
+
+        val intent = intent
+        val roomUrl = intent.getStringExtra("url")
+
         storedRoomId = getRoomId(this)
 
 
         setContent {
-
 
 
 
@@ -174,7 +179,7 @@ class Roomsetting : ComponentActivity() {
 
             LazyColumn {
                 item {
-                    icon()
+                    icon("$roomUrl")
                     Spacer(modifier = Modifier.height(30.dp))
                 }
 
@@ -214,7 +219,7 @@ class Roomsetting : ComponentActivity() {
     }
 
     @Composable
-    fun icon() {
+    fun icon(roomUrl: String) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -224,15 +229,23 @@ class Roomsetting : ComponentActivity() {
             shape = RoundedCornerShape(180.dp), // Применяем закругленные углы к Card
             elevation = CardDefaults.cardElevation(defaultElevation = 20.dp)
         ) {
+
             Image(
-                painter = painterResource(id = R.drawable.android),
+                painter = if (roomUrl.isNotEmpty()) {
+                    // Load image from URL
+                    rememberImagePainter(data = roomUrl)
+                } else {
+                    // Load a default image when URL is empty
+                    painterResource(id = R.drawable.android) // Replace with your default image resource
+                },
                 contentDescription = null,
-                contentScale = ContentScale.Fit, // Здесь задается contentScale
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .width(200.dp)
-                    .padding(40.dp)
+                    .size(270.dp)
+                    .clip(RoundedCornerShape(40.dp)),
+                contentScale = ContentScale.Crop
             )
+
+
         }
     }
 

@@ -71,6 +71,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
+import com.example.codewithfriends.Aboutusers.Aboutuser
 import com.example.codewithfriends.R
 import com.example.codewithfriends.chats.Chat
 
@@ -82,6 +83,7 @@ import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.codewithfriends.presentation.sign_in.UserData
+import com.example.codewithfriends.roomsetting.Roomsetting
 import com.example.codewithfriends.roomsetting.TaskData
 import com.example.reaction.logik.PreferenceHelper
 import com.example.reaction.logik.PreferenceHelper.saveRoomId
@@ -281,11 +283,14 @@ class FindRoom : ComponentActivity() {
                     {
                             Button(
                                 onClick = {
+                                    val intent = Intent(this@FindRoom, Chat::class.java)
+                                    intent.putExtra(
+                                        "url",
+                                       room.url
+                                    ) // Здесь вы добавляете данные в Intent
+                                    startActivity(intent)
                                 goToChatActivity(room.id)
                                 showCircle = !showCircle
-
-                                    val intent = Intent(this@FindRoom, Chat::class.java)
-                                    startActivity(intent)
 
 
                             },

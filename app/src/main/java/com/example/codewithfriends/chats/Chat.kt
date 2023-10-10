@@ -118,8 +118,8 @@ class Chat : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
 
-
-
+        val intent = intent
+        val roomUrl = intent.getStringExtra("url")
 
         storedRoomId = getRoomId(this)
 
@@ -146,7 +146,7 @@ class Chat : ComponentActivity() {
                         userData = googleAuthUiClient.getSignedInUser()
                     )
 
-                    upbar(storedRoomId!!, "$id", "$name", "$img")
+                    upbar(storedRoomId!!, "$id", "$name", "$img", "$roomUrl")
 
                     if (storedRoomId != null) {
                         getData(storedRoomId!!, "$id", "$name")
@@ -577,7 +577,7 @@ class Chat : ComponentActivity() {
 
 
     @Composable
-    fun upbar(roomId: String, id: String, name: String, img: String){
+    fun upbar(roomId: String, id: String, name: String, img: String, url: String){
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -592,6 +592,10 @@ class Chat : ComponentActivity() {
                         shape = RoundedCornerShape(30.dp),
                         onClick = {
                             val intent = Intent(this@Chat, Roomsetting::class.java)
+                            intent.putExtra(
+                                "url",
+                                url
+                            ) // Здесь вы добавляете данные в Intent
                             startActivity(intent)
                         }
                     ) {
