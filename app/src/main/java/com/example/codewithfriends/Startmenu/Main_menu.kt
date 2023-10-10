@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -43,6 +44,7 @@ import androidx.compose.ui.text.TextStyle
 
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.example.codewithfriends.Activity.theme.CreativyRoom
 import com.example.codewithfriends.R
@@ -64,10 +66,23 @@ class Main_menu : ComponentActivity() {
             oneTapClient = Identity.getSignInClient(applicationContext)
         )
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Create_Acount()
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                item{
+                    Create_Acount()
+                }
+                item{
+                    Edit()
+                }
+                item {
+                    Button()
+                }
+
+            }
+
         }
     }
 
@@ -75,19 +90,15 @@ class Main_menu : ComponentActivity() {
     @Preview(showBackground = true)
     @Composable
     fun Create_Acount() {
-        var text by remember { mutableStateOf("") }
-        val focusRequester = remember { FocusRequester() }
-        val keyboardController = LocalSoftwareKeyboardController.current
-        val joinroom: Color = colorResource(id = R.color.joinroom)
-        val creatroom: Color = colorResource(id = R.color.creatroom)
-        var textSize by remember { mutableStateOf(24.sp) } // Состояние для хранения размера текста
-            //   val userText = getUserText(context) // userText содержит "Привет, это текстовые данные пользователя!"
-        var userText = ""
+
+        //   val userText = getUserText(context) // userText содержит "Привет, это текстовые данные пользователя!"
+        val userText = ""
         PreferenceHelper.setUserText(this, userText)
 
         Column(
             modifier = Modifier // общий элемент
-                .fillMaxSize()
+                .fillMaxWidth()
+                .height(150.dp)
         )
         {
             Row(
@@ -130,64 +141,117 @@ class Main_menu : ComponentActivity() {
                             .height(55.dp)
 
                     ) {
-                        Text(
+                       /* Text(
                             text = stringResource(id = R.string.age),
                             modifier = Modifier.fillMaxSize(),
                             fontSize = 24.sp
-                        )
+                        )*/
                     }
                 }
             }
+        }
+    }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 5.dp, end = 5.dp)
-                    .wrapContentHeight()
-                    .wrapContentSize(align = Alignment.Center) // Выравнивание Box по центру экрана
-            ) {
+    @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+    @Composable
+    fun Edit()
+    {
+        var text by remember { mutableStateOf("") }
+        val focusRequester = remember { FocusRequester() }
+        val keyboardController = LocalSoftwareKeyboardController.current
+        val textSize by remember { mutableStateOf(24.sp) } // Состояние для хранения размера текста
+        //   val userText = getUserText(context) // userText содержит "Привет, это текстовые данные пользователя!"
+        val userText = ""
+        PreferenceHelper.setUserText(this, userText)
 
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 5.dp, end = 5.dp)
+                .height(780.dp)
+                .wrapContentSize(align = Alignment.Center) // Выравнивание Box по центру экрана
+        ) {
 
-                TextField(
-                    value = text, // Текущее значение текста в поле
-                    onValueChange = { text = it }, // Обработчик изменения текста, обновляющий переменную "text"
-                    textStyle = TextStyle(fontSize = textSize),
-                   // textStyle = TextStyle.Default, // Стиль текста, используемый в поле ввода (используется стандартный стиль)
+    item {
 
-                    colors = TextFieldDefaults.textFieldColors(
-                        focusedIndicatorColor = Color.Transparent, // Цвет индикатора при фокусе на поле (прозрачный - отключает индикатор)
-                        unfocusedIndicatorColor = Color.Transparent, // Цвет индикатора при потере фокуса на поле (прозрачный - отключает индикатор)
-                        disabledIndicatorColor = Color.Transparent, // Цвет индикатора, когда поле неактивно (прозрачный - отключает индикатор)
-                                containerColor = Color.White
-                    ),
+        TextField(
+            value = text, // Текущее значение текста в поле
+            onValueChange = {
+                text = it
+            }, // Обработчик изменения текста, обновляющий переменную "text"
+            textStyle = TextStyle(fontSize = textSize),
+            // textStyle = TextStyle.Default, // Стиль текста, используемый в поле ввода (используется стандартный стиль)
 
-                    label = { // Метка, которая отображается над полем ввода
-                        Text(text = stringResource(id = R.string.aboutyou),fontSize = 20.sp)
-                    },
+            colors = TextFieldDefaults.textFieldColors(
+                focusedIndicatorColor = Color.Transparent, // Цвет индикатора при фокусе на поле (прозрачный - отключает индикатор)
+                unfocusedIndicatorColor = Color.Transparent, // Цвет индикатора при потере фокуса на поле (прозрачный - отключает индикатор)
+                disabledIndicatorColor = Color.Transparent, // Цвет индикатора, когда поле неактивно (прозрачный - отключает индикатор)
+                containerColor = Color.White
+            ),
 
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = ImeAction.Done, // Действие на кнопке "Готово" на клавиатуре (закрытие клавиатуры)
-
-                        keyboardType = KeyboardType.Text // Тип клавиатуры (обычный текст)
-                    ),
-
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            keyboardController?.hide() // Обработчик действия при нажатии на кнопку "Готово" на клавиатуре (скрыть клавиатуру)
-
-                        }
-                    ),
-
-                    modifier = Modifier
-                        .fillMaxSize() // Занимает все доступное пространство по ширине и высоте
-                        .clip(RoundedCornerShape(30.dp)) // Закругление углов поля
-                        .background(Color.LightGray) // Цвет фона поля
-                        .focusRequester(focusRequester = focusRequester) // Позволяет управлять фокусом поля ввода
+            label = { // Метка, которая отображается над полем ввода
+                Text(
+                    text = stringResource(id = R.string.aboutyou),
+                    fontSize = 20.sp,
+                    textAlign = TextAlign.Center
                 )
+            },
 
-            }}
-            Spacer(modifier = Modifier.height(20.dp))
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done, // Действие на кнопке "Готово" на клавиатуре (закрытие клавиатуры)
 
+                keyboardType = KeyboardType.Text // Тип клавиатуры (обычный текст)
+            ),
+
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    keyboardController?.hide() // Обработчик действия при нажатии на кнопку "Готово" на клавиатуре (скрыть клавиатуру)
+
+                }
+            ),
+
+            modifier = Modifier
+                .fillMaxWidth() // Занимает все доступное пространство по ширине и высоте
+                .height(700.dp)
+                .clip(RoundedCornerShape(30.dp)) // Закругление углов поля
+                .background(Color.LightGray) // Цвет фона поля
+                .focusRequester(focusRequester = focusRequester) // Позволяет управлять фокусом поля ввода
+        )
+    }
+
+            item {
+
+                Spacer(modifier = Modifier.height(20.dp))
+                Button(
+                    colors = ButtonDefaults.buttonColors(Color.Magenta),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    onClick = {}
+                )
+                {
+                    Text(text = "Сохранить даные", fontSize = 24.sp)
+                }
+            }
+
+
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+
+
+
+
+            @OptIn(ExperimentalComposeUiApi::class)
+            @Composable
+            fun Button(){
+
+                val joinroom: Color = colorResource(id = R.color.joinroom)
+                val creatroom: Color = colorResource(id = R.color.creatroom)
+                //   val userText = getUserText(context) // userText содержит "Привет, это текстовые данные пользователя!"
+                val userText = ""
+                PreferenceHelper.setUserText(this, userText)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
