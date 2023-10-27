@@ -286,9 +286,14 @@ class FindRoom : ComponentActivity() {
                                     val intent = Intent(this@FindRoom, Chat::class.java)
                                     intent.putExtra(
                                         "url",
-                                       room.url
+                                       room.url,
+                                    )
+                                    intent.putExtra(
+                                        "Admin",
+                                        room.Admin
                                     ) // Здесь вы добавляете данные в Intent
                                     startActivity(intent)
+                                    finish() // Завершаем текущую активность
                                 goToChatActivity(room.id)
                                 showCircle = !showCircle
 

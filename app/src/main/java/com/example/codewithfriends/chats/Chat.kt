@@ -73,13 +73,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.rememberAsyncImagePainter
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.example.codewithfriends.Startmenu.Main_menu
 import com.example.codewithfriends.createamspeck.ui.theme.CodeWithFriendsTheme
+import com.example.codewithfriends.findroom.FindRoom
 import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.codewithfriends.roomsetting.Roomsetting
 import com.google.android.gms.auth.api.identity.Identity
+import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
@@ -100,6 +105,8 @@ class Chat : ComponentActivity() {
 
     private lateinit var webSocketClient: WebSocketClient
     var show = mutableStateOf(false)
+    var kick = mutableStateOf(false)
+
     var developers = mutableStateOf(false)
 
     private val googleAuthUiClient by lazy {
@@ -118,10 +125,36 @@ class Chat : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
 
+            FirebaseMessaging.getInstance().token.addOnCompleteListener{ task ->
+                if (!task.isSuccessful){
+                    return@addOnCompleteListener
+                }
+
+                val token = task.result
+                Log.e("Tag" , "Token -> $token")
+
+            }
+        val name = UID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        val img = IMG(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        val id = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        storedRoomId = getRoomId(this)
+
+
+
+        userexsist(storedRoomId!!, "$id")
+
+
         val intent = intent
         val roomUrl = intent.getStringExtra("url")
+        val Admin = intent.getStringExtra("Admin")
 
-        storedRoomId = getRoomId(this)
+
 
 
 
@@ -146,10 +179,11 @@ class Chat : ComponentActivity() {
                         userData = googleAuthUiClient.getSignedInUser()
                     )
 
-                    upbar(storedRoomId!!, "$id", "$name", "$img", "$roomUrl")
+                    upbar(storedRoomId!!, "$id", "$name", "$img", "$roomUrl", "$Admin")
 
                     if (storedRoomId != null) {
                         getData(storedRoomId!!, "$id", "$name")
+
                     }
 
                     Spacer(modifier = Modifier.height(100.dp))
@@ -173,6 +207,9 @@ class Chat : ComponentActivity() {
 
 
 
+    }
+    private fun restartActivity() {
+        recreate()
     }
 
     private fun sendMessage(message: String) {
@@ -238,12 +275,16 @@ class Chat : ComponentActivity() {
         )
 
         // Автоматическое подключение при входе в активность
-        setupWebSocket(storedRoomId!!, "$ids", "$img", "$name")
+        setupWebSocket(storedRoomId!!, "$name", "$img", "$ids")
+        println("подключение ")
     }
 
 
 
-    private  fun setupWebSocket(roomId: String, username: String, url: String, id: String) {
+
+
+
+    private fun setupWebSocket(roomId: String, username: String, url: String, id: String) {
         if (!isConnected) {
             try {
                 val request: Request = Request.Builder()
@@ -267,7 +308,6 @@ class Chat : ComponentActivity() {
                         Log.d("WebSocket", "Received message: $text")
                     }
 
-
                     override fun onOpen(webSocket: WebSocket, response: Response) {
                         isConnected = true
                     }
@@ -290,6 +330,18 @@ class Chat : ComponentActivity() {
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // Проверяем, если WebSocket соединение активно, то закрываем его
+        if (isConnected) {
+            webSocket?.close(1000, "User closed the connection")
+            isConnected = false
+        }
+    }
+
+
 
     private fun showToast(message: String) {
         // Вывести Toast с заданным сообщением
@@ -366,7 +418,6 @@ class Chat : ComponentActivity() {
                     items(messages) { message ->
                         val isMyMessage = message.sender == url
                         val isMyUrlMessage = message.content.contains(currentUserUrl)
-
 
 
 
@@ -458,6 +509,45 @@ class Chat : ComponentActivity() {
 
                     // Обновляем значение MutableState<Boolean>
                     show.value = trueOrFalse
+                } else {
+                    // Ошибка
+                    Log.e("getData", "Ошибка получения данных: ${response.code}")
+                }
+            }
+        })
+    }
+    private fun userexsist(roomId: String, uid: String) {
+        // Создаем клиент OkHttp
+        val client = OkHttpClient()
+
+        // Создаем запрос
+        val request = Request.Builder()
+            .url("https://getpost-ilya1.up.railway.app/kickuser/$roomId/$uid")
+            .build()
+
+        // Выполняем запрос
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                // Ошибка
+                Log.e("getData", e.message ?: "Неизвестная ошибка")
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: Response) {
+                if (response.isSuccessful) {
+                    // Получаем данные
+                    val data = response.body!!.string()
+                    val trueOrFalse = data.toBoolean()
+
+
+                    // Обновляем значение MutableState<Boolean>
+                    kick.value = trueOrFalse
+
+                    if(kick.value == true){
+                        val intent = Intent(this@Chat, FindRoom::class.java)
+                        startActivity(intent)
+                        finish() // Завершаем текущую активность
+                    }
+
                 } else {
                     // Ошибка
                     Log.e("getData", "Ошибка получения данных: ${response.code}")
@@ -560,7 +650,10 @@ class Chat : ComponentActivity() {
                         if (show.value) {
                             submittedText = text
                             text = ""
-                            onSendMessage(submittedText) // Вызываем функцию для отправки сообщения
+                            if(submittedText != " "){
+                                onSendMessage(submittedText) // Вызываем функцию для отправки сообщения
+                            }
+
                         }
                     }
                 ) {
@@ -577,7 +670,7 @@ class Chat : ComponentActivity() {
 
 
     @Composable
-    fun upbar(roomId: String, id: String, name: String, img: String, url: String){
+    fun upbar(roomId: String, id: String, name: String, img: String, url: String, Admin: String){
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -595,6 +688,10 @@ class Chat : ComponentActivity() {
                             intent.putExtra(
                                 "url",
                                 url
+                            )
+                            intent.putExtra(
+                                "Admin",
+                                Admin
                             ) // Здесь вы добавляете данные в Intent
                             startActivity(intent)
                         }
@@ -614,6 +711,8 @@ class Chat : ComponentActivity() {
                             shape = RoundedCornerShape(30.dp),
                             onClick = {
                                 pushData(roomId,"$id", "$name","$img",)
+
+                                restartActivity()
                             }
                         ) {
                             Text(text = stringResource(id = R.string.room), fontSize = 24.sp)
@@ -627,17 +726,4 @@ class Chat : ComponentActivity() {
             }
         }
 
-
-
-
-
-
-
-
 }
-
-
-
-
-
-

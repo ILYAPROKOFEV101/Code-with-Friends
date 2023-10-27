@@ -13,3 +13,13 @@ data class DeleteRequest(
     val roomId: String,
     val id: String
 )
+
+data class ids(
+    val socketid: String,
+    val ids: String,
+    val uids: String,
+)
+
+
+
+

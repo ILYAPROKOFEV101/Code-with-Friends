@@ -34,6 +34,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 
 
@@ -49,13 +52,20 @@ import androidx.compose.ui.unit.sp
 import com.example.codewithfriends.Activity.theme.CreativyRoom
 import com.example.codewithfriends.R
 import com.example.codewithfriends.findroom.FindRoom
+import com.example.codewithfriends.firebase.TaskRequest
+import com.example.codewithfriends.presentation.profile.ID
+import com.example.codewithfriends.presentation.profile.IMG
 
 import com.example.codewithfriends.presentation.profile.ProfileIcon
 import com.example.codewithfriends.presentation.profile.ProfileName
+import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.reaction.logik.PreferenceHelper
 
 import com.google.android.gms.auth.api.identity.Identity
+import retrofit2.Call
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 
 class Main_menu : ComponentActivity() {
@@ -67,15 +77,29 @@ class Main_menu : ComponentActivity() {
         )
     }
 
+    var aboutme by mutableStateOf("")
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
+
+                val name = UID(
+                    userData = googleAuthUiClient.getSignedInUser()
+                )
+                val img = IMG(
+                    userData = googleAuthUiClient.getSignedInUser()
+                )
+                val id = ID(
+                    userData = googleAuthUiClient.getSignedInUser()
+                )
+
                 item{
                     Create_Acount()
                 }
                 item{
-                    Edit()
+                    Edit("$id", "$img", "$name")
                 }
                 item {
                     Button()
@@ -86,7 +110,7 @@ class Main_menu : ComponentActivity() {
         }
     }
 
-    @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+
     @Preview(showBackground = true)
     @Composable
     fun Create_Acount() {
@@ -154,7 +178,7 @@ class Main_menu : ComponentActivity() {
 
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
     @Composable
-    fun Edit()
+    fun Edit(uid : String, img : String, name: String)
     {
         var text by remember { mutableStateOf("") }
         val focusRequester = remember { FocusRequester() }
@@ -173,7 +197,6 @@ class Main_menu : ComponentActivity() {
         ) {
 
     item {
-
         TextField(
             value = text, // Текущее значение текста в поле
             onValueChange = {
@@ -206,7 +229,7 @@ class Main_menu : ComponentActivity() {
             keyboardActions = KeyboardActions(
                 onDone = {
                     keyboardController?.hide() // Обработчик действия при нажатии на кнопку "Готово" на клавиатуре (скрыть клавиатуру)
-
+                    aboutme = text
                 }
             ),
 
@@ -223,15 +246,24 @@ class Main_menu : ComponentActivity() {
 
                 Spacer(modifier = Modifier.height(20.dp))
                 Button(
-                    colors = ButtonDefaults.buttonColors(Color.Magenta),
+                    colors = ButtonDefaults.buttonColors(Color.Red),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
                     shape = RoundedCornerShape(20.dp),
-                    onClick = {}
+                    onClick = {
+                        sendPostRequest("$uid", "$img", "$name")
+                    }
                 )
                 {
                     Text(text = "Сохранить даные", fontSize = 24.sp)
+                    Icon(
+                        modifier = Modifier
+                            .width(60.dp),
+                        imageVector = Icons.Default.Save,
+                        contentDescription = "Delete",
+ // Цвет иконки
+                    )
                 }
             }
 
@@ -256,8 +288,8 @@ class Main_menu : ComponentActivity() {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(start = 5.dp, end = 5.dp),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.CenterHorizontally
+                        verticalArrangement = Arrangement.Bottom,
+                        horizontalAlignment = Alignment.CenterHorizontally
 
                 ) {
 
@@ -273,13 +305,14 @@ class Main_menu : ComponentActivity() {
                             .height(80.dp)
                         ,
                         shape = RoundedCornerShape(20.dp),
-                    ) {
+                    )
+                    {
                         Text(text = stringResource(id = R.string.creatroom),fontSize = 24.sp)
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    Button( colors = ButtonDefaults.buttonColors(joinroom),
+                    Button( colors = ButtonDefaults.buttonColors(Color.Blue),
                         onClick = {
                             val intent = Intent(this@Main_menu, CreativyRoom::class.java)
                             startActivity(intent)
@@ -294,12 +327,35 @@ class Main_menu : ComponentActivity() {
                     }
                 Spacer(modifier = Modifier.height(10.dp))
                 }
+            }
 
+    fun sendPostRequest(uid : String, img : String, name: String) {
+        // Создайте экземпляр Retrofit
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://getpost-ilya1.up.railway.app/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
 
-        }
+        // Создайте экземпляр службы API
+        val apiService = retrofit.create(Apiuser::class.java)
+
+        // Создайте объект TaskRequest
+        val request = User("$aboutme", 17, "$uid", "$img" )
+
+        // Отправьте POST-запрос с передачей roomId в качестве параметра пути
+        val call = apiService.Sanduser("$uid", request)
+        call.enqueue(object : retrofit2.Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: retrofit2.Response<Void>) {
+                if (response.isSuccessful) {
+                    // Запрос успешно отправлен
+                    // Можете выполнить какие-либо дополнительные действия здесь
+                } else {
+                    // Обработайте ошибку, если есть
+                }
+            }
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                // Обработайте ошибку при отправке запроса
+            }
+        })
     }
-
-
-
-
-
+    }
