@@ -13,6 +13,8 @@
     <string name="Icon">Загрузить фото комнаты </string>
     <string name="room">Зайти в комнату</string>
     <string name="outroom">задания</string>
+    <string name="create">create room</string>
+    <string name="name">name of your room</string>
 
     <string name="reactionresult">Reaction Result</string>
     <string name="singout">Sign out</string>

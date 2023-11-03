@@ -597,16 +597,11 @@ class Roomsetting : ComponentActivity() {
     @Composable
     fun userinroom(participantsState: List<Participant>, Admin: String, uids: String) {  // this fun mean how match users in room
         val cornerShape: Shape = RoundedCornerShape(20.dp) // устанавливаем радиус закругления углов
-        var uid by remember {
-            mutableStateOf("") }
+
         var shows by remember {
             mutableStateOf(false)
         }
-        if(shows == true) {
-            if(uid != ""){
-                DeleteAlertDialog("${storedRoomId!!}", "$uid", )
-            }
-        }
+
 
         LazyRow(modifier = Modifier
             .fillMaxWidth()
@@ -646,8 +641,10 @@ class Roomsetting : ComponentActivity() {
                                         fontSize = 24.sp,
                                         modifier = Modifier.padding(top = 30.dp)
                                     )
+                                    if(shows == true) {
+                                            DeleteAlertDialog("${storedRoomId!!}", "${participant.userId}", )
+                                    }
 
-                                    uid = "${participant.userId}"
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Box(modifier = Modifier)
                                     Button(
@@ -679,7 +676,6 @@ class Roomsetting : ComponentActivity() {
                                                 .height(50.dp),
                                             shape = RoundedCornerShape(10.dp),
                                             onClick = {
-
                                                 shows = true
                                             }) {
                                             Text(

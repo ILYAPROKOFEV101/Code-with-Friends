@@ -12,6 +12,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,6 +35,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,10 +52,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -61,6 +69,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberImagePainter
 import com.example.codewithfriends.R
 import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.UID
@@ -141,6 +150,12 @@ class CreativyRoom : ComponentActivity() {
 
 
             LazyColumn {
+
+                item {
+                    AddImage()
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
+
                 item {
                     Creator()
                 }
@@ -178,10 +193,7 @@ class CreativyRoom : ComponentActivity() {
                     WriteDb()
                     Spacer(modifier = Modifier.height(30.dp))
                 }
-                item {
-                    AddImage()
-                    Spacer(modifier = Modifier.height(20.dp))
-                }
+
             }
 
 
@@ -198,16 +210,11 @@ class CreativyRoom : ComponentActivity() {
         var show by remember {
             mutableStateOf(false) }
 
-        var  name by remember {
-            mutableStateOf("")
-        }
-
-
 
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(130.dp)
+                .height(200.dp)
                 .padding(top = 30.dp, start = 10.dp, end = 10.dp)
                 .clip(RoundedCornerShape(30.dp))
         ) {
@@ -229,10 +236,10 @@ class CreativyRoom : ComponentActivity() {
                 label = { // Метка, которая отображается над полем ввода
 
                     Text(
-                        text = if (!show) stringResource(id = R.string.Nameofroom) else "",
-                        fontSize = 30.sp,
+                        text = if (!show) stringResource(id = R.string.name) else "",
+                        fontSize = 24.sp,
                         color = Color.Black,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()
                     )
 
                 },
@@ -264,13 +271,13 @@ class CreativyRoom : ComponentActivity() {
     fun LanguagePicker() {
         var expanded by remember { mutableStateOf(false) }
 
-        Box(
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(130.dp)
-                .padding(top = 20.dp, start = 10.dp, end = 10.dp)
                 .clip(RoundedCornerShape(30.dp))
-                .clickable { expanded = true }
+                .clickable { expanded = true },
+            colors = CardDefaults.cardColors(Color.White),
         ) {
             if (selectedLanguage.isEmpty()) {
                 Text(
@@ -284,17 +291,20 @@ class CreativyRoom : ComponentActivity() {
                     text = selectedLanguage,
                     fontSize = 24.sp,
                     textAlign = TextAlign.Center, // Здесь задаем выравнивание по центру
-                    color = Color.Black, modifier = Modifier.align(Alignment.Center)
+                    color = Color.Black
+                    , modifier = Modifier.fillMaxWidth()
                 )
             }
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false }, modifier = Modifier
-                    .align(Alignment.Center)
+
                     .background(Color.White)
             ) {
                 languages.forEach { language ->
-                    DropdownMenuItem(onClick = {
+                    DropdownMenuItem(
+                       // modifier = Modifier.fillMaxSize().background(Color.White),
+                        onClick = {
                         selectedLanguage = language
                         expanded = false
                     }) {
@@ -302,7 +312,7 @@ class CreativyRoom : ComponentActivity() {
                             text = language,
                             fontSize = 24.sp,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(8.dp)
+                            modifier = Modifier.padding(8.dp).fillMaxWidth()
                         )
                     }
                 }
@@ -313,25 +323,24 @@ class CreativyRoom : ComponentActivity() {
     @Composable
     fun PlaceInRoomPicker() {
         var expanded by remember { mutableStateOf(false) }
-        Box(
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(130.dp)
-                .padding(top = 20.dp, start = 10.dp, end = 10.dp)
                 .clip(RoundedCornerShape(30.dp))
-                .clickable { expanded = true }
+                .clickable { expanded = true },
+            colors = CardDefaults.cardColors(Color.White),
         ) {
             Text(
                 text = if(selectedPlace < 2)stringResource(id = R.string.placeinroom) + " $selectedPlace" else "$selectedPlace",
                 fontSize = 24.sp,
                 textAlign = TextAlign.Center,
-                color = Color.Black, modifier = Modifier.align(Alignment.Center)
+                color = Color.Black, modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
             )
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 modifier = Modifier
-                    .align(Alignment.Center)
                     .background(Color.White)
             ) {
                 places.forEach { place ->
@@ -359,11 +368,12 @@ class CreativyRoom : ComponentActivity() {
         val keyboardControllers = LocalSoftwareKeyboardController.current
         var showtext by remember {
             mutableStateOf(false) }
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 20.dp, start = 10.dp, end = 10.dp)
-            .clip(RoundedCornerShape(30.dp))
-            .height(300.dp)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(400.dp)
+                .clip(RoundedCornerShape(30.dp)),
+            colors = CardDefaults.cardColors(Color.White),
         ){
             TextField(modifier = Modifier.fillMaxSize(),
                 value = texts, // Текущее значение текста в поле
@@ -382,7 +392,7 @@ class CreativyRoom : ComponentActivity() {
                         text = if (!showtext) stringResource(id = R.string.aboutroom) else "",
                         fontSize = 30.sp,
                         color = Color.Black,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center , modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
                     )
 
                 },
@@ -462,6 +472,7 @@ class CreativyRoom : ComponentActivity() {
     @Composable
     fun WriteDb(){
         val coroutineScope = rememberCoroutineScope()
+
         Button(onClick = {
             coroutineScope.launch {
                 pushData()
@@ -469,10 +480,12 @@ class CreativyRoom : ComponentActivity() {
 
         },modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp)
-            .clip(RoundedCornerShape(20.dp))
-            ,colors = ButtonDefaults.buttonColors(Color.Yellow),) {
-            Text(text = "загрузить на сервер",fontSize = 24.sp)
+            .height(100.dp)
+            .padding(start = 5.dp, end = 5.dp)
+            ,colors = ButtonDefaults.buttonColors(Color.Blue),
+            shape = RoundedCornerShape(20.dp),
+            ) {
+            Text(text = stringResource(id = R.string.create),fontSize = 24.sp)
         }
 
 
@@ -481,13 +494,21 @@ class CreativyRoom : ComponentActivity() {
     @Composable
     fun AddImage() {
 
-        Column(
+        var addimg by remember {
+            mutableStateOf(false)
+        }
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp)
+                .height(280.dp)
         ) {
+
+            if (photo.isNotEmpty()){
+                addimg = true
+            }
+            if (addimg == false){
             Button(
-                colors = ButtonDefaults.buttonColors(Color.Blue),
+                colors = ButtonDefaults.buttonColors(Color.White),
                 onClick = {
                     // Запуск активности выбора изображения
                     pickImage.launch("image/*")
@@ -495,29 +516,68 @@ class CreativyRoom : ComponentActivity() {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(80.dp)
-                    .clip(RoundedCornerShape(1.dp))
+                    .height(280.dp)
+                    .padding(bottom = 15.dp, top = 15.dp, start = 70.dp, end = 70.dp)
+
+                    //.alpha(0f) // Устанавливаем полную прозрачность кнопке
+                    .border(
+                        2.dp, Color.Blue,
+                        shape = RoundedCornerShape(180.dp)
+                    ) // Добавляем бордер шириной 1dp и черного цвета
+                    .clip(RoundedCornerShape(180.dp)),
+                shape = RoundedCornerShape(180.dp), // Применяем закругленные углы к Card
             ) {
-                if(showCircle){
-                    Text(text = stringResource(id = R.string.Icon), fontSize = 24.sp)
+                if (showCircle) {
+                    Text(
+                        text = stringResource(id = R.string.Icon),
+                        fontSize = 24.sp,
+                        style = TextStyle(color = Color.Blue)
+                    )
                 } else {
 
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        Text(text = " Дождитесь загрузки !!! ", fontSize = 24.sp)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = " Дождитесь загрузки !!! ",
+                            fontSize = 24.sp,
+                            style = TextStyle(color = Color.Blue)
+                        )
                         Spacer(modifier = Modifier.width(10.dp))
                         LoadingCircle()
                     }
                 }
-
-
-
             }
+            } else {
+                Image(
+                    painter = if (photo.isNotEmpty()) {
+                        // Load image from URL
+                        rememberImagePainter(data = photo)
+                    } else {
+                        // Load a default image when URL is empty
+                        painterResource(id = R.drawable.android) // Replace with your default image resource
+                    },
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(280.dp)
+                        .padding(bottom = 15.dp, top = 15.dp, start = 70.dp, end = 70.dp)
 
+                        //.alpha(0f) // Устанавливаем полную прозрачность кнопке
+                        .border(
+                            2.dp, Color.Blue,
+                            shape = RoundedCornerShape(180.dp)
+                        ) // Добавляем бордер шириной 1dp и черного цвета
+                        .clip(RoundedCornerShape(180.dp))
+                        .clickable {
+                            addimg = false
+                            showCircle = false
+                            photo = ""
+                        },
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
-
     }
     private fun uploadImageToFirebaseStorage(selectedImageUri: Uri, roomid: String) {
-
 
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
@@ -563,7 +623,7 @@ class CreativyRoom : ComponentActivity() {
     fun LoadingCircle() {
         Box(  modifier = Modifier
             .height(40.dp)
-
+            .background(Color.Blue)
 
             .wrapContentSize(Alignment.Center)
         ) {
@@ -583,10 +643,11 @@ class CreativyRoom : ComponentActivity() {
                 modifier = Modifier.size(40.dp)
             ) {
                 CircularProgressIndicator(
+
                     modifier = Modifier
                         .size(40.dp)
-                        .background(Color.Blue)
-                    //.rotate(rotation.value)
+                        .background(Color.White)
+
                 )
             }
         }
