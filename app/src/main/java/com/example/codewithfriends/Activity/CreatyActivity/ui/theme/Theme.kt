@@ -1,4 +1,4 @@
-package com.example.codewithfriends.Activity.theme.ui.theme
+package com.example.codewithfriends.Activity.CreatyActivity.ui.theme
 
 import android.app.Activity
 import android.os.Build

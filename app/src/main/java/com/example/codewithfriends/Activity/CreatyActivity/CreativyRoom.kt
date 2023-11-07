@@ -1,7 +1,8 @@
-package com.example.codewithfriends.Activity.theme
+package com.example.codewithfriends.Activity.CreatyActivity
 
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,9 +19,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -52,12 +51,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -71,26 +66,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
 import com.example.codewithfriends.R
+import com.example.codewithfriends.Startmenu.Apiuser
+import com.example.codewithfriends.Startmenu.User
 import com.example.codewithfriends.presentation.profile.ID
+import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.reaction.logik.PreferenceHelper
 import com.google.android.gms.auth.api.identity.Identity
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
-import java.net.URL
-import java.io.BufferedReader
-import java.io.DataOutputStream
-import java.io.InputStreamReader
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
 import java.util.UUID
 data class JsonRequest(val url: String)
@@ -114,6 +109,7 @@ class CreativyRoom : ComponentActivity() {
 
 
 
+
     val languages = listOf(
         "android development",
         "ios development",
@@ -126,8 +122,8 @@ class CreativyRoom : ComponentActivity() {
 
     val places = (2..5).toList()
 
-    var selectedPlace = 1
-    val selectedNumber = 1
+    var selectedPlace = 2
+    var selectedNumber = 0
   //  val uniqueAdmin = ""
 
     private var storedRoomId: String? = null // Объявляем на уровне класса
@@ -135,7 +131,7 @@ class CreativyRoom : ComponentActivity() {
     private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { selectedImageUri ->
             // Здесь вы можете загрузить изображение в Firebase Storage
-            uploadImageToFirebaseStorage(selectedImageUri, storedRoomId!!)
+            uploadImageToFirebaseStorage(selectedImageUri)
         }
     }
 
@@ -143,6 +139,13 @@ class CreativyRoom : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
+        val id = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+
+
+        getNumberFromServer("$id")
         storedRoomId = PreferenceHelper.getRoomId(this)
 
         setContent {
@@ -190,7 +193,7 @@ class CreativyRoom : ComponentActivity() {
 
 
                 item {
-                    WriteDb()
+                    WriteDb("$id")
                     Spacer(modifier = Modifier.height(30.dp))
                 }
 
@@ -281,10 +284,10 @@ class CreativyRoom : ComponentActivity() {
         ) {
             if (selectedLanguage.isEmpty()) {
                 Text(
-                    text = "Выберите язык программирования",
+                    text = stringResource(id = R.string.chooselenguage),
                     fontSize = 24.sp,
                     textAlign = TextAlign.Center, // Здесь задаем выравнивание по центру
-                    color = Color.Black
+                    color = Color.Black, modifier = Modifier.fillMaxWidth()
                 )
             } else {
                 Text(
@@ -312,7 +315,9 @@ class CreativyRoom : ComponentActivity() {
                             text = language,
                             fontSize = 24.sp,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(8.dp).fillMaxWidth()
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .fillMaxWidth()
                         )
                     }
                 }
@@ -335,7 +340,9 @@ class CreativyRoom : ComponentActivity() {
                 text = if(selectedPlace < 2)stringResource(id = R.string.placeinroom) + " $selectedPlace" else "$selectedPlace",
                 fontSize = 24.sp,
                 textAlign = TextAlign.Center,
-                color = Color.Black, modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
+                color = Color.Black, modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp)
             )
             DropdownMenu(
                 expanded = expanded,
@@ -392,7 +399,9 @@ class CreativyRoom : ComponentActivity() {
                         text = if (!showtext) stringResource(id = R.string.aboutroom) else "",
                         fontSize = 30.sp,
                         color = Color.Black,
-                        textAlign = TextAlign.Center , modifier = Modifier.fillMaxWidth().padding(top = 20.dp)
+                        textAlign = TextAlign.Center , modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 20.dp)
                     )
 
                 },
@@ -469,14 +478,34 @@ class CreativyRoom : ComponentActivity() {
 
 
 
+
+
     @Composable
-    fun WriteDb(){
+    fun WriteDb(uid: String){
         val coroutineScope = rememberCoroutineScope()
 
-        Button(onClick = {
-            coroutineScope.launch {
-                pushData()
-            }
+        Button(
+
+            onClick = {
+                if(selectedNumber <= 0) {
+                    if (
+                        uniqueId != "" &&
+                        selectedLanguage != "" &&
+                        selectedPlace != null && text != "" && texts != "" && photo != ""
+
+
+                    ) {
+
+                        sendPostRequest(uid)
+                        coroutineScope.launch {
+                            pushData()
+                        }
+                    } else {
+                        showToast(getString(R.string.datainbalank))
+                    }
+                }else {
+                    showToast(getString(R.string.myroom))
+                }
 
         },modifier = Modifier
             .fillMaxWidth()
@@ -577,8 +606,75 @@ class CreativyRoom : ComponentActivity() {
             }
         }
     }
-    private fun uploadImageToFirebaseStorage(selectedImageUri: Uri, roomid: String) {
 
+
+    fun sendPostRequest(uid : String) {
+        // Создайте экземпляр Retrofit
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://getpost-ilya1.up.railway.app/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        // Создайте экземпляр службы API
+        val apiService = retrofit.create(Post::class.java)
+
+
+
+        // Отправьте POST-запрос с передачей roomId в качестве параметра пути
+        val call = apiService.Sanduser("$uid")
+        call.enqueue(object : retrofit2.Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: retrofit2.Response<Void>) {
+                if (response.isSuccessful) {
+                    // Запрос успешно отправлен
+                    // Можете выполнить какие-либо дополнительные действия здесь
+                } else {
+                    // Обработайте ошибку, если есть
+                }
+            }
+            override fun onFailure(call: Call<Void>, t: Throwable) {
+                // Обработайте ошибку при отправке запроса
+            }
+        })
+    }
+
+    // Функция для выполнения запроса к серверу и обработки ответа и ошибок
+        fun getNumberFromServer(uid: String) {
+        // Создание объекта Retrofit
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://getpost-ilya1.up.railway.app/") // Замените BASE_URL_OF_YOUR_SERVER на базовый URL вашего сервера
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        // Инициализация объекта ApiService
+        val apiService: ApiService = retrofit.create(ApiService::class.java)
+
+        // Выполнение запроса к серверу
+        val call: Call<Int> = apiService.getNumber(uid)
+
+        call.enqueue(object : Callback<Int> {
+            override fun onResponse(call: Call<Int>, response: Response<Int>) {
+                if (response.isSuccessful) {
+                    val number: Int = response.body() ?: 0 // Получаем число с сервера (0, 1)
+                    // Данные успешно получены с сервера. Вызовите функцию onSuccess и передайте значение number.
+                    selectedNumber = number
+                } else {
+                    // Ошибка: сервер вернул неуспешный статус код. Вызовите функцию onError с сообщением об ошибке.
+
+                }
+            }
+
+            override fun onFailure(call: Call<Int>, t: Throwable) {
+                // Ошибка при выполнении запроса к серверу. Вызовите функцию onError и передайте сообщение об ошибке.
+
+            }
+        })
+    }
+
+
+    private fun uploadImageToFirebaseStorage(selectedImageUri: Uri) {
+
+
+        
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
 
@@ -586,7 +682,7 @@ class CreativyRoom : ComponentActivity() {
         val imageName = UUID.randomUUID().toString()
 
         // Path to store the image: "images/{roomid}/{imageName}"
-        val imageRef = storageRef.child("images/$roomid/$imageName")
+        val imageRef = storageRef.child("images/$uniqueId/$imageName")
 
         val uploadTask = imageRef.putFile(selectedImageUri)
 
@@ -599,7 +695,7 @@ class CreativyRoom : ComponentActivity() {
                     // Do something with the URL, such as save it to Firestore
 
                     // Покажите Toast об успешной загрузке
-                    showToast("Фотография успешно загружена!")
+                    showToast(getString(R.string.addPhoto))
                     showCircle = true
 
                 }
@@ -607,8 +703,7 @@ class CreativyRoom : ComponentActivity() {
                 // Handle unsuccessful upload
 
                 // Покажите Toast об ошибке загрузки
-                showToast("Ошибка при загрузке фотографии. Пожалуйста, попробуйте еще раз.")
-            }
+                showToast(getString(R.string.upload_error_message))            }
         }
     }
 

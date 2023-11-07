@@ -2,6 +2,7 @@ package com.example.codewithfriends.Startmenu
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -35,7 +36,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 
@@ -49,10 +49,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import com.example.codewithfriends.Activity.theme.CreativyRoom
+import com.example.codewithfriends.Activity.CreatyActivity.ApiService
+import com.example.codewithfriends.Activity.CreatyActivity.CreativyRoom
 import com.example.codewithfriends.R
 import com.example.codewithfriends.findroom.FindRoom
-import com.example.codewithfriends.firebase.TaskRequest
 import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.IMG
 
@@ -64,6 +64,8 @@ import com.example.reaction.logik.PreferenceHelper
 
 import com.google.android.gms.auth.api.identity.Identity
 import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -76,37 +78,47 @@ class Main_menu : ComponentActivity() {
             oneTapClient = Identity.getSignInClient(applicationContext)
         )
     }
-
+    var selectedNumber = 0
     var aboutme by mutableStateOf("")
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val id = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        getNumberFromServer("$id")
         super.onCreate(savedInstanceState)
+
+
         setContent {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
 
-                val name = UID(
-                    userData = googleAuthUiClient.getSignedInUser()
-                )
-                val img = IMG(
-                    userData = googleAuthUiClient.getSignedInUser()
-                )
-                val id = ID(
-                    userData = googleAuthUiClient.getSignedInUser()
-                )
+                    val name = UID(
+                        userData = googleAuthUiClient.getSignedInUser()
+                    )
+                    val img = IMG(
+                        userData = googleAuthUiClient.getSignedInUser()
+                    )
+                    val id = ID(
+                        userData = googleAuthUiClient.getSignedInUser()
+                    )
 
-                item{
-                    Create_Acount()
-                }
-                item{
-                    Edit("$id", "$img", "$name")
-                }
-                item {
-                    Button()
-                }
+                    item {
+                        Create_Acount()
+                    }
+                    item {
+                        Edit("$id", "$img", "$name")
+                    }
+                    item {
+                        Button("$id")
+                    }
 
+                }
             }
-
         }
     }
 
@@ -163,7 +175,6 @@ class Main_menu : ComponentActivity() {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(55.dp)
-
                     ) {
                        /* Text(
                             text = stringResource(id = R.string.age),
@@ -256,7 +267,7 @@ class Main_menu : ComponentActivity() {
                     }
                 )
                 {
-                    Text(text = "Сохранить даные", fontSize = 24.sp)
+                    Text(text = stringResource(id = R.string.savedata), fontSize = 24.sp)
                     Icon(
                         modifier = Modifier
                             .width(60.dp),
@@ -277,8 +288,10 @@ class Main_menu : ComponentActivity() {
 
             @OptIn(ExperimentalComposeUiApi::class)
             @Composable
-            fun Button(){
+            fun Button(uid: String){
 
+
+                getNumberFromServer(uid)
                 val joinroom: Color = colorResource(id = R.color.joinroom)
                 val creatroom: Color = colorResource(id = R.color.creatroom)
                 //   val userText = getUserText(context) // userText содержит "Привет, это текстовые данные пользователя!"
@@ -298,7 +311,7 @@ class Main_menu : ComponentActivity() {
                         onClick = {
                             val intent = Intent(this@Main_menu, FindRoom::class.java)
                             startActivity(intent)
-
+                            //finish()
                                   },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -314,8 +327,13 @@ class Main_menu : ComponentActivity() {
 
                     Button( colors = ButtonDefaults.buttonColors(Color.Blue),
                         onClick = {
-                            val intent = Intent(this@Main_menu, CreativyRoom::class.java)
-                            startActivity(intent)
+                            if(selectedNumber <= 0 ){
+                                val intent = Intent(this@Main_menu, CreativyRoom::class.java)
+                                startActivity(intent)
+                               // finish()
+                            }else {
+                                showToast(getString(R.string.myroom))
+                            }
                                   },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -328,6 +346,12 @@ class Main_menu : ComponentActivity() {
                 Spacer(modifier = Modifier.height(10.dp))
                 }
             }
+
+
+    private fun showToast(message: String) {
+        // Вывести Toast с заданным сообщением
+        Toast.makeText(this@Main_menu, message, Toast.LENGTH_SHORT).show()
+    }
 
     fun sendPostRequest(uid : String, img : String, name: String) {
         // Создайте экземпляр Retrofit
@@ -358,4 +382,38 @@ class Main_menu : ComponentActivity() {
             }
         })
     }
+
+    // Функция для выполнения запроса к серверу и обработки ответа и ошибок
+    fun getNumberFromServer(uid: String) {
+        // Создание объекта Retrofit
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://getpost-ilya1.up.railway.app/") // Замените BASE_URL_OF_YOUR_SERVER на базовый URL вашего сервера
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        // Инициализация объекта ApiService
+        val apiService: ApiService = retrofit.create(ApiService::class.java)
+
+        // Выполнение запроса к серверу
+        val call: Call<Int> = apiService.getNumber(uid)
+
+        call.enqueue(object : Callback<Int> {
+            override fun onResponse(call: Call<Int>, response: Response<Int>) {
+                if (response.isSuccessful) {
+                    val number: Int = response.body() ?: 0 // Получаем число с сервера (0, 1)
+                    // Данные успешно получены с сервера. Вызовите функцию onSuccess и передайте значение number.
+                    selectedNumber = number
+                } else {
+                    // Ошибка: сервер вернул неуспешный статус код. Вызовите функцию onError с сообщением об ошибке.
+
+                }
+            }
+
+            override fun onFailure(call: Call<Int>, t: Throwable) {
+                // Ошибка при выполнении запроса к серверу. Вызовите функцию onError и передайте сообщение об ошибке.
+
+            }
+        })
+    }
+
     }

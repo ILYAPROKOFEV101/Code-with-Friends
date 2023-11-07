@@ -1,4 +1,4 @@
-package com.example.codewithfriends.Activity.theme.ui.theme
+package com.example.codewithfriends.Activity.CreatyActivity
 
 import androidx.compose.ui.graphics.Color
 

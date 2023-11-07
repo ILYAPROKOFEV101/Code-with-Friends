@@ -60,7 +60,7 @@
             android:label="@string/title_activity_find_room"
             android:theme="@style/Theme.CodeWithFriends" />
         <activity
-            android:name=".Activity.theme.CreativyRoom"
+            android:name=".Activity.CreatyActivity.CreativyRoom"
             android:exported="false"
             android:label="@string/title_activity_creativy_room"
             android:theme="@style/Theme.CodeWithFriends" />

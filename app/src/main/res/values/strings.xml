@@ -3,18 +3,23 @@
     <string name="web_client_id">723880678401-e36qj2dcmalhhnp8brc81r5kaiqgr6lb.apps.googleusercontent.com</string>
     <string name="title_activity_main_menu">Main_menu</string>
     <string name="DataBase">https://code-with-friends-73cde-default-rtdb.europe-west1.firebasedatabase.app/</string>
-    <string name="breanch">Укажи ветку git репозитория </string>
-    <string name="filename">укажите в кам файле есть работа </string>
-    <string name="mission">что нужно сделать</string>
-    <string name="Addtask">добавить задания </string>
-    <string name="Photo">добавить фото</string>
-    <string name="Teamspek">создать TeamSpeak</string>
-    <string name="nameTeamspek">Название комнаты </string>
-    <string name="Icon">Загрузить фото комнаты </string>
-    <string name="room">Зайти в комнату</string>
-    <string name="outroom">задания</string>
-    <string name="create">create room</string>
-    <string name="name">name of your room</string>
+    <string name="breanch">Specify the git repository branch</string>
+    <string name="filename">Specify if there is work in the file</string>
+    <string name="mission">What needs to be done</string>
+    <string name="Addtask">Add tasks</string>
+    <string name="Photo">Add photo</string>
+    <string name="Teamspek">Create TeamSpeak</string>
+    <string name="nameTeamspek">Room name</string>
+    <string name="Icon">Upload room photo</string>
+    <string name="room">Enter the room</string>
+    <string name="outroom">Tasks</string>
+    <string name="create">Create room</string>
+    <string name="name">Name of your room</string>
+
+
+    <string name="chooselenguage">Choose a programming language</string>
+
+
 
     <string name="reactionresult">Reaction Result</string>
     <string name="singout">Sign out</string>
@@ -26,16 +31,23 @@
     <string name="title_activity_second_activiti">Second Activity</string>
     <string name="title_activity_tetrismenu">Tetris Menu</string>
     <string name="main_tetris">Tetris</string>
-    <string name="age">Возраст:</string>
-    <string name="joinroom">Создать команду</string>
-    <string name="creatroom">Найти команду</string>
-    <string name="aboutyou">Расскажите о себе другим пользователям:</string>
-    <string name="placeinroom">Выбирите миста </string>
-    <string name="Nameofroom">Выбирите миста </string>
+    <string name="age">Age:</string>
+    <string name="joinroom">Create a team</string>
+    <string name="creatroom">Find a team</string>
+    <string name="aboutyou">Tell others about yourself:</string>
+    <string name="placeinroom">Choose a spot</string>
+    <string name="Nameofroom">Choose a spot</string>
+
 
     <string name="hello">Hello!</string>
     <string name="welcome">Welcome!</string>
-    <string name="aboutroom">Расскажите в кратце о своем проекте.</string>
+    <string name="aboutroom">tell other users about your project</string>
+    <string name="addPhoto">photo added successfully</string>
+    <string name="upload_error_message">Error uploading photo. Please try again.</string>
+    <string name="datainbalank">You have not provided all the details of your room</string>
+    <string name="myroom">you already have a room</string>
+    <string name="savedata">Save information about you</string>
+
 
     <string name="login">Log in with Google</string>
     <string name="username">Username</string>

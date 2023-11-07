@@ -10,6 +10,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -92,9 +94,16 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Shape
+import androidx.core.graphics.rotationMatrix
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.codewithfriends.MainViewModel
 import com.example.codewithfriends.firebase.TaskRequest
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.withContext
 
@@ -142,11 +151,12 @@ class Roomsetting : ComponentActivity() {
 
         storedRoomId = getRoomId(this)
 
+        getTasks(storedRoomId!!)
 
         setContent {
-
-
-
+            val viewModel = viewModel<MainViewModel>()
+            val isLoading by viewModel.isLoading.collectAsState()
+            val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
 
 
 
@@ -158,17 +168,17 @@ class Roomsetting : ComponentActivity() {
             // Проверяем, есть ли данные комнаты
             val firstRoom = rooms.value.firstOrNull()
 
-                    val name = UID(
-                        userData = googleAuthUiClient.getSignedInUser()
-                    )
-                    val img = IMG(
-                        userData = googleAuthUiClient.getSignedInUser()
-                    )
-                    val id = ID(
-                        userData = googleAuthUiClient.getSignedInUser()
-                    )
+            val name = UID(
+                userData = googleAuthUiClient.getSignedInUser()
+            )
+            val img = IMG(
+                userData = googleAuthUiClient.getSignedInUser()
+            )
+            val id = ID(
+                userData = googleAuthUiClient.getSignedInUser()
+            )
 
-            if(id != null && tokens != null){
+            if (id != null && tokens != null) {
                 sendPostRequest(storedRoomId!!, "$id")
             }
 
@@ -180,49 +190,64 @@ class Roomsetting : ComponentActivity() {
 
             }, 500) // 3000 миллисекунд (3 секунды)
 
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+
+                SwipeRefresh(
+                    state = swipeRefresh,
+                    onRefresh = viewModel::LoadStuff
+                ) {
+                    LazyColumn {
+                        item {
+                            icon("$roomUrl")
+                            Spacer(modifier = Modifier.height(30.dp))
+                        }
+
+                        // Вызываем roomname() только если есть данные комнаты
+
+                        item {
+                            firstRoom?.let {
+                                roomname(
+                                    roomName = it.roomName,
+                                    "$id",
+                                    storedRoomId!!
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(30.dp))
+                        }
 
 
+                        item {
+                            userinroom(
+                                participants.value,
+                                "$Admin",
+                                "$id"
+                            ) // Передаем participants.value
+                            Spacer(modifier = Modifier.height(30.dp))
+                        }
 
 
-            LazyColumn {
-                item {
-                    icon("$roomUrl")
-                    Spacer(modifier = Modifier.height(30.dp))
-                }
+                        item {
+                            TaskList(task.value, storedRoomId!!)
+                            // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
+                            Spacer(modifier = Modifier.height(30.dp))
 
-                // Вызываем roomname() только если есть данные комнаты
+                        }
+                        item {
+                            addtask()
+                            Spacer(modifier = Modifier.height(30.dp))
+                        }
+                        item {
+                            Teamspeack()
+                            Spacer(modifier = Modifier.height(30.dp))
+                        }
 
-                    item {
-                        firstRoom?.let { roomname(roomName = it.roomName, "$id", storedRoomId!!) }
-                        Spacer(modifier = Modifier.height(30.dp))
                     }
-
-
-                item {
-                    userinroom(participants.value, "$Admin" , "$id") // Передаем participants.value
-                    Spacer(modifier = Modifier.height(30.dp))
                 }
-
-
-                item {
-                    TaskList(task.value, storedRoomId!!)
-                  // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
-                        Spacer(modifier = Modifier.height(30.dp))
-
-                }
-                item {
-                    addtask()
-                    Spacer(modifier = Modifier.height(30.dp))
-                }
-                item {
-                    Teamspeack()
-                    Spacer(modifier = Modifier.height(30.dp))
-                }
-
             }
         }
-        getTasks(storedRoomId!!)
-
     }
 
 
@@ -698,12 +723,21 @@ class Roomsetting : ComponentActivity() {
 
 
     @Composable
-    fun TaskList(tasks: List<TaskData>,roomId: String) {
-        LazyColumn(modifier = Modifier
-            .fillMaxWidth()
-            .height(1000.dp)) {
-            items(tasks) { task ->
-                TaskCard(task, roomId)
+    fun TaskList(tasks: List<TaskData>, roomId: String) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .heightIn(max = 1000.dp) // Максимальная высота 1000.dp
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+            ) {
+                items(tasks) { task ->
+                    TaskCard(task, roomId)
+                }
             }
         }
     }
@@ -712,16 +746,50 @@ class Roomsetting : ComponentActivity() {
     @Composable
     fun TaskCard(task: TaskData,roomId: String) {
         var scale by remember { mutableStateOf(1f) }
-        var offset by remember { mutableStateOf(Offset(0f, 0f)) }
+        var offset by remember { mutableStateOf(Offset.Zero) }
         val cornerShape: Shape = RoundedCornerShape(20.dp) // устанавливаем радиус закругления углов
-        var uptext  = 500.dp
+        var uptext  = 800.dp
 
-            if (task.mession.length > 100){
-                 uptext = 1070.dp
+
+       /* BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f / 1f)
+        ) {
+            val state = rememberTransformableState{zoomChange, panChang, rotationChange->
+                    scale = (scale * zoomChange).coerceIn(1f, 5f)
+                val extraWidth = (scale - 1) * constraints.maxWidth
+                val extraHeight = (scale - 1) * constraints.maxHeight
+
+                val maxX = extraWidth / 2
+                val maxY= extraHeight / 2
+
+                offset = Offset(
+                    x = (offset.x + scale + panChang.x).coerceIn(-maxX, maxX),
+                    y = (offset.y + scale + panChang.y).coerceIn(-maxY, maxY)
+                )
+                offset += panChang
             }
-        if (task.mession.length > 10){
-             uptext = 670.dp
+            Image(
+                painter = rememberAsyncImagePainter(model = task.photo),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(500.dp)
+                    .graphicsLayer(
+                        scaleX = scale,
+                        scaleY = scale,
+                        translationX = offset.x,
+                        translationY = offset.y
+                    )
+                    .transformable(state)
+            )
         }
+*/
+
+
+
+
 
         Card(
             modifier = Modifier
@@ -735,38 +803,57 @@ class Roomsetting : ComponentActivity() {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(500.dp)
-                    .height(uptext - 100.dp)
+                    .height(700.dp)
                     .padding(16.dp)
             ) {
                 Text(text = "Git Branch: ${task.gitbranch}", fontSize = 24.sp)
+
                 Text(text = "Filename: ${task.filename}", fontSize = 24.sp)
 
-                Image(
-                    painter = rememberAsyncImagePainter(model = task.photo),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
+                BoxWithConstraints(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .pointerInput(Unit) {
-                            detectTransformGestures { _, pan, zoom, _ ->
-                                scale *= zoom
-                                offset = if (scale > 1) {
-                                    Offset(offset.x + pan.x * zoom, offset.y + pan.y * zoom)
-                                } else {
-                                    Offset(0f, 0f)
-                                }
-                            }
-                        }
-                        .graphicsLayer(
-                            scaleX = maxOf(1f, minOf(3f, scale)),
-                            scaleY = maxOf(1f, minOf(3f, scale)),
-                            translationX = offset.x.dp.value,
-                            translationY = offset.y.dp.value
-                        )
-                )
+                        .fillMaxWidth()
+                        .aspectRatio(1f / 1f)
+                ) {
+                    val state = rememberTransformableState{zoomChange, panChang, rotationChange->
+                        scale = (scale * zoomChange).coerceIn(1f, 5f)
+                        val extraWidth = (scale - 1) * constraints.maxWidth
+                        val extraHeight = (scale - 1) * constraints.maxHeight
 
-                Text(text = "Mission: ${task.mession}", fontSize = 24.sp)
+                        val maxX = extraWidth / 2
+                        val maxY= extraHeight / 2
+
+                        offset = Offset(
+                            x = (offset.x + scale + panChang.x).coerceIn(-maxX, maxX),
+                            y = (offset.y + scale + panChang.y).coerceIn(-maxY, maxY)
+                        )
+                        offset += panChang
+                    }
+                    Image(
+                        painter = rememberAsyncImagePainter(model = task.photo),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(700.dp)
+                            .graphicsLayer(
+                                scaleX = scale,
+                                scaleY = scale,
+                                translationX = offset.x,
+                                translationY = offset.y
+                            )
+                            .transformable(state)
+                    )
+                }
+
+                LazyColumn(modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                ){
+                    item{
+                        Text(text = "Mission: ${task.mession}", fontSize = 24.sp)
+                    }
+                }
+
 
             }
                 Row(

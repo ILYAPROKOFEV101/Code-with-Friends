@@ -7,6 +7,7 @@ import android.os.Looper
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -40,6 +41,7 @@ import okhttp3.Request
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.Orientation
 
 
 import androidx.compose.foundation.layout.Column
@@ -48,15 +50,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.FractionalThreshold
+import androidx.compose.material.swipeable
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -94,6 +103,30 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.delay
+
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.Scaffold
+import androidx.compose.runtime.collectAsState
+
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.codewithfriends.MainViewModel
 
 
 class FindRoom : ComponentActivity() {
@@ -115,24 +148,41 @@ class FindRoom : ComponentActivity() {
 
         setContent {
 
+            val viewModel = viewModel<MainViewModel>()
+            val isLoading by viewModel.isLoading.collectAsState()
+            val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
+
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
 
 
 
 
-            val rooms = remember { mutableStateOf(emptyList<Room>()) }
+                val rooms = remember { mutableStateOf(emptyList<Room>()) }
 
 
-            // Задержка перехода на новую страницу через 3 секунды
-               Handler(Looper.getMainLooper()).postDelayed({
-                       getData(rooms)
-               }, 500) // 3000 миллисекунд (3 секунды)
-            // Вызывайте getData только после установки ContentView
+                // Задержка перехода на новую страницу через 3 секунды
+                Handler(Looper.getMainLooper()).postDelayed({
+                    getData(rooms)
+                }, 500) // 3000 миллисекунд (3 секунды)
+                // Вызывайте getData только после установки ContentView
 
-            // Ваш код Composable
-            Box(modifier = Modifier.fillMaxSize()) {
-                RoomList(rooms.value)
+                // Ваш код Composable
+                SwipeRefresh(
+                    state = swipeRefresh,
+                    onRefresh = viewModel::LoadStuff
+                ) {
+
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            RoomList(rooms.value)
+                        }
+
+                }
+
+
             }
-
         }
     }
 
@@ -182,6 +232,9 @@ class FindRoom : ComponentActivity() {
 
 
 
+
+
+
     @Composable
     fun RoomList(rooms: List<Room>) {
             LazyColumn {
@@ -215,7 +268,9 @@ class FindRoom : ComponentActivity() {
                 ),
 
         ) {
-            Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)) {
                     Row(modifier = Modifier
                         .fillMaxWidth()
                         .background(Color.White)
@@ -254,19 +309,19 @@ class FindRoom : ComponentActivity() {
                               ){
                                 Box(
                                     modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 5.dp, start = 10.dp)
-                                    .height(65.dp)
-                                    .clip(CircleShape)
+                                        .fillMaxWidth()
+                                        .padding(top = 5.dp, start = 10.dp)
+                                        .height(65.dp)
+                                        .clip(CircleShape)
                                     ) {
                                 Text(text = "${room.roomName}", modifier = Modifier.padding(top = 10.dp , start = 10.dp), style = TextStyle(fontSize = 24.sp))
                                        }
                             Box(
                                 modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 5.dp, start = 10.dp)
-                                .height(65.dp)
-                                .clip(CircleShape)
+                                    .fillMaxWidth()
+                                    .padding(top = 5.dp, start = 10.dp)
+                                    .height(65.dp)
+                                    .clip(CircleShape)
                                )
                                 {
                                 Text(text = "${room.language}", modifier = Modifier.padding( start = 10.dp), style = TextStyle(fontSize = 24.sp))
