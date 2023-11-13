@@ -14,7 +14,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +28,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,6 +46,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,7 +57,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -61,17 +68,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberImagePainter
 import com.android.volley.Request
 import com.android.volley.toolbox.HttpResponse
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.example.codewithfriends.MainViewModel
 import com.example.codewithfriends.R
+import com.example.codewithfriends.createamspeck.TeamSpeak
 import com.example.codewithfriends.findroom.FindRoom
 import com.example.codewithfriends.findroom.Room
 
 import com.example.codewithfriends.firebase.ui.theme.CodeWithFriendsTheme
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
+import com.example.codewithfriends.roomsetting.Roomsetting
 import com.example.reaction.logik.PreferenceHelper
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.common.reflect.TypeToken
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.HttpClient
@@ -138,36 +152,49 @@ class Addtask : ComponentActivity() {
         storedRoomId = PreferenceHelper.getRoomId(this)
 
         setContent {
+            val viewModel = viewModel<MainViewModel>()
+            val isLoading by viewModel.isLoading.collectAsState()
+            val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
+
             CodeWithFriendsTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    LazyColumn(modifier = Modifier.fillMaxSize()){
-                        item {
-                            Spacer(modifier = Modifier.height(10.dp))
-                            addgitbreanch()
-                        }
-                        item {
-                            Spacer(modifier = Modifier.height(20.dp))
-                            filename()
-                        }
-                        item {
-                            Spacer(modifier = Modifier.height(20.dp))
-                            AddImage()
 
+                    SwipeRefresh(
+                        state = swipeRefresh,
+                        onRefresh =
+                        {
+                            recreate()
                         }
-                        item {
-                            Spacer(modifier = Modifier.height(20.dp))
-                            whatineedtodo()
-                        }
-                        item {
-                            Spacer(modifier = Modifier.height(20.dp))
-                            addtask(storedRoomId!!)
+                    ) {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            item {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                addgitbreanch()
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(20.dp))
+                                filename()
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(20.dp))
+                                AddImage()
+
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(20.dp))
+                                whatineedtodo()
+                            }
+                            item {
+                                Spacer(modifier = Modifier.height(20.dp))
+                                addtask(storedRoomId!!)
+                            }
+
                         }
 
                     }
-
                 }
             }
         }
@@ -291,59 +318,97 @@ class Addtask : ComponentActivity() {
     @Composable
     fun AddImage() {
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
-        ) {
-        Button(
-            colors = ButtonDefaults.buttonColors(Color.Blue),
-            onClick = {
-                // Запуск активности выбора изображения
-                pickImage.launch("image/*")
-                showCircle = !showCircle
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
-                .clip(RoundedCornerShape(1.dp))
-        ) {
-            if(showCircle){
-                Text(text = stringResource(id = R.string.Photo), fontSize = 24.sp)
-            } else {
-
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(text = " Дождитесь загрузки !!! ", fontSize = 24.sp)
-                    Spacer(modifier = Modifier.width(10.dp))
-                    LoadingCircle()
-                }
-            }
-
-
-
+        var addimg by remember {
+            mutableStateOf(false)
         }
-            /*if(!showCircle){
-                Box(modifier = Modifier
-                    .fillMaxWidth()
-                    .align(CenterHorizontally)){
-                    h = 40.dp
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+        ) {
 
-
-                }
-
-
+            if (photo.isNotEmpty()){
+                addimg = true
             }
-*/
+            if (addimg == false){
+                Button(
+                    colors = ButtonDefaults.buttonColors(Color.White),
+                    onClick = {
+                        // Запуск активности выбора изображения
+                        pickImage.launch("image/*")
+                        showCircle = !showCircle
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(280.dp)
+                        .padding(bottom = 15.dp, top = 15.dp, start = 70.dp, end = 70.dp)
+
+                        //.alpha(0f) // Устанавливаем полную прозрачность кнопке
+                        .border(
+                            2.dp, Color.Blue,
+                            shape = RoundedCornerShape(0.dp)
+                        ) // Добавляем бордер шириной 1dp и черного цвета
+                        .clip(RoundedCornerShape(0.dp)),
+                    shape = RoundedCornerShape(0.dp), // Применяем закругленные углы к Card
+                ) {
+                    if (showCircle) {
+                        Text(
+                            text = stringResource(id = R.string.Icon),
+                            fontSize = 24.sp,
+                            style = TextStyle(color = Color.Blue)
+                        )
+                    } else {
+
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = " Дождитесь загрузки !!! ",
+                                fontSize = 24.sp,
+                                style = TextStyle(color = Color.Blue)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            LoadingCircle()
+                        }
+                    }
+                }
+            } else {
+                Image(
+                    painter = if (photo.isNotEmpty()) {
+                        // Load image from URL
+                        rememberImagePainter(data = photo)
+                    } else {
+                        // Load a default image when URL is empty
+                        painterResource(id = R.drawable.android) // Replace with your default image resource
+                    },
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(bottom = 15.dp, top = 15.dp, start = 70.dp, end = 70.dp)
+
+                        //.alpha(0f) // Устанавливаем полную прозрачность кнопке
+                        .border(
+                            2.dp, Color.Blue,
+                            shape = RoundedCornerShape(0.dp)
+                        ) // Добавляем бордер шириной 1dp и черного цвета
+                        .clip(RoundedCornerShape(0.dp))
+                        .clickable {
+                            addimg = false
+                            showCircle = false
+                            photo = ""
+                        },
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
     }
 
-    }
 
     @Preview(showBackground = true)
     @Composable
     fun LoadingCircle() {
         Box(  modifier = Modifier
             .height(40.dp)
-
+            .background(Color.Blue)
 
             .wrapContentSize(Alignment.Center)
         ) {
@@ -363,10 +428,11 @@ class Addtask : ComponentActivity() {
                 modifier = Modifier.size(40.dp)
             ) {
                 CircularProgressIndicator(
+
                     modifier = Modifier
                         .size(40.dp)
-                        .background(Color.Blue)
-                    //.rotate(rotation.value)
+                        .background(Color.White)
+
                 )
             }
         }
@@ -458,6 +524,11 @@ class Addtask : ComponentActivity() {
                     sendPostRequest("$roomid", photo, gitbreanch, filename, mession, uniqueId)
                 
                 myRef.setValue(values)
+
+                val intent = Intent(this@Addtask, Roomsetting::class.java)
+                startActivity(intent)
+                finish()
+
             }
             ,
             modifier = Modifier

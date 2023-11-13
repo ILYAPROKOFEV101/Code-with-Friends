@@ -61,6 +61,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.clip
@@ -69,10 +70,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 import coil.compose.rememberAsyncImagePainter
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.example.codewithfriends.MainViewModel
 import com.example.codewithfriends.Startmenu.Main_menu
 import com.example.codewithfriends.createamspeck.ui.theme.CodeWithFriendsTheme
 import com.example.codewithfriends.findroom.FindRoom
@@ -81,6 +84,8 @@ import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.codewithfriends.roomsetting.Roomsetting
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
@@ -155,10 +160,20 @@ class Chat : ComponentActivity() {
         val Admin = intent.getStringExtra("Admin")
 
 
+        if (storedRoomId != null) {
+            getData(storedRoomId!!, "$id", "$name")
+
+        }
 
 
 
         setContent {
+
+
+            val viewModel = viewModel<MainViewModel>()
+            val isLoading by viewModel.isLoading.collectAsState()
+            val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
+
 
 
             CodeWithFriendsTheme {
@@ -169,40 +184,44 @@ class Chat : ComponentActivity() {
                 ) {
 
 
-                    val name = UID(
-                        userData = googleAuthUiClient.getSignedInUser()
-                    )
-                    val img = IMG(
-                        userData = googleAuthUiClient.getSignedInUser()
-                    )
-                    val id = ID(
-                        userData = googleAuthUiClient.getSignedInUser()
-                    )
+                    SwipeRefresh(
+                        state = swipeRefresh,
+                        onRefresh = {
+                            recreate()
+                        }
+                    ) {
 
-                    upbar(storedRoomId!!, "$id", "$name", "$img", "$roomUrl", "$Admin")
+                        val name = UID(
+                            userData = googleAuthUiClient.getSignedInUser()
+                        )
+                        val img = IMG(
+                            userData = googleAuthUiClient.getSignedInUser()
+                        )
+                        val id = ID(
+                            userData = googleAuthUiClient.getSignedInUser()
+                        )
 
-                    if (storedRoomId != null) {
-                        getData(storedRoomId!!, "$id", "$name")
+                        upbar(storedRoomId!!, "$id", "$name", "$img", "$roomUrl", "$Admin")
 
                     }
 
-                    Spacer(modifier = Modifier.height(100.dp))
+                        Spacer(modifier = Modifier.height(100.dp))
 
-                    if (storedRoomId != null) {
-                        MessageList(messages.value, "$name", "$img", "$id")
-                    }
+                        if (storedRoomId != null) {
+                            MessageList(messages.value, "$name", "$img", "$id")
+                        }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
-                    if (storedRoomId != null) {
-                        Creator { message ->
-                            // Здесь вы можете добавить логику для отправки сообщения через WebSocket
-                            sendMessage(message)
+                        if (storedRoomId != null) {
+                            Creator { message ->
+                                // Здесь вы можете добавить логику для отправки сообщения через WebSocket
+                                sendMessage(message)
+                            }
                         }
                     }
                 }
             }
-        }
 
 
 
@@ -676,13 +695,15 @@ class Chat : ComponentActivity() {
                 .fillMaxWidth()
                 .height(100.dp)
                 .padding(start = 5.dp, end = 5.dp)
+                .clip(RoundedCornerShape(20.dp)),
+
         ) {
                 if (show.value) {
                     Button(
                         colors = ButtonDefaults.buttonColors(Color.Green),
                         modifier = Modifier
                             .fillMaxWidth(),
-                        shape = RoundedCornerShape(30.dp),
+                        shape = RoundedCornerShape(20.dp),
                         onClick = {
                             val intent = Intent(this@Chat, Roomsetting::class.java)
                             intent.putExtra(
@@ -697,18 +718,23 @@ class Chat : ComponentActivity() {
                         }
                     ) {
                         Text(text = stringResource(id = R.string.outroom), fontSize = 24.sp)
-                    }
+                      }
+
                 } else {
 
-                    Row(modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp)) {
+
+
+
+                    Box(modifier = Modifier.fillMaxSize()){
 
                         Button(
                             colors = ButtonDefaults.buttonColors(Color.Blue),
                             modifier = Modifier
-                                .fillMaxWidth(),
-                            shape = RoundedCornerShape(30.dp),
+                                .height(400.dp)
+                                .width(400.dp)
+                                .align(Alignment.Center)
+                            ,
+                            shape = RoundedCornerShape(20.dp),
                             onClick = {
                                 pushData(roomId,"$id", "$name","$img",)
 

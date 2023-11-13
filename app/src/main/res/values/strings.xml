@@ -15,10 +15,17 @@
     <string name="outroom">Tasks</string>
     <string name="create">Create room</string>
     <string name="name">Name of your room</string>
+    <string name="chosedata">Select date</string>
+    <string name="chosetime">Select time </string>
+    <string name="time">Time</string>
+    <string name="Selected">Selected</string>
+    <string name="Choose">Selected</string>
+    <string name="place">Places</string>
+
+    <string name="Nothinkchose">nothing selected</string>
 
 
     <string name="chooselenguage">Choose a programming language</string>
-
 
 
     <string name="reactionresult">Reaction Result</string>
@@ -47,11 +54,12 @@
     <string name="datainbalank">You have not provided all the details of your room</string>
     <string name="myroom">you already have a room</string>
     <string name="savedata">Save information about you</string>
+    <string name="deleteroom">Delete Room</string>
 
 
     <string name="login">Log in with Google</string>
     <string name="username">Username</string>
-    <string name="password">Пароль</string>
+    <string name="password">Password</string>
     <string name="submit">Submit</string>
     <string name="cancel">Cancel</string>
     <string name="error">Error</string>

@@ -21,7 +21,7 @@ class MainViewModel : ViewModel() {
     fun LoadStuff(){
         viewModelScope.launch {
             _isLoading.value = true
-            delay(3000L)
+            delay(2000L)
             _isLoading.value = false
         }
     }

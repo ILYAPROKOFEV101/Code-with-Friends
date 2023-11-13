@@ -24,6 +24,11 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".test.TestActivity"
+            android:exported="false"
+            android:label="@string/title_activity_test"
+            android:theme="@style/Theme.CodeWithFriends" />
+        <activity
             android:name=".Aboutusers.Aboutuser"
             android:exported="false"
             android:label="@string/title_activity_aboutuser"
@@ -47,7 +52,6 @@
             android:name=".roomsetting.Roomsetting"
             android:exported="false"
             android:label="@string/title_activity_roomsetting"
-
             android:theme="@style/Theme.CodeWithFriends" />
         <activity
             android:name=".chats.Chat"
@@ -80,6 +84,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <service
             android:name=".push.PushService"
             android:exported="false">

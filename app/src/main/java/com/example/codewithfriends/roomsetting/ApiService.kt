@@ -11,9 +11,13 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-interface ApiService {
+interface ApiService_ilya {
     @GET("gettask/{roomId}")
     fun getTasks(@Path("roomId") roomId: String): Call<List<TaskResponse>>
+}
+interface OVER_DELETE{
+    @GET("getinfo/{roomId}")
+    fun OVER_AND_DELETE(@Path("roomId") roomId: String): Call<List<Over_DeletetItem>>
 }
 
 
@@ -21,6 +25,11 @@ interface Apidelte {
     @DELETE("delete/{roomId}/{id}/plus")
     suspend fun delete(@Path("roomId") roomId: String, @Path("id") postId: String): Response<Unit>
 }
+interface API_DELET {
+    @DELETE("delete/{roomId}/{id}/minus")
+    suspend fun delete(@Path("roomId") roomId: String, @Path("id") postId: String): Response<Unit>
+}
+
 interface Kick {
     @DELETE("kick/{roomId}/{userId}")
     fun user(@Path("roomId") roomId: String, @Path("userId") userId: String): Call<Unit>

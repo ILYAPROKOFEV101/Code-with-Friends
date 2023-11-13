@@ -38,6 +38,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
+import androidx.compose.runtime.collectAsState
 
 
 import androidx.compose.ui.focus.focusRequester
@@ -49,8 +50,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.codewithfriends.Activity.CreatyActivity.ApiService
 import com.example.codewithfriends.Activity.CreatyActivity.CreativyRoom
+import com.example.codewithfriends.MainViewModel
 import com.example.codewithfriends.R
 import com.example.codewithfriends.findroom.FindRoom
 import com.example.codewithfriends.presentation.profile.ID
@@ -60,7 +63,10 @@ import com.example.codewithfriends.presentation.profile.ProfileIcon
 import com.example.codewithfriends.presentation.profile.ProfileName
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
+import com.example.codewithfriends.test.TestActivity
 import com.example.reaction.logik.PreferenceHelper
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 import com.google.android.gms.auth.api.identity.Identity
 import retrofit2.Call
@@ -91,37 +97,48 @@ class Main_menu : ComponentActivity() {
 
 
         setContent {
+            val viewModel = viewModel<MainViewModel>()
+            val isLoading by viewModel.isLoading.collectAsState()
+            val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
+
+
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-
-                    val name = UID(
-                        userData = googleAuthUiClient.getSignedInUser()
-                    )
-                    val img = IMG(
-                        userData = googleAuthUiClient.getSignedInUser()
-                    )
-                    val id = ID(
-                        userData = googleAuthUiClient.getSignedInUser()
-                    )
-
-                    item {
-                        Create_Acount()
+                SwipeRefresh(
+                    state = swipeRefresh,
+                    onRefresh = {
+                        recreate()
                     }
-                    item {
-                        Edit("$id", "$img", "$name")
-                    }
-                    item {
-                        Button("$id")
-                    }
+                ) {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
 
+                        val name = UID(
+                            userData = googleAuthUiClient.getSignedInUser()
+                        )
+                        val img = IMG(
+                            userData = googleAuthUiClient.getSignedInUser()
+                        )
+                        val id = ID(
+                            userData = googleAuthUiClient.getSignedInUser()
+                        )
+
+                        item {
+                            Create_Acount()
+                        }
+                        item {
+                            Edit("$id", "$img", "$name")
+                        }
+                        item {
+                            Button("$id")
+                        }
+
+                    }
                 }
             }
         }
     }
-
 
     @Preview(showBackground = true)
     @Composable
@@ -176,11 +193,7 @@ class Main_menu : ComponentActivity() {
                             .fillMaxWidth()
                             .height(55.dp)
                     ) {
-                       /* Text(
-                            text = stringResource(id = R.string.age),
-                            modifier = Modifier.fillMaxSize(),
-                            fontSize = 24.sp
-                        )*/
+
                     }
                 }
             }
@@ -267,7 +280,7 @@ class Main_menu : ComponentActivity() {
                     }
                 )
                 {
-                    Text(text = stringResource(id = R.string.savedata), fontSize = 24.sp)
+                    Text(text = stringResource(id = R.string.savedata), fontSize = 20.sp)
                     Icon(
                         modifier = Modifier
                             .width(60.dp),

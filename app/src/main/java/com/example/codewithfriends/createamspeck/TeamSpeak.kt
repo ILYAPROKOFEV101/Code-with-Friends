@@ -182,7 +182,7 @@ class TeamSpeak : ComponentActivity() {
                 }
             ) {
                 // Отобразите выбранную дату внутри кнопки
-                Text(text = selectedDate ?: "Выберите дату", fontSize = 24.sp)
+                Text(text = selectedDate ?: stringResource(id = R.string.chosedata), fontSize = 24.sp)
             }
         }
     }
@@ -224,8 +224,8 @@ class TeamSpeak : ComponentActivity() {
             ) {
                 Text(
                     text = selectedTime?.let { (hours, minutes) ->
-                        "Время: %02d:%02d".format(hours, minutes)
-                    } ?: "Выберите время",
+                        stringResource(id = R.string.time).format(hours, minutes)
+                    } ?: stringResource(id = R.string.chosetime),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -239,6 +239,10 @@ class TeamSpeak : ComponentActivity() {
     fun RadioButtonGroupExample() {
         val selectedSeatCount = remember { mutableStateOf(selectedSeatCount) }
 
+
+        val chose = stringResource(id = R.string.Selected)
+        val nothingchose = stringResource(id = R.string.Nothinkchose)
+        val place = stringResource(id = R.string.Nothinkchose)
 
         val seatOptions = listOf(
             SeatOption("2 seats", 2),
@@ -271,7 +275,7 @@ class TeamSpeak : ComponentActivity() {
             }
 
             Text(
-                text = " Выбрано: ${selectedSeatCount.value ?: "Ничего не выбрано"} места",
+                text = " $chose: ${selectedSeatCount.value ?: "$nothingchose"} $place",
                 modifier = Modifier.padding(16.dp)
             )
         }

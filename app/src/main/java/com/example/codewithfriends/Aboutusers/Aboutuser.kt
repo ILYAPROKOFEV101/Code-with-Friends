@@ -70,7 +70,7 @@ class Aboutuser : ComponentActivity() {
                             icon(user.value)
                         }
                         item {
-                                aboutuser(user.value)
+                            aboutuser(user.value)
                         }
                     }
 
