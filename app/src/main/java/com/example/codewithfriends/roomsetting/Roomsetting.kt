@@ -244,7 +244,9 @@ class Roomsetting : ComponentActivity() {
 
                         }
                         item {
-                            Box(modifier = Modifier.fillMaxWidth().height(450.dp)){
+                            Box(modifier = Modifier
+                                .fillMaxWidth()
+                                .height(450.dp)){
                                 SimpleDonutChart(context, over , delete)
                                 // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
                             }
@@ -906,13 +908,14 @@ class Roomsetting : ComponentActivity() {
                 .fillMaxHeight()
                 .heightIn(min = 100.dp, max = if (tasks.isNotEmpty()) 800.dp else 100.dp)
         ) {
-            LazyColumn(
+            LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight()
                     .heightIn(min = 100.dp, max = if (tasks.isNotEmpty()) 800.dp else 100.dp)
             ) {
                 items(tasks) { task ->
+                    Spacer(modifier = Modifier.width(30.dp))
                     TaskCard(task, roomId)
                 }
             }
@@ -927,7 +930,6 @@ class Roomsetting : ComponentActivity() {
     fun TaskCard(task: TaskData,roomId: String) {
         var scale by remember { mutableStateOf(1f) }
         var offset by remember { mutableStateOf(Offset.Zero) }
-        val cornerShape: Shape = RoundedCornerShape(20.dp) // устанавливаем радиус закругления углов
         var uptext  = 800.dp
 
 
@@ -935,11 +937,11 @@ class Roomsetting : ComponentActivity() {
 
         Card(
             modifier = Modifier
-                .fillMaxWidth()
+                .width(500.dp)
                 .height(uptext)
                 .padding(1.dp, top = 10.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .border(2.dp, Color.Blue, shape = cornerShape),
+                .border(4.dp, Color.Blue, shape = RoundedCornerShape(20.dp)),
             colors = CardDefaults.cardColors(Color.White),
         ) {
             Column(
@@ -958,7 +960,7 @@ class Roomsetting : ComponentActivity() {
                         .aspectRatio(1f / 1f)
                 ) {
                     val state = rememberTransformableState{zoomChange, panChang, rotationChange->
-                        scale = (scale * zoomChange).coerceIn(1f, 5f)
+                        scale = (scale * zoomChange).coerceIn(1f, 7f)
                         val extraWidth = (scale - 1) * constraints.maxWidth
                         val extraHeight = (scale - 1) * constraints.maxHeight
 
@@ -976,6 +978,7 @@ class Roomsetting : ComponentActivity() {
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .padding(20.dp)
                             .height(700.dp)
                             .graphicsLayer(
                                 scaleX = scale,
@@ -1060,6 +1063,8 @@ class Roomsetting : ComponentActivity() {
                 }
             }
         }
+
+    
 
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
@@ -1234,7 +1239,7 @@ class Roomsetting : ComponentActivity() {
             onClick = {
                 val intent = Intent(this@Roomsetting, Addtask::class.java)
                 startActivity(intent)
-
+                finish()
             },
             modifier = Modifier
                 .fillMaxSize()

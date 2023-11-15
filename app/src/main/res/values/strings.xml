@@ -26,6 +26,9 @@
 
 
     <string name="chooselenguage">Choose a programming language</string>
+    <string name="notfoun">
+        It appears that the server is not responding at the moment. This could be due to various reasons, such as temporary technical issues, restricted access from your region, or a lack of internet connectivity. It\'s also possible that the server is undergoing maintenance.
+    </string>
 
 
     <string name="reactionresult">Reaction Result</string>

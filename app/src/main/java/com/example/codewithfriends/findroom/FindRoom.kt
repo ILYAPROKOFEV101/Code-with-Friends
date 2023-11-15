@@ -1,5 +1,6 @@
 package com.example.codewithfriends.findroom
 
+import LoadingComponent
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -125,7 +126,12 @@ import androidx.compose.runtime.collectAsState
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.codewithfriends.LoadingCircle
 import com.example.codewithfriends.MainViewModel
 
 
@@ -232,20 +238,73 @@ class FindRoom : ComponentActivity() {
     }
 
 
+    @Preview(showBackground = true)
+    @Composable
+    fun NOTFound(){
 
+
+
+        Column(Modifier.fillMaxSize()) {
+            Image(
+                 painter = painterResource(id = R.drawable.notfound),
+                contentDescription = "Nothing",
+
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(350.dp)
+                    .clip(RoundedCornerShape(50.dp))
+
+            )
+            Spacer(modifier = Modifier.height(30.dp))
+            Text(
+                text = stringResource(id = R.string.notfoun),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp)
+            )
+
+
+
+        }
+    }
 
 
 
 
     @Composable
     fun RoomList(rooms: List<Room>) {
-            LazyColumn {
+        var notFoundVisible by remember { mutableStateOf(false) }
+
+        LaunchedEffect(true) {
+            // Задержка на 4 секунды
+            delay(4000)
+            notFoundVisible = true
+        }
+
+
+        LazyColumn {
+            if (rooms.isNotEmpty()) {
                 items(rooms) { room ->
                     RoomItem(room)
                 }
-            }
+            } else {
 
+                if (notFoundVisible) {
+                    item {
+                        NOTFound()
+
+                    }
+                } else {
+                    item {
+
+                        LoadingComponent().LoadingCircle()
+                    }
+                }
+            }
+        }
     }
+
+
 
     @Composable
    fun RoomItem(room: Room){
@@ -381,6 +440,7 @@ class FindRoom : ComponentActivity() {
         Spacer(modifier = Modifier.height(10.dp))
 
     }
+
 
 
     fun goToChatActivity(roomId: String) {

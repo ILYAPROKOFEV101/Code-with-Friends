@@ -76,6 +76,7 @@ import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.codewithfriends.MainViewModel
 import com.example.codewithfriends.R
+import com.example.codewithfriends.chats.Chat
 import com.example.codewithfriends.createamspeck.TeamSpeak
 import com.example.codewithfriends.findroom.FindRoom
 import com.example.codewithfriends.findroom.Room
@@ -93,6 +94,7 @@ import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.entity.C
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -525,9 +527,8 @@ class Addtask : ComponentActivity() {
                 
                 myRef.setValue(values)
 
-                val intent = Intent(this@Addtask, Roomsetting::class.java)
-                startActivity(intent)
-                finish()
+
+                
 
             }
             ,
@@ -545,6 +546,7 @@ class Addtask : ComponentActivity() {
 
 
     private fun uploadImageToFirebaseStorage(selectedImageUri: Uri, roomid: String) {
+
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
 
@@ -554,32 +556,33 @@ class Addtask : ComponentActivity() {
         // Path to store the image: "images/{roomid}/{imageName}"
         val imageRef = storageRef.child("images/$roomid/$imageName")
 
-        val uploadTask = imageRef.putFile(selectedImageUri)
+        val metadata = StorageMetadata.Builder()
+            .setContentType("image/png") // Указываем тип контента как PNG
+            .build()
+
+        val uploadTask = imageRef.putFile(selectedImageUri, metadata)
 
         // Add a listener to handle successful or unsuccessful upload
         uploadTask.addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 // Get the download URL from the task result
                 imageRef.downloadUrl.addOnSuccessListener { uri ->
-                    val downloadUrl = uri.toString()
-
-                    // Сохраняем URL изображения в глобальной переменной photo
-                    photo = downloadUrl
-
+                    photo = uri.toString()
                     // Do something with the URL, such as save it to Firestore
 
                     // Покажите Toast об успешной загрузке
-                    showToast("Фотография успешно загружена!")
+                    showToast(getString(R.string.addPhoto))
                     showCircle = true
                 }
             } else {
                 // Handle unsuccessful upload
 
                 // Покажите Toast об ошибке загрузки
-                showToast("Ошибка при загрузке фотографии. Пожалуйста, попробуйте еще раз.")
+                showToast(getString(R.string.upload_error_message))
             }
         }
     }
+
 
 
     private fun showToast(message: String) {
