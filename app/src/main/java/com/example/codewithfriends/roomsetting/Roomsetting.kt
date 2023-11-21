@@ -11,6 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
@@ -93,6 +94,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
@@ -107,6 +110,7 @@ import co.yml.charts.ui.piechart.charts.DonutPieChart
 import co.yml.charts.ui.piechart.models.PieChartConfig
 import co.yml.charts.ui.piechart.models.PieChartData
 import com.example.codewithfriends.MainViewModel
+import com.example.codewithfriends.Viewphote.ViewPhoto
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
@@ -126,9 +130,8 @@ class Roomsetting : ComponentActivity() {
     // Состояния для отслеживания значений
     var over by   mutableStateOf(0f)
     var delete by   mutableStateOf(0f)
-    private fun restartActivity() {
-        recreate()
-    }
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -158,6 +161,7 @@ class Roomsetting : ComponentActivity() {
 
         getTasks(storedRoomId!!)
         OVER_DELETE(storedRoomId!!)
+
         setContent {
             val viewModel = viewModel<MainViewModel>()
             val isLoading by viewModel.isLoading.collectAsState()
@@ -173,12 +177,7 @@ class Roomsetting : ComponentActivity() {
             // Проверяем, есть ли данные комнаты
             val firstRoom = rooms.value.firstOrNull()
 
-            val name = UID(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
-            val img = IMG(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
+
             val id = ID(
                 userData = googleAuthUiClient.getSignedInUser()
             )
@@ -220,7 +219,9 @@ class Roomsetting : ComponentActivity() {
                                 roomname(
                                     roomName = it.roomName,
                                     "$id",
-                                    storedRoomId!!
+                                    storedRoomId!!,
+                                    "$Admin",
+                                    "$id"
                                 )
                             }
                             Spacer(modifier = Modifier.height(30.dp))
@@ -444,7 +445,7 @@ class Roomsetting : ComponentActivity() {
 
 
     @Composable
-    fun roomname(roomName: String, uid: String, roomId: String) {
+    fun roomname(roomName: String, uid: String, roomId: String, Admin: String, uids: String) {
 
         val COLOR_FOR_DELETE_BUTTON : Color = colorResource(id = R.color.custom00FFE8)
 
@@ -468,7 +469,7 @@ class Roomsetting : ComponentActivity() {
                 .fillMaxWidth()
                 .height(80.dp)
                 .padding(start = 10.dp, end = 10.dp)
-                .border(2.dp, Color.Blue, shape = RoundedCornerShape(20.dp))
+                .border(4.dp, Color.Blue, shape = RoundedCornerShape(20.dp))
                 .clip(RoundedCornerShape(20.dp)),
             colors = CardDefaults.cardColors(Color.White),
 
@@ -498,12 +499,13 @@ class Roomsetting : ComponentActivity() {
                             shows = true
                         }) {
                         Text(
-                            text = "выйти из комнаты ",
+                            text = "выйти из комнаты ",// change
                             fontSize = 18.sp,
                             textAlign = TextAlign.Center
                         )
 
                     }
+                    if(Admin == uids) {
                     Spacer(modifier = Modifier.width(10.dp))
                     Button(modifier = Modifier
                         .width(150.dp)
@@ -518,7 +520,7 @@ class Roomsetting : ComponentActivity() {
                             fontSize = 14.sp,
                             textAlign = TextAlign.Center
                         )
-
+                    }
                     }
                 }
             }
@@ -815,7 +817,7 @@ class Roomsetting : ComponentActivity() {
                                 start = 10.dp,
                                 end = 10.dp
                             )
-                            .border(2.dp, Color.Blue, shape = cornerShape)
+                            .border(4.dp, Color.Blue, shape = cornerShape)
                             .clip(RoundedCornerShape(10.dp)),
                         colors = CardDefaults.cardColors(Color.White),
                     ) {
@@ -885,6 +887,7 @@ class Roomsetting : ComponentActivity() {
                                                 text = "Delete user",
                                             )
                                         }
+                                        Spacer(modifier = Modifier.width(10.dp))
 
 
                                     }
@@ -906,17 +909,19 @@ class Roomsetting : ComponentActivity() {
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .heightIn(min = 100.dp, max = if (tasks.isNotEmpty()) 800.dp else 100.dp)
+                .heightIn(min = 100.dp, max = if (tasks.isNotEmpty()) 1000.dp else 100.dp)
         ) {
+            val lazyListState = rememberLazyListState()
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight()
-                    .heightIn(min = 100.dp, max = if (tasks.isNotEmpty()) 800.dp else 100.dp)
+                    .heightIn(min = 100.dp, max = if (tasks.isNotEmpty()) 1000.dp else 100.dp),
+                state = lazyListState
             ) {
-                items(tasks) { task ->
-                    Spacer(modifier = Modifier.width(30.dp))
+                itemsIndexed(tasks) { index, task ->
                     TaskCard(task, roomId)
+                    Spacer(modifier = Modifier.width(30.dp))
                 }
             }
         }
@@ -926,11 +931,12 @@ class Roomsetting : ComponentActivity() {
 
 
 
+
     @Composable
     fun TaskCard(task: TaskData,roomId: String) {
         var scale by remember { mutableStateOf(1f) }
         var offset by remember { mutableStateOf(Offset.Zero) }
-        var uptext  = 800.dp
+        var uptext = 800.dp
 
 
 
@@ -938,69 +944,52 @@ class Roomsetting : ComponentActivity() {
         Card(
             modifier = Modifier
                 .width(500.dp)
-                .height(uptext)
-                .padding(1.dp, top = 10.dp)
+                .height(1000.dp)
                 .clip(RoundedCornerShape(10.dp))
                 .border(4.dp, Color.Blue, shape = RoundedCornerShape(20.dp)),
             colors = CardDefaults.cardColors(Color.White),
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(700.dp)
+                    .fillMaxSize()
                     .padding(16.dp)
-                  ) {
+            ) {
                 Text(text = "Git Branch: ${task.gitbranch}", fontSize = 24.sp)
 
                 Text(text = "Filename: ${task.filename}", fontSize = 24.sp)
 
+
+
                 BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(1f / 1f)
+
                 ) {
-                    val state = rememberTransformableState{zoomChange, panChang, rotationChange->
-                        scale = (scale * zoomChange).coerceIn(1f, 7f)
-                        val extraWidth = (scale - 1) * constraints.maxWidth
-                        val extraHeight = (scale - 1) * constraints.maxHeight
 
-                        val maxX = extraWidth / 2
-                        val maxY= extraHeight / 2
-
-                        offset = Offset(
-                            x = (offset.x + scale + panChang.x).coerceIn(-maxX, maxX),
-                            y = (offset.y + scale + panChang.y).coerceIn(-maxY, maxY)
-                        )
-                        offset += panChang
-                    }
                     Image(
                         painter = rememberAsyncImagePainter(model = task.photo),
                         contentDescription = null,
                         modifier = Modifier
-                            .fillMaxWidth()
                             .padding(20.dp)
-                            .height(700.dp)
-                            .graphicsLayer(
-                                scaleX = scale,
-                                scaleY = scale,
-                                translationX = offset.x,
-                                translationY = offset.y
-                            )
-                            .transformable(state)
+                            .height(600.dp)
+                            .clickable {
+                                openLargeImage(task.photo)
+                            }
+
                     )
                 }
-
-                LazyColumn(modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                ){
-                    item{
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                ) {
+                    item {
                         Text(text = "Mission: ${task.mession}", fontSize = 24.sp)
                     }
                 }
 
 
-            }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1009,18 +998,20 @@ class Roomsetting : ComponentActivity() {
                 )
                 {
 
-
+                    Spacer(modifier = Modifier.width(10.dp))
                     Button(
-                        modifier = Modifier.fillMaxHeight(),
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(1f),
                         shape = RoundedCornerShape(20.dp),
                         colors = ButtonDefaults.buttonColors(Color.Red),
                         onClick = {
-                            deleteDataComplit("$roomId", "${task.id}" )
+                            deleteDataComplit("$roomId", "${task.id}")
 
-                          //  deleteUserFromRoomAsync
+                            //  deleteUserFromRoomAsync
                             recreate()
                         },
-                    ){
+                    ) {
 
                         Text(text = "Delete", fontSize = 15.sp, modifier = Modifier)
 
@@ -1034,15 +1025,17 @@ class Roomsetting : ComponentActivity() {
                         )
                     }
 
-
+                    Spacer(modifier = Modifier.width(50.dp))
 
 
                     Button(
-                        modifier = Modifier.fillMaxHeight(),
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .weight(1f),
                         shape = RoundedCornerShape(20.dp),
                         colors = ButtonDefaults.buttonColors(Color.Green),
                         onClick = {
-                            deleteData("$roomId", "${task.id}" )
+                            deleteData("$roomId", "${task.id}")
                             recreate()
                             // Ваш код, который будет выполнен при нажатии кнопки
                         },
@@ -1056,16 +1049,23 @@ class Roomsetting : ComponentActivity() {
                             imageVector = Icons.Default.Check,
                             contentDescription = "Delete",
                             tint = Color.White // Цвет иконки
-                            )
+                        )
 
                     }
+                    Spacer(modifier = Modifier.width(10.dp))
 
                 }
             }
         }
+    }
+    fun openLargeImage( photo: String) {
+        // Здесь реализуйте логику открытия большой версии изображения
+        // Например, использование Intent для открытия новой активности с большим изображением
+        val intent = Intent(this, ViewPhoto::class.java)
+        intent.putExtra("PHOTO_URL", photo) // Передача URL изображения в активность
+        startActivity(intent)
 
-    
-
+    }
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
     private fun SimpleDonutChart(context: Context, over: Float, delet: Float) {

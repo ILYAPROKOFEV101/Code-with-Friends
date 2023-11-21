@@ -201,7 +201,15 @@ class Chat : ComponentActivity() {
                             userData = googleAuthUiClient.getSignedInUser()
                         )
 
-                        upbar(storedRoomId!!, "$id", "$name", "$img", "$roomUrl", "$Admin")
+
+                        Box(modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+
+                        ) {
+                            upbar(storedRoomId!!, "$id", "$name", "$img", "$roomUrl", "$Admin")
+
+                        }
 
                     }
 
@@ -428,6 +436,7 @@ class Chat : ComponentActivity() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 60.dp, top = 50.dp)
+                        .background(Color(0x2F3083FF))
                         .wrapContentHeight(),
                     reverseLayout = false,
                     state = listState
@@ -443,6 +452,7 @@ class Chat : ComponentActivity() {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
+
                                 .padding(8.dp),
                             contentAlignment = if (isMyMessage || isMyUrlMessage) Alignment.CenterEnd else Alignment.CenterStart
                         ) {
@@ -474,7 +484,9 @@ class Chat : ComponentActivity() {
                                     modifier = Modifier
                                         .fillMaxWidth(0.8f)
                                         .padding(2.dp),
-                                    backgroundColor = if (isMyMessage || isMyUrlMessage) Color.Green else Color.Blue,
+                                    backgroundColor = if (isMyMessage || isMyUrlMessage) Color(
+                                        0xFF52FD56
+                                    ) else Color(0xFFFFFFFF),
                                     elevation = 10.dp,
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
@@ -482,9 +494,9 @@ class Chat : ComponentActivity() {
                                         Text(
                                             text = "${message.sender}$beforeUrl$afterUrl",
                                             textAlign = TextAlign.Start,
-                                            fontSize = 20.sp,
+                                            fontSize = 18.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = Color.White,
+                                            color = Color.Black,
                                             overflow = TextOverflow.Ellipsis
                                         )
                                     }
@@ -669,7 +681,7 @@ class Chat : ComponentActivity() {
                         if (show.value) {
                             submittedText = text
                             text = ""
-                            if(submittedText != " "){
+                            if(submittedText != ""){
                                 onSendMessage(submittedText) // Вызываем функцию для отправки сообщения
                             }
 
@@ -690,18 +702,12 @@ class Chat : ComponentActivity() {
 
     @Composable
     fun upbar(roomId: String, id: String, name: String, img: String, url: String, Admin: String){
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-                .padding(start = 5.dp, end = 5.dp)
-                .clip(RoundedCornerShape(20.dp)),
 
-        ) {
                 if (show.value) {
                     Button(
-                        colors = ButtonDefaults.buttonColors(Color.Green),
+                        colors = ButtonDefaults.buttonColors(Color(0xB900CE0A)),
                         modifier = Modifier
+                            .background(Color(0x2F3083FF))
                             .fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
                         onClick = {
@@ -721,19 +727,11 @@ class Chat : ComponentActivity() {
                       }
 
                 } else {
-
-
-
-
-                    Box(modifier = Modifier.fillMaxSize()){
-
                         Button(
-                            colors = ButtonDefaults.buttonColors(Color.Blue),
+                            colors = ButtonDefaults.buttonColors(Color(0xFF1472FF)),
                             modifier = Modifier
-                                .height(400.dp)
-                                .width(400.dp)
-                                .align(Alignment.Center)
-                            ,
+                                .height(100.dp)
+                                .fillMaxWidth(),
                             shape = RoundedCornerShape(20.dp),
                             onClick = {
                                 pushData(roomId,"$id", "$name","$img",)
@@ -744,12 +742,12 @@ class Chat : ComponentActivity() {
                             Text(text = stringResource(id = R.string.room), fontSize = 24.sp)
                         }
 
-                    }
+
 
                     // Другие элементы, которые вы хотите отобразить вместо кнопки,
                     // когда showButton равно false
                 }
             }
-        }
+
 
 }

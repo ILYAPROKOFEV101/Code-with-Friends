@@ -31,9 +31,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.IconButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -58,8 +61,10 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -90,6 +95,7 @@ import kotlinx.coroutines.tasks.await
 class  MainActivity: ComponentActivity() {
 
 
+    var cloth by mutableStateOf(false)
 
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -99,8 +105,29 @@ class  MainActivity: ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+
+
+
+// Инициализируйте PreferenceHelper в вашей активности
+        PreferenceHelper.initialize(applicationContext)
+        val myValue = PreferenceHelper.getValue("myKey")
+
+
+
+
         super.onCreate(savedInstanceState)
         setContent {
+
+
+            if (myValue == false){
+                if (cloth == false) {
+                    DeleteRoom()
+                }
+            }
+
+
+
 
             //val intent = Intent(this@MainActivity, Main_menu::class.java)
             // startActivity(intent)
@@ -371,6 +398,76 @@ class  MainActivity: ComponentActivity() {
          //
         }
     }
+@Preview
+    @Composable
+    fun DeleteRoom() {
+        var show by remember {
+            mutableStateOf(true)
+        }
+                if(show == true) {
+
+                    AlertDialog(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(top = 30.dp, bottom = 30.dp)
+                            .clip(
+                                RoundedCornerShape(20.dp)
+                            ),
+                        shape = RoundedCornerShape(20.dp),
+                        onDismissRequest = { /* ... */ },
+
+                        title = { Text(text = stringResource(id = R.string.Privacy_Policy),
+                            fontSize = 24.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()) },
+
+                        buttons = {
+                            LazyColumn(modifier = Modifier
+                                .fillMaxWidth()
+                                .height(500.dp)
+                                .padding(5.dp)){
+                                item {
+                                            Text(text = stringResource(id = R.string.policy))
+                                }
+
+
+                            }
+                            Column(
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .padding(bottom = 10.dp),
+                                verticalArrangement = Arrangement.SpaceBetween,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Button(
+                                    onClick = {
+                                        cloth = true
+                                        PreferenceHelper.saveValue("myKey", true)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(Color(0xFF29B630)),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(20.dp))
+                                ) {
+                                 Text(text = stringResource(id = R.string.I_agree), color = Color.White)
+                                }
+                                Button(
+                                    onClick = {
+                                        finish()
+                                    },
+                                    colors = ButtonDefaults.buttonColors(Color(0xFFFA0505)),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(15.dp))
+                                ) {
+                                    Text( stringResource(id = R.string.I_dont_agree),color = Color.White)
+                                }
+                            }
+                        }
+                    )
+                }
+    }
 
 
     @Composable
@@ -397,7 +494,7 @@ class  MainActivity: ComponentActivity() {
                     .padding(start = 70.dp, end = 70.dp)
                     .height(50.dp)
                     .align(Alignment.Center),
-                colors = ButtonDefaults.buttonColors(Color.Blue),
+                colors = ButtonDefaults.buttonColors(Color(0xFF4CAF50)),
                 shape = RoundedCornerShape(20.dp),
                 onClick = {
                     val intent = Intent(this@MainActivity, Main_menu::class.java)

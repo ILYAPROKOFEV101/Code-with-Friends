@@ -1,6 +1,7 @@
 package com.example.codewithfriends.findroom
 
 import LoadingComponent
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -121,6 +122,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.collectAsState
 
@@ -133,6 +136,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.codewithfriends.LoadingCircle
 import com.example.codewithfriends.MainViewModel
+import com.example.codewithfriends.Viewphote.ViewPhoto
+import com.example.reaction.logik.PreferenceHelper.getRoomId
 
 
 class FindRoom : ComponentActivity() {
@@ -146,13 +151,31 @@ class FindRoom : ComponentActivity() {
     var showCircle by mutableStateOf(false)
 
     private val client = OkHttpClient()
-
+    private var storedRoomId: String? = null // Объявляем на уровне класса
    private val handler = Handler()
+
+
+    var myroom by  mutableStateOf(false)
+    var select by  mutableStateOf(false)
+
+    val languages = listOf(
+        "android development",
+        "ios development",
+        "Web development",
+        "Game development",
+        "C++ Software",
+        "Machine learning "
+    )
+    var selectedLanguage by  mutableStateOf("")
+
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        storedRoomId = getRoomId(this)
 
         super.onCreate(savedInstanceState)
 
         setContent {
+
 
             val viewModel = viewModel<MainViewModel>()
             val isLoading by viewModel.isLoading.collectAsState()
@@ -162,11 +185,12 @@ class FindRoom : ComponentActivity() {
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
-
-
-
+                val id = ID(
+                    userData = googleAuthUiClient.getSignedInUser()
+                )
 
                 val rooms = remember { mutableStateOf(emptyList<Room>()) }
+                val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
 
 
                 // Задержка перехода на новую страницу через 3 секунды
@@ -174,7 +198,7 @@ class FindRoom : ComponentActivity() {
                     getData(rooms)
                 }, 500) // 3000 миллисекунд (3 секунды)
                 // Вызывайте getData только после установки ContentView
-
+                GET_MYROOM("$id", data_from_myroom)
                 // Ваш код Composable
                 SwipeRefresh(
                     state = swipeRefresh,
@@ -184,7 +208,9 @@ class FindRoom : ComponentActivity() {
                 ) {
 
                         Box(modifier = Modifier.fillMaxSize()) {
-                            RoomList(rooms.value)
+
+
+                            RoomList(rooms.value, data_from_myroom.value)
                         }
 
                 }
@@ -206,6 +232,49 @@ class FindRoom : ComponentActivity() {
 
         // Создаем запрос
         val request = api.getRooms()
+
+        // Выполняем запрос
+        request.enqueue(object : Callback<List<Room>> {
+            override fun onFailure(call: Call<List<Room>>, t: Throwable) {
+                // Ошибка
+                Log.e("getData", t.message ?: "Неизвестная ошибка")
+
+                // Курятина
+                if (t.message?.contains("404") ?: false) {
+                    Log.d("getData", "Данные не найдены")
+                } else {
+                    Log.d("getData", "Неизвестная ошибка")
+                }
+            }
+
+            override fun onResponse(call: Call<List<Room>>, response: Response<List<Room>>) {
+                // Успех
+                if (response.isSuccessful) {
+                    // Получаем данные
+                    val newRooms = response.body() ?: emptyList()
+
+                    // Обновляем состояние
+                    rooms.value = newRooms
+                } else {
+                    // Ошибка
+                    Log.e("getData", "Ошибка получения данных: ")
+                }
+            }
+        })
+    }
+
+    private fun GET_MYROOM(uid:String, rooms: MutableState<List<Room>>) {
+        // Создаем Retrofit клиент
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://getpost-ilya1.up.railway.app/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        // Создаем API интерфейс
+        val api = retrofit.create(Getmyroom::class.java)
+
+        // Создаем запрос
+        val request = api.getRooms(uid)
 
         // Выполняем запрос
         request.enqueue(object : Callback<List<Room>> {
@@ -264,7 +333,6 @@ class FindRoom : ComponentActivity() {
             )
 
 
-
         }
     }
 
@@ -272,7 +340,7 @@ class FindRoom : ComponentActivity() {
 
 
     @Composable
-    fun RoomList(rooms: List<Room>) {
+    fun RoomList(rooms: List<Room>, Myroom: List<Room>) {
         var notFoundVisible by remember { mutableStateOf(false) }
 
         LaunchedEffect(true) {
@@ -281,25 +349,49 @@ class FindRoom : ComponentActivity() {
             notFoundVisible = true
         }
 
+        val id = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+
 
         LazyColumn {
-            if (rooms.isNotEmpty()) {
-                items(rooms) { room ->
-                    RoomItem(room)
+                item {
+                    Selecte()
                 }
+            if (rooms.isNotEmpty()) {
+
+                if(myroom == true){
+                    items(rooms) { room ->
+                        if(room.Admin == id){
+                            RoomItem(room)
+                        }
+                    }
+
+                    items(Myroom) { Myroom ->
+                            RoomItem(Myroom)
+                    }
+
+                } else if (select == true && selectedLanguage != ""){
+                    items(rooms) { room ->
+                        if(room.language == selectedLanguage){
+                            RoomItem(room)
+                        }
+                        
+                    }
+                } else {
+                    items(rooms) { room ->
+                            RoomItem(room)
+                    }
+                }
+
             } else {
 
                 if (notFoundVisible) {
                     item {
                         NOTFound()
-
-                    }
-                } else {
-                    item {
-
-                        LoadingComponent().LoadingCircle()
                     }
                 }
+
             }
         }
     }
@@ -311,9 +403,9 @@ class FindRoom : ComponentActivity() {
     val joinroom: Color = colorResource(id = R.color.joinroom)
     val creatroom: Color = colorResource(id = R.color.creatroom)
 
-        
 
-        Spacer(modifier = Modifier.height(20.dp))
+
+
 
         Card(
             elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
@@ -435,13 +527,99 @@ class FindRoom : ComponentActivity() {
                     }
 
                 }
-
             }
         Spacer(modifier = Modifier.height(10.dp))
 
     }
 
 
+
+    @Preview
+    @Composable
+    fun Selecte() {
+        var expanded by remember { mutableStateOf(false) }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp)
+        ) {
+            Button(
+                colors = ButtonDefaults.buttonColors(if (!myroom && !select) Color(0xFF0BDD27) else Color(
+                    0xFF246DFF
+                )
+                ),
+                onClick = {
+                    myroom = false
+                    select = false
+                    expanded = false
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(5.dp),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Text(text = stringResource(id = R.string.all))
+            }
+
+            Button(
+                colors = ButtonDefaults.buttonColors(if (myroom) Color(0xFF0BDD27) else Color(
+                    0xFF246DFF
+                )),
+                onClick = {
+                    myroom = true
+                    select = false
+                    expanded = false
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(5.dp),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Text(text = stringResource(id = R.string.Muroom))
+            }
+
+            Button(
+                colors = ButtonDefaults.buttonColors(if (select) Color(0xFF0BDD27) else Color(
+                    0xFF246DFF
+                )),
+                onClick = {
+                    expanded = true
+                    myroom = false
+                    select = true
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(5.dp),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Text(text = stringResource(id = R.string.Selected))
+            }
+
+            // DropdownMenu
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(5.dp)
+            ) {
+                // Populate the menu with items from the list
+                languages.forEach { language ->
+                    DropdownMenuItem(
+                        onClick = {
+                            selectedLanguage = language
+                            expanded = false
+                        }
+                    ) {
+                        Text(text = language)
+                    }
+                }
+            }
+        }
+    }
 
     fun goToChatActivity(roomId: String) {
 

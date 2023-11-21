@@ -65,7 +65,7 @@ fun ProfileScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
-        Button(colors = ButtonDefaults.buttonColors(Color.Green),onClick = onSignOut, modifier = Modifier.clip(RoundedCornerShape(90.dp)), shape = RoundedCornerShape(20.dp)) {
+        Button(colors = ButtonDefaults.buttonColors(Color(0xFF03A9F4)),onClick = onSignOut, modifier = Modifier.clip(RoundedCornerShape(90.dp)), shape = RoundedCornerShape(20.dp)) {
             Text(text = "Sign out")
         }
     }

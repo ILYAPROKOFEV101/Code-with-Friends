@@ -23,9 +23,36 @@
     <string name="place">Places</string>
 
     <string name="Nothinkchose">nothing selected</string>
+    <string name="all">ALL ROOM</string>
+    <string name="Muroom">MY ROOM</string>
+    <string name="SpeshelRoom">SELECT</string>
+    <string name="policy">
+This Privacy Policy outlines the procedures for collecting, using, and disclosing personal information of users (hereinafter &quot;Users&quot;) within the use of our social network (hereinafter &quot;Network&quot;). This Policy also establishes the rules that Users agree to abide by when using the Network.\n\n
+1. Collection and use of personal information\n\n
+1.1. When registering on the Network, Users provide certain personal information, including but not limited to, name, email address, and other information necessary to create an account.\n\n
+1.2. We may also collect and use information about Users\' behavior in the Network to improve functionality and provide personalized services.\n\n
+2. Restrictions on the use of the Network\n\n
+2.1. Users agree to refrain from posting photos and content of an indecent nature in the Network, as well as expressing aggression and calling for unlawful actions against other Users or third parties.\n\n
+2.2. We reserve the right to remove content that violates the rules of using the Network and take measures against Users who violate these restrictions.\n\n
+3. Responsibility and confidentiality of data\n\n
+3.1. We are not responsible for the confidentiality and storage of data provided by Users in the Network.\n\n
+3.2. Users acknowledge and agree that we are not obligated to provide any guarantees regarding the confidentiality and security of transmitted or stored information.\n\n
+4. Lack of obligations to Users\n\n
+4.1. This Policy does not create any obligations on the part of our social network to Users. We reserve the right to change the terms of this Policy at any time without prior notice.\n\n
+4.2. Users agree that the use of the Network is at their own risk, and we are not responsible for any damage caused to Users as a result of using the Network.\n\n
+5. Children\'s Privacy:\n\n
+5.1. The Network is not intended for individuals under the age of 13. We do not knowingly collect personal information from children under this age without parental consent.\n\n
+5.2. Parents or legal guardians can contact us to review, delete, or refuse further collection of their child\'s information.\n\n
+6. Changes to the Privacy Policy:\n\n
+6.1. We reserve the right to modify or update this Privacy Policy. Users will be notified of any significant changes, and continued use of the Network after such modifications constitutes acceptance of the revised Policy.\n\n
+This Privacy Policy comes into effect upon its publication and remains in force until amended or revoked. By using our social network, Users confirm their agreement with the terms of this Policy.</string>
 
 
     <string name="chooselenguage">Choose a programming language</string>
+    <string name="Privacy_Policy">Privacy Policy</string>
+    <string name="I_agree">I agree</string>
+    <string name="I_dont_agree">I don\'t agree</string>
+
     <string name="notfoun">
         It appears that the server is not responding at the moment. This could be due to various reasons, such as temporary technical issues, restricted access from your region, or a lack of internet connectivity. It\'s also possible that the server is undergoing maintenance.
     </string>
@@ -116,4 +143,5 @@
     <string name="title_activity_test">TestActivity</string>
     <string name="title_activity_team_speak">TeamSpeak</string>
     <string name="title_activity_aboutuser">Aboutuser</string>
+    <string name="title_activity_view_photo">ViewPhoto</string>
 </resources>
