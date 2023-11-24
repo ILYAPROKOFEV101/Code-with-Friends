@@ -21,6 +21,17 @@
     <string name="Selected">Selected</string>
     <string name="Choose">Selected</string>
     <string name="place">Places</string>
+    <string name="Complaint">Write a complaint</string>
+    <string name="Confirmation">Confirmation</string>
+    <string name="Confirmationrealy">Are you sure you want to remove this user from the room?</string>
+    <string name="Delete">Delete</string>
+    <string name="Cancel">Cancel</string>
+    <string name="escape">Escape</string>
+    <string name="want">Do you really want to leave the room?</string>
+    <string name="destroy">Do you really want to destroy the room?</string>
+    <string name="destroyroom">Destroy</string>
+    <string name="Exit">Exit</string>
+
 
     <string name="Nothinkchose">nothing selected</string>
     <string name="all">ALL ROOM</string>
@@ -49,6 +60,7 @@ This Privacy Policy comes into effect upon its publication and remains in force 
 
 
     <string name="chooselenguage">Choose a programming language</string>
+    <string name="writecomplaint">write a complaint and we will review the application</string>
     <string name="Privacy_Policy">Privacy Policy</string>
     <string name="I_agree">I agree</string>
     <string name="I_dont_agree">I don\'t agree</string>
@@ -144,4 +156,6 @@ This Privacy Policy comes into effect upon its publication and remains in force 
     <string name="title_activity_team_speak">TeamSpeak</string>
     <string name="title_activity_aboutuser">Aboutuser</string>
     <string name="title_activity_view_photo">ViewPhoto</string>
+    <string name="title_activity_complaint">ComplaintActivity</string>
+    <string name="title_activity_sendban">Sendban</string>
 </resources>

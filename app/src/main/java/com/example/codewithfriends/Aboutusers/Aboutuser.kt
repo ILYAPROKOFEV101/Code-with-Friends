@@ -1,5 +1,6 @@
 package com.example.codewithfriends.Aboutusers
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -14,10 +15,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +36,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
@@ -41,17 +45,29 @@ import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.codewithfriends.Aboutusers.ui.theme.CodeWithFriendsTheme
+import com.example.codewithfriends.Complaint.Sendban
 import com.example.codewithfriends.R
-import com.example.codewithfriends.findroom.Room
+import com.example.codewithfriends.presentation.profile.ID
+import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
+import com.google.android.gms.auth.api.identity.Identity
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 
 class Aboutuser : ComponentActivity() {
 
-
+    private val googleAuthUiClient by lazy {
+        GoogleAuthUiClient(
+            context = applicationContext,
+            oneTapClient = Identity.getSignInClient(applicationContext)
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val id = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
 
         val userId = intent.getStringExtra("userId")
         setContent {
@@ -72,6 +88,14 @@ class Aboutuser : ComponentActivity() {
                         item {
                             aboutuser(user.value)
                         }
+
+                        if(id != userId){
+                            item {
+                                Complaint("$userId")
+                                }
+                        }
+
+
                     }
 
                 }
@@ -124,8 +148,8 @@ class Aboutuser : ComponentActivity() {
                     .height(700.dp)
             ) {
                 items(user) { user ->
-                    age(user)
-                    Spacer(modifier = Modifier.height(10.dp))
+                   // age(user)
+                   // Spacer(modifier = Modifier.height(10.dp))
                     aboutme(user)
                 }
             }
@@ -199,6 +223,31 @@ class Aboutuser : ComponentActivity() {
         val requestQueue = Volley.newRequestQueue(this)
         requestQueue.add(request)
     }
+
+
+    @Composable
+    fun Complaint(uid: String){
+        Button(modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .padding(5.dp), shape = RoundedCornerShape(20.dp),
+            colors = ButtonDefaults.buttonColors(Color(0xFFF44336)),
+            onClick = {
+                val intent = Intent(this@Aboutuser, Sendban::class.java)
+                intent.putExtra(
+                    "userId",
+                    uid
+                ) // Здесь вы добавляете данные в Intent
+                startActivity(intent)
+            }) {
+            Text(
+                text = stringResource(id = R.string.Complaint),
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+
 
 
 }

@@ -1,5 +1,6 @@
 package com.example.codewithfriends.Startmenu
 
+import LoadingComponent
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -92,6 +93,11 @@ class Main_menu : ComponentActivity() {
         val id = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )
+
+        val loadingComponent = LoadingComponent()
+        loadingComponent.userexsist("$id", this)
+
+
         getNumberFromServer("$id")
         super.onCreate(savedInstanceState)
 
@@ -216,7 +222,7 @@ class Main_menu : ComponentActivity() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 5.dp, end = 5.dp)
-                .height(780.dp)
+                .height(500.dp)
                 .wrapContentSize(align = Alignment.Center) // Выравнивание Box по центру экрана
         ) {
 
@@ -259,7 +265,7 @@ class Main_menu : ComponentActivity() {
 
             modifier = Modifier
                 .fillMaxWidth() // Занимает все доступное пространство по ширине и высоте
-                .height(700.dp)
+                .height(400.dp)
                 .clip(RoundedCornerShape(30.dp)) // Закругление углов поля
                 .background(Color.LightGray) // Цвет фона поля
                 .focusRequester(focusRequester = focusRequester) // Позволяет управлять фокусом поля ввода

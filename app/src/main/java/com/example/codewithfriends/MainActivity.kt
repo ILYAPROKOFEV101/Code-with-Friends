@@ -1,3 +1,4 @@
+
 package com.example.codewithfriends
 
 
@@ -93,6 +94,7 @@ import kotlinx.coroutines.tasks.await
 
 @Suppress("DEPRECATION", "UNREACHABLE_CODE")
 class  MainActivity: ComponentActivity() {
+    var leftop by mutableStateOf(true)
 
 
     var cloth by mutableStateOf(false)
@@ -150,9 +152,7 @@ class  MainActivity: ComponentActivity() {
                         mutableStateOf(false)
                     }
 
-                    var leftop by remember {
-                        mutableStateOf(true)
-                    }
+
 
                     var user by remember { mutableStateOf(Firebase.auth.currentUser) }
 
@@ -427,43 +427,46 @@ class  MainActivity: ComponentActivity() {
                                 .fillMaxWidth()
                                 .height(500.dp)
                                 .padding(5.dp)){
+
                                 item {
                                             Text(text = stringResource(id = R.string.policy))
                                 }
-
+                                item {
+                                    Column(
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 10.dp),
+                                        verticalArrangement = Arrangement.SpaceBetween,
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Button(
+                                            onClick = {
+                                                cloth = true
+                                                PreferenceHelper.saveValue("myKey", true)
+                                            },
+                                            colors = ButtonDefaults.buttonColors(Color(0xFF29B630)),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(20.dp))
+                                        ) {
+                                            Text(text = stringResource(id = R.string.I_agree), color = Color.White)
+                                        }
+                                        Button(
+                                            onClick = {
+                                                finish()
+                                            },
+                                            colors = ButtonDefaults.buttonColors(Color(0xFFFA0505)),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(15.dp))
+                                        ) {
+                                            Text( stringResource(id = R.string.I_dont_agree),color = Color.White)
+                                        }
+                                    }
+                                }
 
                             }
-                            Column(
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp)
-                                    .padding(bottom = 10.dp),
-                                verticalArrangement = Arrangement.SpaceBetween,
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Button(
-                                    onClick = {
-                                        cloth = true
-                                        PreferenceHelper.saveValue("myKey", true)
-                                    },
-                                    colors = ButtonDefaults.buttonColors(Color(0xFF29B630)),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(20.dp))
-                                ) {
-                                 Text(text = stringResource(id = R.string.I_agree), color = Color.White)
-                                }
-                                Button(
-                                    onClick = {
-                                        finish()
-                                    },
-                                    colors = ButtonDefaults.buttonColors(Color(0xFFFA0505)),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(15.dp))
-                                ) {
-                                    Text( stringResource(id = R.string.I_dont_agree),color = Color.White)
-                                }
-                            }
+
                         }
                     )
                 }
@@ -476,6 +479,7 @@ class  MainActivity: ComponentActivity() {
 
             val intent = Intent(this@MainActivity, Main_menu::class.java)
             startActivity(intent)
+
 
         }
     }

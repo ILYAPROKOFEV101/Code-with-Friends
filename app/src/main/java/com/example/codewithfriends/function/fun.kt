@@ -1,5 +1,10 @@
 
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -15,40 +20,58 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.codewithfriends.findroom.FindRoom
+
+
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 
 class LoadingComponent {
 
-    @Composable
-    fun LoadingCircle() {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .height(100.dp)
 
-                .wrapContentSize(Alignment.Center)
-        ) {
-            val rotation = rememberInfiniteTransition().animateFloat(
-                initialValue = 0f,
-                targetValue = 360f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(durationMillis = 1000, easing = LinearEasing),
-                    repeatMode = RepeatMode.Restart
-                )
-            )
 
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(100.dp)
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .background(Color.White)
-                )
+
+    fun userexsist(uid: String,  context: Context) {
+        // Создаем клиент OkHttp
+        val client = OkHttpClient()
+
+
+        // Создаем запрос
+        val request = Request.Builder()
+            .url("https://getpost-ilya1.up.railway.app/examination/$uid")
+            .build()
+
+        // Выполняем запрос
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                // Ошибка
+                Log.e("getData", e.message ?: "Неизвестная ошибка")
             }
-        }
+
+            override fun onResponse(call: okhttp3.Call, response: Response) {
+                if (response.isSuccessful) {
+                    // Получаем данные
+                    val data = response.body!!.string()
+                    val trueOrFalse = data.toBoolean()
+
+
+                    if(trueOrFalse){
+                        (context as? Activity)?.finishAffinity()
+                        // Показать Toast уведомление
+                        Toast.makeText(context, "This is a ban", Toast.LENGTH_SHORT).show()
+                    }
+
+                } else {
+                    // Ошибка
+                    Log.e("getData", "Ошибка получения данных: ${response.code}")
+                }
+            }
+        })
     }
+
 }
 

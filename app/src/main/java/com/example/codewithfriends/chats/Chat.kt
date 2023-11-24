@@ -1,5 +1,6 @@
 package com.example.codewithfriends.chats
 
+import LoadingComponent
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -149,6 +150,10 @@ class Chat : ComponentActivity() {
             userData = googleAuthUiClient.getSignedInUser()
         )
         storedRoomId = getRoomId(this)
+
+
+        val loadingComponent = LoadingComponent()
+        loadingComponent.userexsist("$id", this)
 
 
 

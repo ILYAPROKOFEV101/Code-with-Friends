@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.rememberTransformableState
@@ -279,7 +280,8 @@ class Roomsetting : ComponentActivity() {
                 .padding(bottom = 15.dp, top = 15.dp, start = 70.dp, end = 70.dp)
                 .clip(RoundedCornerShape(180.dp)),
             shape = RoundedCornerShape(180.dp), // Применяем закругленные углы к Card
-            elevation = CardDefaults.cardElevation(defaultElevation = 20.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 20.dp),
+            colors = CardDefaults.cardColors(Color.White),
         ) {
 
             Image(
@@ -293,8 +295,10 @@ class Roomsetting : ComponentActivity() {
                 contentDescription = null,
                 modifier = Modifier
                     .size(270.dp)
-                    .clip(RoundedCornerShape(40.dp)),
-                contentScale = ContentScale.Crop
+                    .clip(RoundedCornerShape(180.dp))
+                    .align(Alignment.CenterHorizontally)
+                ,
+                contentScale = ContentScale.Crop,
             )
 
 
@@ -499,7 +503,7 @@ class Roomsetting : ComponentActivity() {
                             shows = true
                         }) {
                         Text(
-                            text = "выйти из комнаты ",// change
+                            text = stringResource(id = R.string.Exit),// change
                             fontSize = 18.sp,
                             textAlign = TextAlign.Center
                         )
@@ -508,7 +512,7 @@ class Roomsetting : ComponentActivity() {
                     if(Admin == uids) {
                     Spacer(modifier = Modifier.width(10.dp))
                     Button(modifier = Modifier
-                        .width(150.dp)
+                        .width(200.dp)
                         .padding(5.dp)
                         .fillMaxHeight(), shape = RoundedCornerShape(20.dp),
                         colors = ButtonDefaults.buttonColors(COLOR_FOR_DELETE_BUTTON),
@@ -530,6 +534,7 @@ class Roomsetting : ComponentActivity() {
     @Composable
     fun ComposeAlertDialog(roomName: String, uid: String, roomId: String) {
 
+        val Text = stringResource(id = R.string.want)
         var show by remember {
             mutableStateOf(true)
         }
@@ -537,8 +542,8 @@ class Roomsetting : ComponentActivity() {
         if(show) {
             AlertDialog(
                 onDismissRequest = { /* ... */ },
-                title = { Text(text = "Подтверждение") },
-                text = { Text(text = "Вы действительно хотите удалиться из комнаты '$roomName'?") },
+                title = { Text(text = stringResource(id = R.string.Confirmation)) },
+                text = { Text(text = "$Text 'room:$roomName'?") },
                 buttons = {
                     Column(
                         modifier = Modifier
@@ -560,7 +565,7 @@ class Roomsetting : ComponentActivity() {
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(15.dp))
                         ) {
-                            Text("Удалиться", color = Color.White)
+                            Text(stringResource(id = R.string.Delete), color = Color.White)
                         }
                         Button(
                             onClick = { show = !show  },
@@ -569,7 +574,7 @@ class Roomsetting : ComponentActivity() {
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(15.dp))
                         ) {
-                            Text("Отмена", color = Color.DarkGray)
+                            Text(stringResource(id = R.string.Cancel), color = Color.DarkGray)
                         }
                     }
                 }
@@ -586,8 +591,8 @@ class Roomsetting : ComponentActivity() {
         if(show) {
             AlertDialog(
                 onDismissRequest = { /* ... */ },
-                title = { Text(text = "Подтверждение") },
-                text = { Text(text = "Вы действительно хотите удолить комнату ") },
+                title = { Text(text = stringResource(id = R.string.Confirmation)) },
+                text = { Text(text = stringResource(id = R.string.destroy)) },
                 buttons = {
                     Column(
                         modifier = Modifier
@@ -609,7 +614,7 @@ class Roomsetting : ComponentActivity() {
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(15.dp))
                         ) {
-                            Text("Удалиться", color = Color.White)
+                            Text(stringResource(id = R.string.destroyroom), color = Color.White)
                         }
                         Button(
                             onClick = { show = !show  },
@@ -618,7 +623,7 @@ class Roomsetting : ComponentActivity() {
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(15.dp))
                         ) {
-                            Text("Отмена", color = Color.DarkGray)
+                            Text(stringResource(id = R.string.Cancel), color = Color.DarkGray)
                         }
                     }
                 }
@@ -635,8 +640,8 @@ class Roomsetting : ComponentActivity() {
         if(show) {
             AlertDialog(
                 onDismissRequest = { /* ... */ },
-                title = { Text(text = "Подтверждение") },
-                text = { Text(text = "Вы действительно хотите удалить этого пользователя из  комнаты ") },
+                title = { Text(text = stringResource(id = R.string.Confirmation)) },
+                text = { Text(text = stringResource(id = R.string.Confirmationrealy)) },
                 buttons = {
                     Column(
                         modifier = Modifier
@@ -655,16 +660,16 @@ class Roomsetting : ComponentActivity() {
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(15.dp))
                         ) {
-                            Text("Удалиться", color = Color.White)
+                            Text(stringResource(id = R.string.Delete), color = Color.White)
                         }
                         Button(
-                            onClick = { show = true },
+                            onClick = { show = false},
                             colors = ButtonDefaults.buttonColors(Color.LightGray),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(15.dp))
                         ) {
-                            Text("Отмена", color = Color.DarkGray)
+                            Text(stringResource(id = R.string.Cancel), color = Color.DarkGray)
 
                         }
                     }
@@ -1110,7 +1115,7 @@ class Roomsetting : ComponentActivity() {
             DonutPieChart(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(400.dp),
+                    .wrapContentWidth(),
 
                 donutChartData, // Передаем новые данные
                 pieChartConfig

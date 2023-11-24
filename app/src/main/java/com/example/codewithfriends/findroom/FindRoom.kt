@@ -169,6 +169,12 @@ class FindRoom : ComponentActivity() {
     var selectedLanguage by  mutableStateOf("")
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val id = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+
+        val loadingComponent = LoadingComponent()
+        loadingComponent.userexsist("$id", this)
 
         storedRoomId = getRoomId(this)
 
@@ -185,9 +191,6 @@ class FindRoom : ComponentActivity() {
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.background
             ) {
-                val id = ID(
-                    userData = googleAuthUiClient.getSignedInUser()
-                )
 
                 val rooms = remember { mutableStateOf(emptyList<Room>()) }
                 val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
@@ -342,6 +345,7 @@ class FindRoom : ComponentActivity() {
     @Composable
     fun RoomList(rooms: List<Room>, Myroom: List<Room>) {
         var notFoundVisible by remember { mutableStateOf(false) }
+        var showroom by remember { mutableStateOf(true) }
 
         LaunchedEffect(true) {
             // Задержка на 4 секунды
@@ -362,13 +366,16 @@ class FindRoom : ComponentActivity() {
 
                 if(myroom == true){
                     items(rooms) { room ->
-                        if(room.Admin == id){
+                        if (room.Admin == id) {
                             RoomItem(room)
                         }
+
                     }
 
-                    items(Myroom) { Myroom ->
+                    if (showroom == true) {
+                        items(Myroom) { Myroom ->
                             RoomItem(Myroom)
+                        }
                     }
 
                 } else if (select == true && selectedLanguage != ""){
