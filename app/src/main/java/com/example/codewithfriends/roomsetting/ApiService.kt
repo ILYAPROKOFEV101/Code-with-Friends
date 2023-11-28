@@ -1,5 +1,6 @@
 package com.example.codewithfriends.roomsetting
 
+import com.example.codewithfriends.findroom.Room
 import com.example.codewithfriends.firebase.TaskRequest
 import com.google.gson.annotations.SerializedName
 import retrofit2.Call
@@ -41,4 +42,9 @@ interface Kick {
 interface Addids{
     @POST("/ids")
     fun Sanduser(@Body request: ids): Call<Void>
+}
+
+interface GetmyAPI {
+    @GET("/getimg/{roomId}")
+    fun GETIMG(@Path("roomId") roomId: String): Call<List<Room2>>
 }

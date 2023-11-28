@@ -112,6 +112,8 @@ import co.yml.charts.ui.piechart.models.PieChartConfig
 import co.yml.charts.ui.piechart.models.PieChartData
 import com.example.codewithfriends.MainViewModel
 import com.example.codewithfriends.Viewphote.ViewPhoto
+import com.example.codewithfriends.findroom.Getmyroom
+import com.example.codewithfriends.test.TestActivity
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
@@ -139,13 +141,13 @@ class Roomsetting : ComponentActivity() {
 
 
 
-        FirebaseMessaging.getInstance().token.addOnCompleteListener{ task ->
-            if (!task.isSuccessful){
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
                 return@addOnCompleteListener
             }
 
             val token = task.result
-            Log.e("Tag" , "Token -> $token")
+            Log.e("Tag", "Token -> $token")
             tokens = token
 
         }
@@ -153,14 +155,11 @@ class Roomsetting : ComponentActivity() {
 
 
 
-
-        val intent = intent
-        val roomUrl = intent.getStringExtra("url")
-        val Admin = intent.getStringExtra("Admin")
-
         storedRoomId = getRoomId(this)
 
+
         getTasks(storedRoomId!!)
+
         OVER_DELETE(storedRoomId!!)
 
         setContent {
@@ -168,14 +167,16 @@ class Roomsetting : ComponentActivity() {
             val isLoading by viewModel.isLoading.collectAsState()
             val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
 
-
+            val data_from_myroom = remember { mutableStateOf(emptyList<Room2>()) }
 
             val rooms = remember { mutableStateOf(emptyList<Room>()) }
 
             val participants = remember { mutableStateOf(emptyList<Participant>()) }
 
-
+            GET_MYROOM(storedRoomId!!, data_from_myroom)
             // Проверяем, есть ли данные комнаты
+
+
             val firstRoom = rooms.value.firstOrNull()
 
 
@@ -207,72 +208,91 @@ class Roomsetting : ComponentActivity() {
                         recreate()
                     }
                 ) {
-                    LazyColumn {
-                        item {
-                            icon("$roomUrl")
-                            Spacer(modifier = Modifier.height(30.dp))
-                        }
-
-                        // Вызываем roomname() только если есть данные комнаты
-
-                        item {
-                            firstRoom?.let {
-                                roomname(
-                                    roomName = it.roomName,
-                                    "$id",
-                                    storedRoomId!!,
-                                    "$Admin",
-                                    "$id"
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(30.dp))
-                        }
-
-
-                        item {
-                            userinroom(
-                                participants.value,
-                                "$Admin",
-                                "$id"
-                            ) // Передаем participants.value
-                            Spacer(modifier = Modifier.height(30.dp))
-                        }
-
-
-                        item {
-                            TaskList(task.value, storedRoomId!!)
-                            // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
-                            Spacer(modifier = Modifier.height(30.dp))
-
-                        }
-                        item {
-                            Box(modifier = Modifier
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier
                                 .fillMaxWidth()
-                                .height(450.dp)){
-                                SimpleDonutChart(context, over , delete)
-                                // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
+                                .weight(1f) // Отдает оставшееся пространство RoomList
+                                .background(Color(0x2F3083FF))
+                        ) {
+                            item {
+                                icon(data_from_myroom)
+                                Spacer(modifier = Modifier.height(30.dp))
                             }
-                            Spacer(modifier = Modifier.height(30.dp))
+
+                            // Вызываем roomname() только если есть данные комнаты
+
+                            item {
+                                firstRoom?.let {
+                                    roomname(
+                                        roomName = it.roomName,
+                                        "$id",
+                                        storedRoomId!!,
+                                        "$id",
+                                                data_from_myroom
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(30.dp))
+                            }
+
+
+                            item {
+                                userinroom(
+                                    participants.value,
+                                    "$id",
+                                    data_from_myroom
+                                ) // Передаем participants.value
+                                Spacer(modifier = Modifier.height(30.dp))
+                            }
+
+
+                            item {
+                                TaskList(task.value, storedRoomId!!)
+                                // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
+                                Spacer(modifier = Modifier.height(30.dp))
+
+                            }
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(450.dp)
+                                ) {
+                                    SimpleDonutChart(context, over, delete)
+                                    // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
+                                }
+                                Spacer(modifier = Modifier.height(30.dp))
+
+                            }
+                            item {
+                                addtask()
+                                Spacer(modifier = Modifier.height(30.dp))
+                            }
+                            item {
+                                Teamspeack()
+                                Spacer(modifier = Modifier.height(30.dp))
+                            }
 
                         }
-                        item {
-                            addtask()
-                            Spacer(modifier = Modifier.height(30.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(80.dp)
+                        ) {
+                            val testActivity = TestActivity()
+                            testActivity.ButtonBar(context)
                         }
-                        item {
-                            Teamspeack()
-                            Spacer(modifier = Modifier.height(30.dp))
-                        }
-
                     }
                 }
             }
         }
+
     }
-
-
     @Composable
-    fun icon(roomUrl: String) {
+    fun icon( rooms: MutableState<List<Room2>>) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -283,11 +303,13 @@ class Roomsetting : ComponentActivity() {
             elevation = CardDefaults.cardElevation(defaultElevation = 20.dp),
             colors = CardDefaults.cardColors(Color.White),
         ) {
+            val roomsList: List<Room2> = rooms.value
 
+            for (room in roomsList) {
             Image(
-                painter = if (roomUrl.isNotEmpty()) {
+                painter = if (room.url.isNotEmpty()) {
                     // Load image from URL
-                    rememberImagePainter(data = roomUrl)
+                    rememberImagePainter(data = room.url)
                 } else {
                     // Load a default image when URL is empty
                     painterResource(id = R.drawable.android) // Replace with your default image resource
@@ -303,6 +325,7 @@ class Roomsetting : ComponentActivity() {
 
 
         }
+    }
     }
 
     private fun getData(roomId: String, rooms: MutableState<List<Room>>) {
@@ -449,9 +472,14 @@ class Roomsetting : ComponentActivity() {
 
 
     @Composable
-    fun roomname(roomName: String, uid: String, roomId: String, Admin: String, uids: String) {
+    fun roomname(
+        roomName: String,
+        uid: String,
+        roomId: String,
+        uids: String,
+        rooms: MutableState<List<Room2>>,) {
 
-        val COLOR_FOR_DELETE_BUTTON : Color = colorResource(id = R.color.custom00FFE8)
+        val COLOR_FOR_DELETE_BUTTON: Color = colorResource(id = R.color.custom00FFE8)
 
         val cornerShape: Shape = RoundedCornerShape(20.dp) // устанавливаем радиус закругления углов
 
@@ -465,7 +493,7 @@ class Roomsetting : ComponentActivity() {
             ComposeAlertDialog(roomName, uid, roomId)
         }
         if (delete == true) {
-            DeleteRoom( uid, roomId)
+            DeleteRoom(uid, roomId)
         }
 
         Card(
@@ -501,6 +529,7 @@ class Roomsetting : ComponentActivity() {
                         onClick = {
 
                             shows = true
+
                         }) {
                         Text(
                             text = stringResource(id = R.string.Exit),// change
@@ -509,28 +538,30 @@ class Roomsetting : ComponentActivity() {
                         )
 
                     }
-                    if(Admin == uids) {
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Button(modifier = Modifier
-                        .width(200.dp)
-                        .padding(5.dp)
-                        .fillMaxHeight(), shape = RoundedCornerShape(20.dp),
-                        colors = ButtonDefaults.buttonColors(COLOR_FOR_DELETE_BUTTON),
-                        onClick = {
-                            delete = true
-                        }) {
-                        Text(
-                            text = stringResource(id = R.string.deleteroom),
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    }
+                    val roomsList: List<Room2> = rooms.value
+                    for (room in roomsList) {
+                        if (room.Admin == uids) {
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Button(modifier = Modifier
+                                .width(200.dp)
+                                .padding(5.dp)
+                                .fillMaxHeight(), shape = RoundedCornerShape(20.dp),
+                                colors = ButtonDefaults.buttonColors(COLOR_FOR_DELETE_BUTTON),
+                                onClick = {
+                                    delete = true
+                                }) {
+                                Text(
+                                    text = stringResource(id = R.string.deleteroom),
+                                    fontSize = 14.sp,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
     }
-
     @Composable
     fun ComposeAlertDialog(roomName: String, uid: String, roomId: String) {
 
@@ -803,7 +834,7 @@ class Roomsetting : ComponentActivity() {
 
 
     @Composable
-    fun userinroom(participantsState: List<Participant>, Admin: String, uids: String) {  // this fun mean how match users in room
+    fun userinroom(participantsState: List<Participant>, uids: String,rooms: MutableState<List<Room2>>,) {  // this fun mean how match users in room
         val cornerShape: Shape = RoundedCornerShape(20.dp) // устанавливаем радиус закругления углов
 
         var shows by remember {
@@ -811,72 +842,77 @@ class Roomsetting : ComponentActivity() {
         }
 
 
-        LazyRow(modifier = Modifier
-            .fillMaxWidth()
-            .height(500.dp)) {
-                item {
-                    Card(
-                        modifier = Modifier
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(500.dp)
+        ) {
+            item {
+                Card(
+                    modifier = Modifier
 
-                            .padding(
-                                start = 10.dp,
-                                end = 10.dp
-                            )
-                            .border(4.dp, Color.Blue, shape = cornerShape)
-                            .clip(RoundedCornerShape(10.dp)),
-                        colors = CardDefaults.cardColors(Color.White),
-                    ) {
-                        //
-                        LazyColumn(modifier = Modifier.fillMaxSize()) {
-                            items(participantsState) { participant ->
-                                // Здесь вы можете создать элемент списка для каждого участника
-                                Spacer(modifier = Modifier.height(10.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
+                        .padding(
+                            start = 10.dp,
+                            end = 10.dp
+                        )
+                        .border(4.dp, Color.Blue, shape = cornerShape)
+                        .clip(RoundedCornerShape(20.dp)),
+                    colors = CardDefaults.cardColors(Color.White),
+                ) {
+                    //
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(participantsState) { participant ->
+                            // Здесь вы можете создать элемент списка для каждого участника
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
 
-                                    // Выводим изображение аватарки с помощью библиотеки Coil
-                                    Image(
-                                        painter = rememberImagePainter(data = participant.imageUrl),
-                                        contentDescription = null, // Устанавливаем null для contentDescription
-                                        modifier = Modifier
-                                            .size(100.dp)
-                                            .padding(10.dp)
-                                            .clip(RoundedCornerShape(30.dp))
-                                    )
-                                    Text(
-                                        text = participant.username,
-                                        fontSize = 24.sp,
-                                        modifier = Modifier
-                                            .padding(top = 30.dp)
-                                            .width(200.dp)
-                                    )
-                                    if(shows == true) {
-                                            DeleteAlertDialog("${storedRoomId!!}", "${participant.userId}", )
+                                // Выводим изображение аватарки с помощью библиотеки Coil
+                                Image(
+                                    painter = rememberImagePainter(data = participant.imageUrl),
+                                    contentDescription = null, // Устанавливаем null для contentDescription
+                                    modifier = Modifier
+                                        .size(100.dp)
+                                        .padding(10.dp)
+                                        .clip(RoundedCornerShape(30.dp))
+                                )
+                                Text(
+                                    text = participant.username,
+                                    fontSize = 24.sp,
+                                    modifier = Modifier
+                                        .padding(top = 30.dp)
+                                        .width(200.dp)
+                                )
+                                if (shows == true) {
+                                    DeleteAlertDialog("${storedRoomId!!}", "${participant.userId}",)
+                                }
+
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Box(modifier = Modifier)
+                                Button(
+                                    colors = ButtonDefaults.buttonColors(Color.Blue),
+                                    modifier = Modifier
+                                        .padding(top = 20.dp, end = 5.dp)
+                                        .wrapContentWidth()
+                                        .height(50.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    onClick = {
+                                        val intent = Intent(this@Roomsetting, Aboutuser::class.java)
+                                        intent.putExtra(
+                                            "userId",
+                                            participant.userId
+                                        ) // Здесь вы добавляете данные в Intent
+                                        startActivity(intent)
                                     }
+                                ) {
+                                    Text(text = "about user")
+                                    //{participant.userId} это надо передать
+                                }
+                                val roomsList: List<Room2> = rooms.value
 
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Box(modifier = Modifier)
-                                    Button(
-                                        colors = ButtonDefaults.buttonColors(Color.Blue),
-                                        modifier = Modifier
-                                            .padding(top = 20.dp, end = 5.dp)
-                                            .wrapContentWidth()
-                                            .height(50.dp),
-                                        shape = RoundedCornerShape(10.dp),
-                                        onClick = {
-                                            val intent = Intent(this@Roomsetting, Aboutuser::class.java)
-                                            intent.putExtra(
-                                                "userId",
-                                                participant.userId
-                                            ) // Здесь вы добавляете данные в Intent
-                                            startActivity(intent)
-                                        }
-                                        ) {
-                                        Text(text = "about user")
-                                        //{participant.userId} это надо передать
-                                        }
-                                    if(Admin == uids) {
+                                for (room in roomsList) {
+                                    if (room.Admin == uids) {
                                         Spacer(modifier = Modifier.width(20.dp))
                                         Button(
                                             colors = ButtonDefaults.buttonColors(Color.Red),
@@ -904,7 +940,7 @@ class Roomsetting : ComponentActivity() {
             }
         }
 
-
+    }
 
 
 
@@ -950,7 +986,7 @@ class Roomsetting : ComponentActivity() {
             modifier = Modifier
                 .width(500.dp)
                 .height(1000.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(20.dp))
                 .border(4.dp, Color.Blue, shape = RoundedCornerShape(20.dp)),
             colors = CardDefaults.cardColors(Color.White),
         ) {
@@ -1105,6 +1141,7 @@ class Roomsetting : ComponentActivity() {
                 isAnimationEnable = true,
                 chartPadding = 25,
                 labelFontSize = 42.sp,
+                backgroundColor = Color(0x2F3083FF)
             )
 
         Column(
@@ -1231,7 +1268,6 @@ class Roomsetting : ComponentActivity() {
     @Preview(showBackground = true)
     @Composable
     fun addtask(){
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -1271,7 +1307,6 @@ class Roomsetting : ComponentActivity() {
                 onClick = {
                     val intent = Intent(this@Roomsetting, TeamSpeak::class.java)
                     startActivity(intent)
-
                 },
                 modifier = Modifier
                     .fillMaxSize()
@@ -1282,6 +1317,49 @@ class Roomsetting : ComponentActivity() {
             }
         }
     }
+    private fun GET_MYROOM(uid:String, rooms: MutableState<List<Room2>>) {
+        // Создаем Retrofit клиент
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://getpost-ilya1.up.railway.app/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        // Создаем API интерфейс
+        val api = retrofit.create(GetmyAPI::class.java)
+
+        // Создаем запрос
+        val request = api.GETIMG(uid)
+
+        // Выполняем запрос
+        request.enqueue(object : Callback<List<Room2>> {
+            override fun onFailure(call: Call<List<Room2>>, t: Throwable) {
+                // Ошибка
+                Log.e("getData", t.message ?: "Неизвестная ошибка")
+
+                // Курятина
+                if (t.message?.contains("404") ?: false) {
+                    Log.d("getData", "Данные не найдены")
+                } else {
+                    Log.d("getData", "Неизвестная ошибка")
+                }
+            }
+
+            override fun onResponse(call: Call<List<Room2>>, response: Response<List<Room2>>) {
+                // Успех
+                if (response.isSuccessful) {
+                    // Получаем данные
+                    val newRooms = response.body() ?: emptyList()
+
+                    // Обновляем состояние
+                    rooms.value = newRooms
+                } else {
+                    // Ошибка
+                    Log.e("getData", "Ошибка получения данных: ")
+                }
+            }
+        })
+    }
+
 
 
 }

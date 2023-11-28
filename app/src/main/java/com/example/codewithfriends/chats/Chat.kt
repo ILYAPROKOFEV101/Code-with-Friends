@@ -84,6 +84,7 @@ import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
+import com.example.codewithfriends.push.PushService
 import com.example.codewithfriends.roomsetting.Roomsetting
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
@@ -109,6 +110,7 @@ class Chat : ComponentActivity() {
 
     private var messageIdCounter = 0
 
+
     private lateinit var webSocketClient: WebSocketClient
     var show = mutableStateOf(false)
     var kick = mutableStateOf(false)
@@ -131,7 +133,10 @@ class Chat : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
 
-            FirebaseMessaging.getInstance().token.addOnCompleteListener{ task ->
+
+
+
+        FirebaseMessaging.getInstance().token.addOnCompleteListener{ task ->
                 if (!task.isSuccessful){
                     return@addOnCompleteListener
                 }
@@ -160,9 +165,6 @@ class Chat : ComponentActivity() {
         userexsist(storedRoomId!!, "$id")
 
 
-        val intent = intent
-        val roomUrl = intent.getStringExtra("url")
-        val Admin = intent.getStringExtra("Admin")
 
 
         if (storedRoomId != null) {
@@ -212,7 +214,7 @@ class Chat : ComponentActivity() {
                             .height(100.dp)
 
                         ) {
-                            upbar(storedRoomId!!, "$id", "$name", "$img", "$roomUrl", "$Admin")
+                            upbar(storedRoomId!!, "$id", "$name", "$img", )
 
                         }
 
@@ -247,6 +249,7 @@ class Chat : ComponentActivity() {
     private fun sendMessage(message: String) {
         // Проверяем, что WebSocket подключен
         if (webSocket != null) {
+
             val messageId = messageIdCounter++
             val messageWithId = "$message" // Добавляем ID к сообщению
             webSocket?.send(messageWithId)
@@ -342,6 +345,7 @@ class Chat : ComponentActivity() {
 
                     override fun onOpen(webSocket: WebSocket, response: Response) {
                         isConnected = true
+
                     }
 
                     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
@@ -706,7 +710,7 @@ class Chat : ComponentActivity() {
 
 
     @Composable
-    fun upbar(roomId: String, id: String, name: String, img: String, url: String, Admin: String){
+    fun upbar(roomId: String, id: String, name: String, img: String){
 
                 if (show.value) {
                     Button(
@@ -717,14 +721,6 @@ class Chat : ComponentActivity() {
                         shape = RoundedCornerShape(20.dp),
                         onClick = {
                             val intent = Intent(this@Chat, Roomsetting::class.java)
-                            intent.putExtra(
-                                "url",
-                                url
-                            )
-                            intent.putExtra(
-                                "Admin",
-                                Admin
-                            ) // Здесь вы добавляете данные в Intent
                             startActivity(intent)
                         }
                     ) {

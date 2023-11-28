@@ -80,6 +80,7 @@ import com.example.codewithfriends.presentation.sign_in.SignInViewModel
 import com.example.codewithfriends.presentation.sign_in.UserData
 import com.example.codewithfriends.ui.theme.ComposeGoogleSignInCleanArchitectureTheme
 import com.example.codewithfriends.Startmenu.Main_menu
+import com.example.reaction.logik.PreferenceHelper.saveRoomId
 
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -375,6 +376,7 @@ class  MainActivity: ComponentActivity() {
                                         onSignOut = {
                                             lifecycleScope.launch {
                                                 googleAuthUiClient.signOut()
+                                                 saveRoomId(this@MainActivity, "")
                                                 Toast.makeText(
                                                     applicationContext,
                                                     "Goodbye",

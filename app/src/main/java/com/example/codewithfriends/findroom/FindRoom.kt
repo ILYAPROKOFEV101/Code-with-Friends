@@ -121,6 +121,7 @@ import kotlinx.coroutines.delay
 
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
@@ -137,6 +138,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.codewithfriends.LoadingCircle
 import com.example.codewithfriends.MainViewModel
 import com.example.codewithfriends.Viewphote.ViewPhoto
+import com.example.codewithfriends.test.TestActivity
 import com.example.reaction.logik.PreferenceHelper.getRoomId
 
 
@@ -181,47 +183,61 @@ class FindRoom : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-
-
             val viewModel = viewModel<MainViewModel>()
             val isLoading by viewModel.isLoading.collectAsState()
             val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
 
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
 
-                val rooms = remember { mutableStateOf(emptyList<Room>()) }
-                val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
-
-
-                // Задержка перехода на новую страницу через 3 секунды
-                Handler(Looper.getMainLooper()).postDelayed({
-                    getData(rooms)
-                }, 500) // 3000 миллисекунд (3 секунды)
-                // Вызывайте getData только после установки ContentView
-                GET_MYROOM("$id", data_from_myroom)
-                // Ваш код Composable
                 SwipeRefresh(
                     state = swipeRefresh,
                     onRefresh = {
                         recreate()
                     }
                 ) {
+                        val rooms = remember { mutableStateOf(emptyList<Room>()) }
+                        val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
 
-                        Box(modifier = Modifier.fillMaxSize()) {
+                        // Задержка перехода на новую страницу через 3 секунды
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            getData(rooms)
+                        }, 500) // 3000 миллисекунд (3 секунды)
 
+                        // Вызывайте getData только после установки ContentView
+                        GET_MYROOM("$id", data_from_myroom)
 
-                            RoomList(rooms.value, data_from_myroom.value)
+                    SwipeRefresh(
+                        state = swipeRefresh,
+                        onRefresh = {
+                            recreate()
                         }
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .weight(1f) // Отдает оставшееся пространство RoomList
+                            ) {
+                                RoomList(rooms.value, data_from_myroom.value)
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(80.dp)
+                            ) {
+                                val testActivity = TestActivity()
+                                testActivity.ButtonBar(this@FindRoom)
+                            }
+                        }
+                    }
 
                 }
-
-
             }
         }
-    }
+
 
     private fun getData(rooms: MutableState<List<Room>>) {
         // Создаем Retrofit клиент
@@ -358,7 +374,7 @@ class FindRoom : ComponentActivity() {
         )
 
 
-        LazyColumn {
+        LazyColumn(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
                 item {
                     Selecte()
                 }
@@ -367,7 +383,7 @@ class FindRoom : ComponentActivity() {
                 if(myroom == true){
                     items(rooms) { room ->
                         if (room.Admin == id) {
-                            RoomItem(room)
+                            RoomItem(room)//hello
                         }
 
                     }
@@ -499,14 +515,6 @@ class FindRoom : ComponentActivity() {
                             Button(
                                 onClick = {
                                     val intent = Intent(this@FindRoom, Chat::class.java)
-                                    intent.putExtra(
-                                        "url",
-                                       room.url,
-                                    )
-                                    intent.putExtra(
-                                        "Admin",
-                                        room.Admin
-                                    ) // Здесь вы добавляете данные в Intent
                                     startActivity(intent)
 
                                 goToChatActivity(room.id)

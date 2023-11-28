@@ -20,6 +20,16 @@ data class ids(
     val uids: String,
 )
 
+data class Room2(
+    val id: String,
+    val roomName: String,
+    val language: String,
+    val placeInRoom: Int,
+    val aboutRoom: String,
+    val Admin: String,
+    val url: String
+)
+
 
 
 

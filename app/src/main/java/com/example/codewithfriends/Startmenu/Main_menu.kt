@@ -107,10 +107,9 @@ class Main_menu : ComponentActivity() {
             val isLoading by viewModel.isLoading.collectAsState()
             val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
 
-
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
             ) {
                 SwipeRefresh(
                     state = swipeRefresh,
@@ -118,32 +117,43 @@ class Main_menu : ComponentActivity() {
                         recreate()
                     }
                 ) {
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) {
+                            val name = UID(
+                                userData = googleAuthUiClient.getSignedInUser()
+                            )
+                            val img = IMG(
+                                userData = googleAuthUiClient.getSignedInUser()
+                            )
+                            val id = ID(
+                                userData = googleAuthUiClient.getSignedInUser()
+                            )
 
-                        val name = UID(
-                            userData = googleAuthUiClient.getSignedInUser()
-                        )
-                        val img = IMG(
-                            userData = googleAuthUiClient.getSignedInUser()
-                        )
-                        val id = ID(
-                            userData = googleAuthUiClient.getSignedInUser()
-                        )
-
-                        item {
-                            Create_Acount()
-                        }
-                        item {
-                            Edit("$id", "$img", "$name")
-                        }
-                        item {
-                            Button("$id")
+                            item {
+                                Create_Acount()
+                            }
+                            item {
+                                Edit("$id", "$img", "$name")
+                            }
+                            item {
+                                Button("$id")
+                            }
                         }
 
+                        val testActivity = TestActivity()
+                        testActivity.ButtonBar(this@Main_menu)
                     }
                 }
             }
         }
+
     }
 
     @Preview(showBackground = true)
@@ -347,7 +357,7 @@ class Main_menu : ComponentActivity() {
                     Button( colors = ButtonDefaults.buttonColors(Color.Blue),
                         onClick = {
                             if(selectedNumber <= 0 ){
-                                val intent = Intent(this@Main_menu, CreativyRoom::class.java)
+                                val intent = Intent(this@Main_menu, CreativyRoom::class.java)//CreativyRoom
                                 startActivity(intent)
                                // finish()
                             }else {

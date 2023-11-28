@@ -1,8 +1,10 @@
 
 
 import android.app.Activity
+import android.app.Application
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.LinearEasing
@@ -75,3 +77,38 @@ class LoadingComponent {
 
 }
 
+class MyApp : Application() {
+    var isAppInForeground = false
+
+    override fun onCreate() {
+        super.onCreate()
+        registerActivityLifecycleCallbacks(AppLifecycleCallbacks())
+    }
+
+    private inner class AppLifecycleCallbacks : ActivityLifecycleCallbacks {
+        override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+        }
+
+        override fun onActivityStarted(activity: Activity) {
+            isAppInForeground = true
+        }
+
+        override fun onActivityResumed(activity: Activity) {
+            isAppInForeground = true
+        }
+
+        override fun onActivityPaused(activity: Activity) {
+            isAppInForeground = false
+        }
+
+        override fun onActivityStopped(activity: Activity) {
+            isAppInForeground = false
+        }
+
+        override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
+        }
+
+        override fun onActivityDestroyed(activity: Activity) {
+        }
+    }
+}

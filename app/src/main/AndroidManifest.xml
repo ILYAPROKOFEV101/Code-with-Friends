@@ -29,11 +29,6 @@
             android:label="@string/title_activity_sendban"
             android:theme="@style/Theme.CodeWithFriends" />
         <activity
-            android:name=".Complaint.ComplaintActivity"
-            android:exported="false"
-            android:label="@string/title_activity_complaint"
-            android:theme="@style/Theme.CodeWithFriends" />
-        <activity
             android:name=".Viewphote.ViewPhoto"
             android:exported="false"
             android:label="@string/title_activity_view_photo"
