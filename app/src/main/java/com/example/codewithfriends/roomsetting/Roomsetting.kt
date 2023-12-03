@@ -158,9 +158,14 @@ class Roomsetting : ComponentActivity() {
         storedRoomId = getRoomId(this)
 
 
-        getTasks(storedRoomId!!)
+        storedRoomId?.let { nonNullValue ->
+            getTasks(nonNullValue)
+        }
 
-        OVER_DELETE(storedRoomId!!)
+        storedRoomId?.let { nonNullValue ->
+            OVER_DELETE(nonNullValue)
+        }
+
 
         setContent {
             val viewModel = viewModel<MainViewModel>()
@@ -1012,7 +1017,7 @@ class Roomsetting : ComponentActivity() {
                         contentDescription = null,
                         modifier = Modifier
                             .padding(20.dp)
-                            .height(600.dp)
+                            .size(400.dp)
                             .clickable {
                                 openLargeImage(task.photo)
                             }
@@ -1022,7 +1027,7 @@ class Roomsetting : ComponentActivity() {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .height(600.dp)
                 ) {
                     item {
                         Text(text = "Mission: ${task.mession}", fontSize = 24.sp)

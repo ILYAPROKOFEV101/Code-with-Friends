@@ -1,7 +1,10 @@
 package com.example.codewithfriends.test
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,6 +40,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,6 +48,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.example.codewithfriends.MainActivity
+import com.example.codewithfriends.Startmenu.Main_menu
 import com.example.codewithfriends.buttonbarnavigatino.BottomBarScreen
 import com.example.codewithfriends.chats.Chat
 import com.example.codewithfriends.findroom.FindRoom
@@ -72,6 +77,7 @@ class TestActivity () {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp)
+                .background(Color.White.copy(alpha = 0.5f))
             ,
         ) {
             val items = listOf(
@@ -100,8 +106,11 @@ class TestActivity () {
                 mutableStateOf(0)
             }
             Surface(
-                modifier = Modifier.fillMaxWidth().height(80.dp).align(Alignment.BottomCenter),
-                color = MaterialTheme.colorScheme.background
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .align(Alignment.BottomCenter)
+                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f)) // Установите прозрачность для Surface
             ) {
                 NavigationBar(modifier = Modifier.align(Alignment.BottomCenter)) {
                     items.forEachIndexed { index, item ->
@@ -111,39 +120,40 @@ class TestActivity () {
                                 selectedItemIndex = index
                                 when (index) {
                                     0 -> {
-                                        val intent = Intent(context, MainActivity::class.java)
+                                        val intent = Intent(context, Main_menu::class.java)
                                         context.startActivity(intent)
+                                      //  (context as? Activity)?.finish() // Закрываем текущую активити
+                                    //    (context as? Activity)?.finish() // Закрываем текущую активити
                                     }
 
                                     1 -> {
-                                        if(storedRoomId == ""){
-                                            val intent = Intent(context, FindRoom::class.java)
-                                            context.startActivity(intent)
-                                        }else {
+                                        if(storedRoomId?.isNullOrEmpty() == false){
                                             val intent = Intent(context, Chat::class.java)
                                             context.startActivity(intent)
+                                            (context as? Activity)?.finish() // Закрываем текущую активити
+
+                                        }else {
+
+                                            val intent = Intent(context, FindRoom::class.java)
+                                            context.startActivity(intent)
+                                            (context as? Activity)?.finish() // Закрываем текущую активити
                                         }
                                     }
 
                                     2 -> {
-                                        if(storedRoomId == ""){
-                                            val intent = Intent(context, FindRoom::class.java)
-                                            context.startActivity(intent)
-                                        }else {
+                                        if(storedRoomId?.isNullOrEmpty() == false){
                                             val intent = Intent(context, Roomsetting::class.java)
                                             context.startActivity(intent)
+                                            (context as? Activity)?.finish() // Закрываем текущую активити
+                                        }else {
+
+                                            val intent = Intent(context, FindRoom::class.java)
+                                            context.startActivity(intent)
+                                            (context as? Activity)?.finish() // Закрываем текущую активити
+
                                         }
                                     }
 
-                                    3 -> {
-                                        if(storedRoomId == ""){
-                                            val intent = Intent(context, FindRoom::class.java)
-                                            context.startActivity(intent)
-                                        }else {
-                                            val intent = Intent(context, Roomsetting::class.java)
-                                            context.startActivity(intent)
-                                        }
-                                    }
                                 }
                             },
                             label = {
