@@ -980,13 +980,6 @@ class Roomsetting : ComponentActivity() {
 
     @Composable
     fun TaskCard(task: TaskData,roomId: String) {
-        var scale by remember { mutableStateOf(1f) }
-        var offset by remember { mutableStateOf(Offset.Zero) }
-        var uptext = 800.dp
-
-
-
-
         Card(
             modifier = Modifier
                 .width(500.dp)
@@ -1017,7 +1010,7 @@ class Roomsetting : ComponentActivity() {
                         contentDescription = null,
                         modifier = Modifier
                             .padding(20.dp)
-                            .size(400.dp)
+                            .height(600.dp)
                             .clickable {
                                 openLargeImage(task.photo)
                             }
@@ -1027,7 +1020,7 @@ class Roomsetting : ComponentActivity() {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(600.dp)
+                        .height(200.dp)
                 ) {
                     item {
                         Text(text = "Mission: ${task.mession}", fontSize = 24.sp)
@@ -1083,7 +1076,6 @@ class Roomsetting : ComponentActivity() {
                         onClick = {
                             deleteData("$roomId", "${task.id}")
                             recreate()
-                            // Ваш код, который будет выполнен при нажатии кнопки
                         },
                     ) {
                         Text(text = "finished", fontSize = 15.sp, modifier = Modifier)

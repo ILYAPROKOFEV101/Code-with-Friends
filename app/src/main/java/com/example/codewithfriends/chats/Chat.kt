@@ -8,13 +8,17 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 
 import androidx.compose.foundation.layout.Row
+
 import androidx.compose.foundation.layout.Spacer
 
 
@@ -57,6 +61,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Task
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -67,17 +76,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.codewithfriends.MainViewModel
 import com.example.codewithfriends.Startmenu.Main_menu
+import com.example.codewithfriends.Viewphote.ViewPhoto
 import com.example.codewithfriends.createamspeck.ui.theme.CodeWithFriendsTheme
 import com.example.codewithfriends.findroom.FindRoom
 import com.example.codewithfriends.presentation.profile.ID
@@ -90,6 +103,8 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 
@@ -104,6 +119,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import java.io.IOException
+import java.util.UUID
 
 
 class Chat : ComponentActivity() {
@@ -114,6 +130,7 @@ class Chat : ComponentActivity() {
     private lateinit var webSocketClient: WebSocketClient
     var show = mutableStateOf(false)
     var kick = mutableStateOf(false)
+    var photo by mutableStateOf("")
 
     var developers = mutableStateOf(false)
 
@@ -129,6 +146,13 @@ class Chat : ComponentActivity() {
     private var webSocket: WebSocket? = null
     private var isConnected by mutableStateOf(false)
     private var storedRoomId: String? = null // Объявляем на уровне класса
+
+    private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let { selectedImageUri ->
+            // Здесь вы можете загрузить изображение в Firebase Storage
+            uploadImageToFirebaseStorage(selectedImageUri, storedRoomId!!)
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -271,6 +295,7 @@ class Chat : ComponentActivity() {
                     val newMessage = Message(
                         sender = "",
                         content = messageContent
+
                     )
                     messages.value = messages.value + newMessage // Add message to the list
 
@@ -330,7 +355,11 @@ class Chat : ComponentActivity() {
                     override fun onMessage(webSocket: WebSocket, text: String) {
                         val newMessage = Message(
                             sender = "",
-                            content = text
+                            content = if (photo != "") {
+                                "$text <image>$photo</image>"
+                            } else {
+                                text
+                            }
                         )
 
                         // Вызов метода onMessageReceived для обработки нового сообщения
@@ -404,6 +433,39 @@ class Chat : ComponentActivity() {
         return matchResult?.groups?.get(1)?.value
     }
 
+    fun extractTimeFromString(input: String): String? {
+        val pattern = "<time>([^<]+)</time>".toRegex()
+        val matchResult = pattern.find(input)
+        return matchResult?.groups?.get(1)?.value
+    }
+
+    fun removeTimeFromMessage(input: String): String {
+        return input.replace("<time>([^<]+)</time>".toRegex(), "")
+    }
+
+    fun extractImageFromMessage(input: String): String? {
+        val pattern = "<image>(.+?)</image>".toRegex()
+        val matchResult = pattern.find(input)
+        return matchResult?.groups?.get(1)?.value
+    }
+
+    fun removeImageFromMessage(input: String): String {
+        return input.replace("<image>(.+?)</image>".toRegex(), "")
+    }
+
+    fun extractIMAGEFromMessage(input: String): String? {
+        val pattern = "<IMAGE>(.+?)</IMAGE>".toRegex()
+        val matchResult = pattern.find(input)
+        return matchResult?.groups?.get(1)?.value
+    }
+
+    fun removeIMAGEFromMessage(input: String): String {
+        return input.replace("<IMAGE>(.+?)</IMAGE>".toRegex(), "")
+    }
+
+
+
+
 
     @Composable
     fun MessageList(messages: List<Message>?, username: String, url: String, id: String) {
@@ -475,7 +537,16 @@ class Chat : ComponentActivity() {
                                     .size(40.dp)
                                     .clip(RoundedCornerShape(40.dp))
                                 val imageUrl = extractUrlFromString(message.content)
-                                val (beforeUrl, afterUrl) = splitMessageContent(message.content)
+                                val paint = extractImageFromMessage(message.content) ?: extractIMAGEFromMessage(message.content)
+                                val timeString = extractTimeFromString(message.content)
+                                val imageContent = removeImageFromMessage(message.content) ?: removeIMAGEFromMessage(message.content)
+                                val (beforeUrl, afterUrl) = splitMessageContent(
+                                    removeTimeFromMessage(imageContent)
+                                )
+                                /*val textWithImage = splitMessageContentWithImageAndText(
+                                    removeTimeFromMessage(message.content)
+                                )*/
+
 
                                 if (!(isMyMessage || isMyUrlMessage)) {
                                     if (imageUrl != null) {
@@ -494,12 +565,14 @@ class Chat : ComponentActivity() {
                                         .fillMaxWidth(0.8f)
                                         .padding(2.dp),
                                     backgroundColor = if (isMyMessage || isMyUrlMessage) Color(
-                                        0xFF52FD56
+                                        0xE650B973
                                     ) else Color(0xFFFFFFFF),
                                     elevation = 10.dp,
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Column(modifier = Modifier.padding(8.dp)) {
+                                    Column(modifier = Modifier
+                                        .padding(8.dp)
+                                        .background ( if (isMyMessage || isMyUrlMessage) Color(0xE650B973) else Color(0xFFFFFFFF))){
                                         Text(
                                             text = "${message.sender}$beforeUrl$afterUrl",
                                             textAlign = TextAlign.Start,
@@ -508,10 +581,59 @@ class Chat : ComponentActivity() {
                                             color = Color.Black,
                                             overflow = TextOverflow.Ellipsis
                                         )
+                                        val pattern =
+                                            "<time>(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})</time>".toRegex()
+
+
+
+
+                                        if (paint != null) {
+                                            Spacer(modifier = Modifier.height(20.dp))
+                                            if (paint.isNotEmpty()) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .width(500.dp)
+                                                        .height(200.dp)
+                                                        .background ( if (isMyMessage || isMyUrlMessage) Color(
+                                                            0xE650B973
+                                                        ) else Color(0xFFFFFFFF))
+                                                        .zIndex(1f), // Устанавливает z-индекс, чтобы поместиться наверху других
+                                                ) {
+                                                    Image(
+                                                        painter = if (paint.isNotEmpty()) {
+                                                            // Load image from URL
+                                                            rememberImagePainter(data = paint)
+                                                        } else {
+                                                            // Load a default image when URL is empty
+                                                            painterResource(id = R.drawable.android) // Replace with your default image resource
+                                                        },
+                                                        contentDescription = null,
+                                                        modifier = Modifier
+                                                            .fillMaxSize()
+                                                            .clip(RoundedCornerShape(20.dp))
+                                                            .clickable {
+                                                                openLargeImage("$paint")
+                                                            },
+                                                    )
+                                                }
+
+                                            }
+                                        }
+                                        Box(modifier = Modifier
+                                            .fillMaxWidth()
+                                            .wrapContentHeight(),
+                                            contentAlignment =  Alignment.CenterEnd
+                                        ) {
+                                            Text(
+                                                text = "$timeString",
+                                                fontSize = 10.sp,
+                                                color = Color.Black,
+                                                )
+                                        }
+
                                     }
                                 }
                             }
-
                         }
 
                     }
@@ -520,6 +642,14 @@ class Chat : ComponentActivity() {
         }
     }
 
+    fun openLargeImage( photo: String) {
+        // Здесь реализуйте логику открытия большой версии изображения
+        // Например, использование Intent для открытия новой активности с большим изображением
+        val intent = Intent(this, ViewPhoto::class.java)
+        intent.putExtra("PHOTO_URL", photo) // Передача URL изображения в активность
+        startActivity(intent)
+
+    }
 
 
 
@@ -650,12 +780,41 @@ class Chat : ComponentActivity() {
         var textSize by remember { mutableStateOf(20.sp) }
         var text by remember { mutableStateOf("") }
         var submittedText by remember { mutableStateOf("") }
+        var showimg by remember { mutableStateOf(false) }
 
         Column(
             modifier = Modifier
                 .fillMaxSize(), // Занимает всю доступную вертикальную высоту
             verticalArrangement = Arrangement.Bottom
         ) {
+            if(photo != "" && showimg == true) {
+                Box(modifier = Modifier
+                    .width(400.dp)
+                    .height(400.dp)
+                    .zIndex(1f), // Устанавливает z-индекс, чтобы поместиться наверху других элементов
+                    contentAlignment = Alignment.BottomCenter // Выравнивание по нижнему кра
+                ) {
+                    Image(
+                        painter = if (photo.isNotEmpty()) {
+                            // Load image from URL
+                            rememberImagePainter(data = photo)
+                        } else {
+                            // Load a default image when URL is empty
+                            painterResource(id = R.drawable.android) // Replace with your default image resource
+                        },
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(bottom = 15.dp, top = 15.dp, start = 70.dp, end = 70.dp)
+
+                            .clip(RoundedCornerShape(20.dp))
+                            .clickable {},
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(20.dp))
             Row(
                 modifier = Modifier
@@ -664,8 +823,34 @@ class Chat : ComponentActivity() {
                     .padding(start = 8.dp, end = 20.dp),
                 verticalAlignment = Alignment.Bottom // Прижимаем содержимое к верхней части
             ) {
+
+                IconButton(
+                    modifier = Modifier
+                        .weight(0.1f)
+                        .align(Alignment.CenterVertically), // Выравнивание по центру вертикально
+                    onClick = {
+                        showimg = !showimg
+                        pickImage.launch("image/*")
+                        photo = ""
+                    }
+                ) {
+                    if (showimg == false) {
+                        Icon(
+                            imageVector = Icons.Default.AddPhotoAlternate,
+                            contentDescription = "Send"
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Cancel,
+                            contentDescription = "Send"
+                        )
+
+                    }
+                }
                 TextField(
-                    modifier = Modifier.weight(0.9f),
+                    modifier = Modifier
+                        .weight(0.8f)
+                        .clip(RoundedCornerShape(20.dp)),
                     value = text,
                     onValueChange = { text = it },
                     textStyle = TextStyle(fontSize = textSize),
@@ -690,11 +875,18 @@ class Chat : ComponentActivity() {
                         if (show.value) {
                             submittedText = text
                             text = ""
-                            if(submittedText != ""){
-                                onSendMessage(submittedText) // Вызываем функцию для отправки сообщения
+                            if(submittedText != "" || photo != ""){
+                                onSendMessage(
+                                    if (photo != "") {
+                                        "$submittedText <image>$photo</image>"
+                                    } else {
+                                        "$submittedText"
+                                    }
+                                ) // Вызываем функцию для отправки сообщения
                             }
 
                         }
+                        photo = ""
                     }
                 ) {
                     Icon(
@@ -749,6 +941,44 @@ class Chat : ComponentActivity() {
                     // когда showButton равно false
                 }
             }
+
+    private fun uploadImageToFirebaseStorage(selectedImageUri: Uri, roomid: String) {
+
+        val storage = FirebaseStorage.getInstance()
+        val storageRef = storage.reference
+
+        // Create a unique name for the image to avoid overwriting
+        val imageName = UUID.randomUUID().toString()
+
+        // Path to store the image: "images/{roomid}/{imageName}"
+        val imageRef = storageRef.child("images/$roomid/$imageName")
+
+        val metadata = StorageMetadata.Builder()
+            .setContentType("image/png") // Указываем тип контента как PNG
+            .build()
+
+        val uploadTask = imageRef.putFile(selectedImageUri, metadata)
+
+        // Add a listener to handle successful or unsuccessful upload
+        uploadTask.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                // Get the download URL from the task result
+                imageRef.downloadUrl.addOnSuccessListener { uri ->
+                    photo = uri.toString()
+                    // Do something with the URL, such as save it to Firestore
+
+                    // Покажите Toast об успешной загрузке
+                    showToast(getString(R.string.addPhoto))
+
+                }
+            } else {
+                // Handle unsuccessful upload
+
+                // Покажите Toast об ошибке загрузки
+                showToast(getString(R.string.upload_error_message))
+            }
+        }
+    }
 
 
 }
