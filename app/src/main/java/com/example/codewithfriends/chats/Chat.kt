@@ -119,6 +119,13 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import java.io.IOException
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 
@@ -439,6 +446,7 @@ class Chat : ComponentActivity() {
         return matchResult?.groups?.get(1)?.value
     }
 
+
     fun removeTimeFromMessage(input: String): String {
         return input.replace("<time>([^<]+)</time>".toRegex(), "")
     }
@@ -448,6 +456,20 @@ class Chat : ComponentActivity() {
         val matchResult = pattern.find(input)
         return matchResult?.groups?.get(1)?.value
     }
+
+
+    // Функция для форматирования времени из UTC в местное время пользователя
+    fun formatTimeForUser(timeString: String): String {
+        val utcFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+        val utcDateTime = LocalDateTime.parse(timeString, utcFormatter)
+
+        val userTimeZone = ZoneId.systemDefault()
+        val userLocalDateTime = utcDateTime.atZone(ZoneOffset.UTC).withZoneSameInstant(userTimeZone)
+
+        val userFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+        return userFormatter.format(userLocalDateTime)
+    }
+
 
     fun removeImageFromMessage(input: String): String {
         return input.replace("<image>(.+?)</image>".toRegex(), "")
@@ -476,6 +498,10 @@ class Chat : ComponentActivity() {
                 val lastVisibleItemIndex = messages.size - 1
                 val coroutineScope = rememberCoroutineScope()
                 val hasScrolled = rememberSaveable { mutableStateOf(false) }
+
+                var currentDay: LocalDate? = null
+                // Объявите форматтер для времени
+                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
                 if (!hasScrolled.value || messages.last().sender == url) {
                     LaunchedEffect(messages) {
@@ -518,7 +544,39 @@ class Chat : ComponentActivity() {
                         val isMyMessage = message.sender == url
                         val isMyUrlMessage = message.content.contains(currentUserUrl)
 
+                        // Использование функций в вашем коде
+                        val timeString = extractTimeFromString(message.content)
+                        val formattedTime = timeString?.let { formatTimeForUser(it) }
 
+
+                        // Используйте текущее время в миллисекундах
+                        val currentTimeMillis = System.currentTimeMillis()
+
+                    // Парсинг строки времени в LocalDateTime
+                        val messageDateTime = LocalDateTime.parse(timeString, formatter)
+
+                        // Проверка, изменился ли день с момента последнего сообщения
+                        val daysDiff = Duration.between(messageDateTime, Instant.ofEpochMilli(currentTimeMillis).atZone(ZoneId.systemDefault())).toDays()
+                        val showDayMarker = currentDay == null || daysDiff > 0
+
+                // Обновление текущего дня
+                        currentDay = messageDateTime.toLocalDate()
+
+                        if (showDayMarker) {
+                            // Отображение маркера дня
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = messageDateTime.format(DateTimeFormatter.ofPattern("MM-dd")),
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                        }
 
                         Box(
                             modifier = Modifier
@@ -538,7 +596,6 @@ class Chat : ComponentActivity() {
                                     .clip(RoundedCornerShape(40.dp))
                                 val imageUrl = extractUrlFromString(message.content)
                                 val paint = extractImageFromMessage(message.content) ?: extractIMAGEFromMessage(message.content)
-                                val timeString = extractTimeFromString(message.content)
                                 val imageContent = removeImageFromMessage(message.content) ?: removeIMAGEFromMessage(message.content)
                                 val (beforeUrl, afterUrl) = splitMessageContent(
                                     removeTimeFromMessage(imageContent)
@@ -592,8 +649,8 @@ class Chat : ComponentActivity() {
                                             if (paint.isNotEmpty()) {
                                                 Box(
                                                     modifier = Modifier
-                                                        .width(500.dp)
-                                                        .height(200.dp)
+                                                        .fillMaxWidth()
+                                                        .height(400.dp)
                                                         .background ( if (isMyMessage || isMyUrlMessage) Color(
                                                             0xE650B973
                                                         ) else Color(0xFFFFFFFF))
@@ -619,23 +676,25 @@ class Chat : ComponentActivity() {
 
                                             }
                                         }
-                                        Box(modifier = Modifier
-                                            .fillMaxWidth()
-                                            .wrapContentHeight(),
-                                            contentAlignment =  Alignment.CenterEnd
+
+
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .wrapContentHeight(),
+                                            contentAlignment = Alignment.CenterEnd
                                         ) {
                                             Text(
-                                                text = "$timeString",
+                                                text = formattedTime?.split(" ")?.get(1) ?: "", // Извлекаем только время
                                                 fontSize = 10.sp,
                                                 color = Color.Black,
-                                                )
+                                            )
                                         }
 
                                     }
                                 }
                             }
                         }
-
                     }
                 }
             }

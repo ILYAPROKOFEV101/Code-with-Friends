@@ -129,8 +129,12 @@ class TestActivity () {
                                     1 -> {
                                         if(storedRoomId?.isNullOrEmpty() == false){
                                             val intent = Intent(context, Chat::class.java)
-                                            context.startActivity(intent)
-                                            (context as? Activity)?.finish() // Закрываем текущую активити
+                                            if (context !is MainActivity) {
+                                                context.startActivity(intent)
+                                             //   (context as? Activity)?.finish() // Закрываем текущую активити, если это не MainActivity
+                                            } else {
+                                                context.startActivity(intent)
+                                            }
 
                                         }else {
 
@@ -143,8 +147,13 @@ class TestActivity () {
                                     2 -> {
                                         if(storedRoomId?.isNullOrEmpty() == false){
                                             val intent = Intent(context, Roomsetting::class.java)
-                                            context.startActivity(intent)
-                                            (context as? Activity)?.finish() // Закрываем текущую активити
+                                            if (context !is MainActivity) {
+                                                context.startActivity(intent)
+                                                //   (context as? Activity)?.finish() // Закрываем текущую активити, если это не MainActivity
+                                            } else {
+                                                context.startActivity(intent)
+                                            }
+
                                         }else {
 
                                             val intent = Intent(context, FindRoom::class.java)

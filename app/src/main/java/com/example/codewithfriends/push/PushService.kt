@@ -2,7 +2,9 @@ package com.example.codewithfriends.push
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -33,6 +35,7 @@ import androidx.core.app.Person
 import androidx.core.graphics.drawable.IconCompat
 import coil.compose.rememberImagePainter
 import com.example.codewithfriends.R
+import com.example.codewithfriends.chats.Chat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.squareup.picasso.Picasso
@@ -77,13 +80,21 @@ class PushService : FirebaseMessagingService() {
 
         // Создайте NotificationBuilder
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-           //  .setContentTitle(title)
-          //  .setColor(Color.TRANSPARENT)
-            //.setSmallIcon(R.mipmap.ic_launcher_round)
-           .setColor(Color.BLUE)
-            //.setSmallIcon(R.drawable.ic_launcher_backgroundnew)
-           .setSmallIcon(R.drawable.send)
+            .setColor(Color.BLUE)
+            .setSmallIcon(R.drawable.send)
 
+        // Добавьте кнопку к уведомлению
+        val intent = Intent(this, Chat::class.java)
+        intent.putExtra("your_extra_key", "your_extra_value")
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
+        val action = NotificationCompat.Action.Builder(
+            R.drawable.send,  // Замените на свою иконку кнопки
+            "reply to message",            // Текст кнопки
+            pendingIntent
+        ).build()
+
+        notificationBuilder.addAction(action)
 
         // Проверьте, есть ли информация о отправителе и его иконке
         if (senderName != null && !senderIcon.isNullOrEmpty()) {
@@ -95,20 +106,22 @@ class PushService : FirebaseMessagingService() {
                 val roundedSenderIconBitmap = getCircularBitmap(senderIconBitmap)
 
                 // Создайте MessagingStyle
-                val messagingStyle = NotificationCompat.MessagingStyle(Person.Builder().setName("Me").build())
+                val messagingStyle =
+                    NotificationCompat.MessagingStyle(Person.Builder().setName("Me").build())
 
                 // Добавьте сообщение
                 val messageBuilder = NotificationCompat.MessagingStyle.Message(
                     message,
                     System.currentTimeMillis(),
-                    Person.Builder().setName(senderName).setIcon(IconCompat.createWithBitmap(roundedSenderIconBitmap)).build()
+                    Person.Builder().setName(senderName)
+                        .setIcon(IconCompat.createWithBitmap(roundedSenderIconBitmap)).build()
                 )
 
                 messagingStyle.addMessage(messageBuilder)
 
                 // Примените MessagingStyle к NotificationBuilder
                 notificationBuilder.setStyle(messagingStyle)
-            }  catch (e: IOException) {
+            } catch (e: IOException) {
                 e.printStackTrace()
             }
         }

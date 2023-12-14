@@ -292,7 +292,9 @@ class Main_menu : ComponentActivity() {
                         .height(50.dp),
                     shape = RoundedCornerShape(20.dp),
                     onClick = {
-                        sendPostRequest("$uid", "$img", "$name")
+                        if(aboutme != ""){
+                            sendPostRequest("$uid", "$img", "$name")
+                        }
                     }
                 )
                 {
@@ -301,8 +303,8 @@ class Main_menu : ComponentActivity() {
                         modifier = Modifier
                             .width(60.dp),
                         imageVector = Icons.Default.Save,
-                        contentDescription = "Delete",
- // Цвет иконки
+                        contentDescription = "Save",
+                    // Цвет иконки
                     )
                 }
             }
