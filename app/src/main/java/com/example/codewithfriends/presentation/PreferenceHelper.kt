@@ -13,6 +13,11 @@ object PreferenceHelper {
 
     private const val KEY_ROOM_ID = "roomId"
 
+    private const val KEY_STRING_1 = "key_string_1"
+    private const val KEY_STRING_2 = "key_string_2"
+    private const val KEY_STRING_3 = "key_string_3"
+    private const val KEY_STRING_4 = "key_string_4"
+
 
     private fun getSharedPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFERENCE_NAME, Context.MODE_PRIVATE)
@@ -65,6 +70,46 @@ object PreferenceHelper {
         getSharedPreferences(appContext).edit {
             putBoolean(key, value)
         }
+    }
+
+    fun saveid(context: Context, value: String) {
+        val editor = getSharedPreferences(context).edit()
+        editor.putString(KEY_STRING_1, value)
+        editor.apply()
+    }
+
+    fun getSid(context: Context): String? {
+        return getSharedPreferences(context).getString(KEY_STRING_1, "")
+    }
+
+    fun savename(context: Context, value: String) {
+        val editor = getSharedPreferences(context).edit()
+        editor.putString(KEY_STRING_2, value)
+        editor.apply()
+    }
+
+    fun getname(context: Context): String? {
+        return getSharedPreferences(context).getString(KEY_STRING_2, "")
+    }
+
+    fun saveimg(context: Context, value: String) {
+        val editor = getSharedPreferences(context).edit()
+        editor.putString(KEY_STRING_3, value)
+        editor.apply()
+    }
+
+    fun getimg(context: Context): String? {
+        return getSharedPreferences(context).getString(KEY_STRING_3, "")
+    }
+
+    fun saveSoket(context: Context, value: String) {
+        val editor = getSharedPreferences(context).edit()
+        editor.putString(KEY_STRING_4, value)
+        editor.apply()
+    }
+
+    fun getSoket(context: Context): String? {
+        return getSharedPreferences(context).getString(KEY_STRING_4, "")
     }
 
 }

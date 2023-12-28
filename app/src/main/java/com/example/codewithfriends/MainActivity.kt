@@ -217,8 +217,6 @@ class  MainActivity: ComponentActivity() {
 
 
 
-
-
                         if (user == null) {
                             //Text("Not logged in")
 

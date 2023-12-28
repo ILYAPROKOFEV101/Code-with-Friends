@@ -148,6 +148,10 @@ class Chat : ComponentActivity() {
         )
     }
 
+    // Добавьте переменные для отслеживания последнего показанного месяца и дня
+    var lastShownMonth: Int? = null
+    var lastShownDayOfMonth: Int? = null
+
     private val messages = mutableStateOf(listOf<Message>()) // Хранение
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
@@ -555,12 +559,14 @@ class Chat : ComponentActivity() {
                     // Парсинг строки времени в LocalDateTime
                         val messageDateTime = LocalDateTime.parse(timeString, formatter)
 
-                        // Проверка, изменился ли день с момента последнего сообщения
-                        val daysDiff = Duration.between(messageDateTime, Instant.ofEpochMilli(currentTimeMillis).atZone(ZoneId.systemDefault())).toDays()
-                        val showDayMarker = currentDay == null || daysDiff > 0
+                        // Проверка, совпадает ли месяц и день с момента последнего сообщения
+                        val showDayMarker = lastShownMonth == null || lastShownDayOfMonth == null ||
+                                messageDateTime.monthValue != lastShownMonth ||
+                                messageDateTime.dayOfMonth != lastShownDayOfMonth
 
-                // Обновление текущего дня
-                        currentDay = messageDateTime.toLocalDate()
+                        // Обновление текущего месяца и дня
+                        lastShownMonth = messageDateTime.monthValue
+                        lastShownDayOfMonth = messageDateTime.dayOfMonth
 
                         if (showDayMarker) {
                             // Отображение маркера дня
@@ -577,6 +583,7 @@ class Chat : ComponentActivity() {
                                 )
                             }
                         }
+
 
                         Box(
                             modifier = Modifier

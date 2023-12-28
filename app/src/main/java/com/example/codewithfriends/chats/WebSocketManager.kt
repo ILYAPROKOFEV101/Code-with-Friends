@@ -1,84 +1,63 @@
 package com.example.codewithfriends.chats
 
 
-import android.util.Log
-import com.example.codewithfriends.presentation.sign_in.UserData
-import com.google.firebase.database.Exclude
-import com.google.protobuf.ByteString
-import okhttp3.Response
-import okhttp3.WebSocket
-import okhttp3.WebSocketListener
-import okhttp3.OkHttpClient
-
-
-
+import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.client.HttpClient
 
 
 import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
-import okio.ByteString.Companion.encodeUtf8
-import java.util.concurrent.TimeUnit
+import okio.ByteString
 
 
 
-
-class WebSocketManager private constructor() {
+class WebSocketClient(private val roomId: String, private val username: String, private val url: String, private val id: String) {
+    private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
-    private var isConnected = false
-    val client = OkHttpClient()
-    companion object {
-        private var instance: WebSocketManager? = null
 
-        fun getInstance(): WebSocketManager {
-            if (instance == null) {
-                instance = WebSocketManager()
-            }
-            return instance!!
-        }
-    }
+    fun connect() {
+        val request = Request.Builder()
+            .url("wss://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id")
+            .build()
 
-    fun connectWebSocket(roomId: String, username: String, url: String, id: String) {
-        if (!isConnected) {
-            try {
-                val request: Request = Request.Builder()
-                    .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id")
-                    .build()
-
-                webSocket = client.newWebSocket(request, object : WebSocketListener() {
-                    override fun onMessage(webSocket: WebSocket, text: String) {
-                        // Обработка входящих сообщений
-                    }
-
-                    override fun onOpen(webSocket: WebSocket, response: Response) {
-                        isConnected = true
-                    }
-
-                    override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                        isConnected = false
-                    }
-
-                    override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                        isConnected = false
-                        // Обработка ошибок WebSocket
-                    }
-                })
-            } catch (e: Exception) {
-                // Обработка ошибок при создании WebSocket
-            }
-        }
-    }
-
-    fun disconnectWebSocket() {
-        webSocket?.close(1000, "User initiated disconnect")
-        isConnected = false
+        webSocket = client.newWebSocket(request, MyWebSocketListener())
     }
 
     fun sendMessage(message: String) {
-        // Проверяем, что WebSocket подключен
-        if (isConnected) {
-            webSocket?.send(message)
+        webSocket?.send(message)
+    }
+
+    fun disconnect() {
+        webSocket?.close(1000, "Goodbye, WebSocket!")
+    }
+
+    private inner class MyWebSocketListener : WebSocketListener() {
+        override fun onOpen(webSocket: WebSocket, response: Response) {
+            // WebSocket connection opened
+            // You can handle any actions on connection open here
+        }
+
+        override fun onMessage(webSocket: WebSocket, text: String) {
+            // Received a text message
+            // You can handle the received message here
+        }
+
+        override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+            // Received a binary message
+            // You can handle the received message here
+        }
+
+        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+            // WebSocket is about to close
+            // You can handle any actions before closing here
+        }
+
+        override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+            // WebSocket connection closed
+            // You can handle any actions after closing here
+        }
+
+        override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+            // WebSocket connection failure
+            // You can handle the failure here
         }
     }
 }
-

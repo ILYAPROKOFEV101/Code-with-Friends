@@ -114,6 +114,7 @@ import com.example.codewithfriends.MainViewModel
 import com.example.codewithfriends.Viewphote.ViewPhoto
 import com.example.codewithfriends.findroom.Getmyroom
 import com.example.codewithfriends.test.TestActivity
+import com.example.reaction.logik.PreferenceHelper
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
@@ -192,6 +193,31 @@ class Roomsetting : ComponentActivity() {
             if (id != null && tokens != null) {
                 sendPostRequest(storedRoomId!!, "$id")
             }
+
+
+            val name = UID(
+                userData = googleAuthUiClient.getSignedInUser()
+            )
+            val img = IMG(
+                userData = googleAuthUiClient.getSignedInUser()
+            )
+
+            storedRoomId = getRoomId(this)
+
+
+
+
+            // Сохранение значения для ключа KEY_STRING_1
+            PreferenceHelper.saveid(this, "$id")
+
+
+            PreferenceHelper.savename(this, "$name")
+
+                // Сохранение значения для ключа KEY_STRING_3
+            PreferenceHelper.saveimg(this, "$img")
+
+            // Сохранение значения для ключа KEY_STRING_4
+            PreferenceHelper.saveSoket(this, "$storedRoomId")
 
 
             Handler(Looper.getMainLooper()).postDelayed({
