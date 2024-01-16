@@ -126,6 +126,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Scaffold
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.collectAsState
 
 import androidx.compose.runtime.mutableStateOf
@@ -138,6 +139,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.codewithfriends.LoadingCircle
 import com.example.codewithfriends.MainViewModel
 import com.example.codewithfriends.Viewphote.ViewPhoto
+import com.example.codewithfriends.findroom.ui.theme.CodeWithFriendsTheme
 import com.example.codewithfriends.test.TestActivity
 import com.example.reaction.logik.PreferenceHelper.getRoomId
 
@@ -187,23 +189,23 @@ class FindRoom : ComponentActivity() {
             val isLoading by viewModel.isLoading.collectAsState()
             val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
 
-
+            CodeWithFriendsTheme{
                 SwipeRefresh(
                     state = swipeRefresh,
                     onRefresh = {
                         recreate()
                     }
                 ) {
-                        val rooms = remember { mutableStateOf(emptyList<Room>()) }
-                        val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
+                    val rooms = remember { mutableStateOf(emptyList<Room>()) }
+                    val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
 
-                        // Задержка перехода на новую страницу через 3 секунды
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            getData(rooms)
-                        }, 500) // 3000 миллисекунд (3 секунды)
+                    // Задержка перехода на новую страницу через 3 секунды
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        getData(rooms)
+                    }, 500) // 3000 миллисекунд (3 секунды)
 
-                        // Вызывайте getData только после установки ContentView
-                        GET_MYROOM("$id", data_from_myroom)
+                    // Вызывайте getData только после установки ContentView
+                    GET_MYROOM("$id", data_from_myroom)
 
                     SwipeRefresh(
                         state = swipeRefresh,
@@ -214,6 +216,7 @@ class FindRoom : ComponentActivity() {
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .background(colorScheme.background)
                         ) {
                             Box(
                                 modifier = Modifier
@@ -237,7 +240,7 @@ class FindRoom : ComponentActivity() {
                 }
             }
         }
-
+    }
 
     private fun getData(rooms: MutableState<List<Room>>) {
         // Создаем Retrofit клиент
@@ -442,6 +445,9 @@ class FindRoom : ComponentActivity() {
                     border = BorderStroke(5.dp, SolidColor(joinroom)),
                     shape = RoundedCornerShape(30.dp)
                 ),
+            colors = CardDefaults.cardColors(
+                MaterialTheme.colorScheme.background,
+            ),
 
         ) {
             Column(modifier = Modifier
@@ -490,8 +496,16 @@ class FindRoom : ComponentActivity() {
                                         .height(65.dp)
                                         .clip(CircleShape)
                                     ) {
-                                Text(text = "${room.roomName}", modifier = Modifier.padding(top = 10.dp , start = 10.dp), style = TextStyle(fontSize = 24.sp))
-                                       }
+                                    Text(
+                                        text = "${room.roomName}",
+                                        modifier = Modifier.padding(top = 10.dp, start = 10.dp),
+                                        style = TextStyle(
+                                            fontSize = 24.sp,
+                                            color = Color.Black  // Set the text color to colorScheme.background
+                                        )
+                                    )
+
+                                }
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -500,7 +514,10 @@ class FindRoom : ComponentActivity() {
                                     .clip(CircleShape)
                                )
                                 {
-                                Text(text = "${room.language}", modifier = Modifier.padding( start = 10.dp), style = TextStyle(fontSize = 24.sp))
+                                Text(text = "${room.language}", modifier = Modifier
+                                    .padding( start = 10.dp),
+                                    style = TextStyle(fontSize = 24.sp),
+                                    color = Color.Black  )
                                 }
 
                              }
@@ -538,7 +555,7 @@ class FindRoom : ComponentActivity() {
                         .height(350.dp)
                         .clip(RoundedCornerShape(30.dp))
                     ){
-                        item {  Text(text = "${room.aboutRoom}", modifier = Modifier.padding( start = 10.dp), style = TextStyle(fontSize = 24.sp)) }
+                        item {  Text(text = "${room.aboutRoom}", modifier = Modifier.padding( start = 10.dp), style = TextStyle(fontSize = 24.sp), color = Color.Black  ) }
                     }
 
                 }

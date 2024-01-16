@@ -104,12 +104,13 @@
             </intent-filter>
         </service>
         <receiver
-            android:name=".push.ReplyReceiver"
+            android:name=".push.YourBroadcastReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="your.package.name.REPLY_ACTION" />
+                <action android:name="your_action" />
             </intent-filter>
         </receiver>
+
 
     </application>
 

@@ -14,47 +14,68 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
 import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.widget.EditText
 
-import androidx.compose.foundation.Image
-
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationCompat
 import androidx.core.app.Person
 import androidx.core.app.RemoteInput
 import androidx.core.graphics.drawable.IconCompat
-import coil.compose.rememberImagePainter
 import com.example.codewithfriends.R
+
 import com.example.codewithfriends.chats.Chat
 import com.example.codewithfriends.chats.WebSocketClient
+import com.example.codewithfriends.push.PushService.Companion.KEY_TEXT_REPLY
 import com.example.reaction.logik.PreferenceHelper
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.squareup.picasso.Picasso
+import kotlinx.coroutines.withContext
 import okio.IOException
 
-import androidx.compose.material.TextField
+class YourBroadcastReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent?) {
+        if (intent?.action == "your_action") {
+            val conversationId = intent.getIntExtra("conversation_id", 0)
+            // Получите текст ответа
+            val replyText = getMessageText(intent)
+            Log.d("YourBroadcastReceiver", "Reply Text: $replyText")
+            if (replyText != null) {
+                // Обработайте текст ответа, например, отправьте его на сервер
+                // ...
+
+
+                Log.d("PushService", "Получено новое сообщение. Отображение уведомления. $replyText")
+
+                pushmessge(context,"$replyText")
+
+            }
+        }
+    }
+}
+
+fun getMessageText(intent: Intent): CharSequence? {
+    return RemoteInput.getResultsFromIntent(intent)?.getCharSequence(KEY_TEXT_REPLY)
+}
+
 
 class PushService : FirebaseMessagingService() {
 
+    // Дополнительная переменная для хранения сообщений
+    private val messages: MutableList<NotificationCompat.MessagingStyle.Message> = mutableListOf()
+
+    companion object {
+        const val KEY_TEXT_REPLY = "key_text_reply"
+        // Ваши остальные константы здесь...
+    }
+
+  //  private val KEY_TEXT_REPLY = "key_text_reply"
 
     private lateinit var conversation: EditText // Или другой тип поля для ввода текста
+
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
@@ -65,20 +86,32 @@ class PushService : FirebaseMessagingService() {
         val senderName = remoteMessage.data["senderName"]
         val senderIcon = remoteMessage.data["senderIcon"]
 
-        // Показ уведомления
+        // Создаем intent для использования внутри showNotification
+        val intent = Intent(this, Chat::class.java)
+        intent.action = "your_action" // ваше действие
+
         title?.let {
             showNotification(title, body ?: "", senderName, senderIcon)
         }
+
+
+
+
+
     }
+
+
 
     private fun showNotification(
         title: String,
         message: String,
         senderName: String?,
-        senderIcon: String?
+        senderIcon: String?,
+
     ) {
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
 
         // Конфигурация уведомления
         val channelId = "channelId"
@@ -91,97 +124,125 @@ class PushService : FirebaseMessagingService() {
         }
 
 
-        // Key for the string that's delivered in the action's intent.
+        Log.d("Notification", "Creating PendingIntent")
+        var replyPendingIntent: PendingIntent =
+            PendingIntent.getBroadcast(
+                applicationContext,
+                getConversationId(),
+                getMessageReplyIntent(getConversationId(), this),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            )
+        Log.d("Notification", "PendingIntent created successfully")
 
-        // Key for the string that's delivered in the action's intent.
-       val KEY_TEXT_REPLY = "key_text_reply"
+
         var replyLabel: String = resources.getString(R.string.reply_label)
         var remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).run {
             setLabel(replyLabel)
             build()
         }
 
+        // Создайте экземпляр действия для ответа и добавьте дистанционный ввод.
+        val action: NotificationCompat.Action = NotificationCompat.Action.Builder(
+            R.drawable.send,
+            getString(R.string.label),
+            replyPendingIntent
+        )
+            .addRemoteInput(remoteInput)
+            .build()
 
-        var replyPendingIntent: PendingIntent =
-            PendingIntent.getBroadcast(
-                applicationContext,
-                getConversationId(),
-                getMessageReplyIntent(getConversationId()),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE  // Используйте флаг FLAG_MUTABLE
-            )
-
-
-        // Create the reply action and add the remote input.
-        var action: NotificationCompat.Action =
-            NotificationCompat.Action.Builder(R.drawable.send,
-                getString(R.string.label), replyPendingIntent)
-                .addRemoteInput(remoteInput)
-                .build()
-
-
-
-        // Создайте NotificationBuilder
+// Создайте строитель уведомлений.
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setColor(Color.BLUE)
             .setSmallIcon(R.drawable.send)
-
-        // Добавьте поле text
-        notificationBuilder.setContentText(message)
             .addAction(action)
+            .setContentText(message)
+
+            // Получите данные отправителя из SharedPreferences.
+        val nameValue = PreferenceHelper.getname(this)
+        val imgValue = PreferenceHelper.getimg(this)
+
+// Загрузите изображение отправителя с использованием Picasso.
+        val senderIconBitmap = Picasso.get().load(imgValue).get()
+
+// Создайте круглое изображение отправителя.
+        val roundedSenderIconBitmap = getCircularBitmap(senderIconBitmap)
+
+// Создайте объект MessagingStyle для отображения разговора в уведомлении.
+        val messagingStyle = NotificationCompat.MessagingStyle(
+            Person.Builder()
+                .setName(nameValue)
+                .setIcon(IconCompat.createWithBitmap(roundedSenderIconBitmap))
+                .build()
+        )
+
+
+
+// Загрузите изображение отправителя из другого источника (предполагается, что это строковый URL).
+        val senderIconBitmaps = Picasso.get().load(senderIcon).get()
+
+// Создайте круглое изображение отправителя для использования в сообщении разговора.
+        val roundedSenderIconBitmaps = getCircularBitmap(senderIconBitmaps)
+
+// Создайте объект сообщения разговора.
+        val userMessageBuilder = NotificationCompat.MessagingStyle.Message(
+            message,
+            System.currentTimeMillis(),
+            Person.Builder()
+                .setName(senderName)
+                .setIcon(IconCompat.createWithBitmap(roundedSenderIconBitmaps))
+                .build()
+        )
+
+        // Добавьте сообщение в объект MessagingStyle.
+        messagingStyle.addMessage(userMessageBuilder)
+
+        // Примените объект MessagingStyle к уведомлению.
+        notificationBuilder.setStyle(messagingStyle)
+
+// Установите текст сообщения в уведомлении.
+        notificationBuilder.setContentText(message)
+
+// Отправьте уведомление с помощью NotificationManager.
+        notificationManager.notify(getConversationId(), notificationBuilder.build())
+
+
+        // Обновляем уведомление
+            //notificationManager.notify(getConversationId(), updatedNotification)
 
 
 
 
-        // Проверьте, есть ли информация о отправителе и его иконке
-        if (senderName != null && !senderIcon.isNullOrEmpty()) {
-            // Загрузите изображение по URL с использованием Picasso
-            try {
-                val senderIconBitmap = Picasso.get().load(senderIcon).get()
+        val notificationId = getConversationId()  // Замените эту часть на ваш способ получения уникального идентификатора
 
-                // Обрежьте изображение отправителя для создания круглого эффекта
-                val roundedSenderIconBitmap = getCircularBitmap(senderIconBitmap)
 
-               // pushmessge(this, "hello")
-                // Создайте MessagingStyle
-                val messagingStyle =
-                    NotificationCompat.MessagingStyle(Person.Builder().setName("Me").build())
-
-                // Добавьте сообщение
-                val messageBuilder = NotificationCompat.MessagingStyle.Message(
-                    message,
-                    System.currentTimeMillis(),
-                    Person.Builder().setName(senderName)
-                        .setIcon(IconCompat.createWithBitmap(roundedSenderIconBitmap)).build()
-                )
-
-                messagingStyle.addMessage(messageBuilder)
-
-                // Примените MessagingStyle к NotificationBuilder
-                notificationBuilder.setStyle(messagingStyle)
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
+        val currentNotification = notificationManager.activeNotifications.find {
+            it.id == notificationId
         }
 
 
-
-
-        // Показать уведомление
-        notificationManager.notify(1, notificationBuilder.build())
     }
 
 
-    private fun getConversationId(): Int {
-        // Замените на вашу логику получения ID беседы
-        return 1
+
+
+
+    fun getConversationId(): Int {
+        // Генерируем уникальный идентификатор, например, на основе времени
+        return System.currentTimeMillis().toInt()
     }
 
-    private fun getMessageReplyIntent(conversationId: Int): Intent {
-        // Замените на вашу логику создания Intent для ответа на сообщение
-        val intent = Intent(this, Chat::class.java)
-        // Добавьте необходимые параметры
+
+
+
+    fun getMessageReplyIntent(conversationId: Int, context: Context): Intent {
+        val intent = Intent(this, YourBroadcastReceiver::class.java)
+        intent.action = "your_action" // ваше действие
+        intent.putExtra("conversation_id", conversationId)
         return intent
     }
+
+
+
 }
 
 
@@ -200,7 +261,7 @@ private fun getCircularBitmap(bitmap: Bitmap): Bitmap {
     return output
 }
 
-fun pushmessge(context: Context, message: String){
+fun pushmessge(context: Context, message: CharSequence){
     // Получение значения для ключа KEY_STRING_1 (id)
     val idValue = PreferenceHelper.getSid(context)
 
@@ -216,6 +277,7 @@ fun pushmessge(context: Context, message: String){
     val webSocketClient = WebSocketClient("$socketValue", "$nameValue", "$imgValue", "$idValue")
     webSocketClient.connect()
 
+
 // Отправка сообщения
     webSocketClient.sendMessage("$message")
 
@@ -226,22 +288,4 @@ fun pushmessge(context: Context, message: String){
 
 
 
-class ReplyReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context?, intent: Intent?) {
-        val remoteInput = intent?.let { RemoteInput.getResultsFromIntent(it) }
-
-        if (remoteInput != null) {
-            val replyText = remoteInput.getCharSequence("key_text_reply")
-
-            // Теперь у вас есть введенный текст, который можно использовать
-            if (replyText != null) {
-                val notificationId = intent?.getIntExtra("notificationId", 0)
-                Log.d("ReplyReceiver", "Received reply: $replyText")
-
-                // Обработайте введенный текст по вашему усмотрению
-                // например, отправьте его в чат или обновите уведомление с ответом
-            }
-        }
-    }
-}
 

@@ -69,6 +69,7 @@ import androidx.compose.material.icons.filled.Task
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -99,6 +100,7 @@ import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.codewithfriends.push.PushService
 import com.example.codewithfriends.roomsetting.Roomsetting
+import com.example.reaction.logik.PreferenceHelper
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.gms.auth.api.identity.Identity
@@ -905,12 +907,6 @@ class Chat : ComponentActivity() {
                             imageVector = Icons.Default.AddPhotoAlternate,
                             contentDescription = "Send"
                         )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Cancel,
-                            contentDescription = "Send"
-                        )
-
                     }
                 }
                 TextField(
@@ -957,7 +953,9 @@ class Chat : ComponentActivity() {
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.send),
-                        contentDescription = "Send"
+                        contentDescription = "Send",
+                        tint = colorScheme.tertiary  // Set the tint color to colorScheme.background
+
                     )
                 }
             }
@@ -984,6 +982,11 @@ class Chat : ComponentActivity() {
                     ) {
                         Text(text = stringResource(id = R.string.outroom), fontSize = 24.sp)
                       }
+
+
+
+
+
 
                 } else {
                         Button(
