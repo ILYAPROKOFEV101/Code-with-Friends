@@ -1,6 +1,7 @@
 package com.example.codewithfriends.chats
 
 import LoadingComponent
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -312,6 +313,7 @@ class Chat : ComponentActivity() {
                     )
                     messages.value = messages.value + newMessage // Add message to the list
 
+
                     // Добавьте лог для отслеживания прихода новых сообщений
                     Log.d("WebSocket", "Received message: $messageContent")
                 }
@@ -348,7 +350,7 @@ class Chat : ComponentActivity() {
         )
 
         // Автоматическое подключение при входе в активность
-        setupWebSocket(storedRoomId!!, "$name", "$img", "$ids")
+        setupWebSocket(storedRoomId!!, "$name", "$img", "$ids", this)
         println("подключение ")
     }
 
@@ -357,7 +359,7 @@ class Chat : ComponentActivity() {
 
 
 
-    private fun setupWebSocket(roomId: String, username: String, url: String, id: String) {
+    private fun setupWebSocket(roomId: String, username: String, url: String, id: String, context : Context) {
         if (!isConnected) {
             try {
                 val request: Request = Request.Builder()
@@ -380,6 +382,10 @@ class Chat : ComponentActivity() {
 
                         // Добавить новое сообщение к вашему списку сообщений
                         messages.value = messages.value + newMessage
+
+                        // Сохранение обновленного списка в память
+                        PreferenceHelper.saveMessages(context, messages.value)
+
 
                         // Добавьте лог для отслеживания прихода новых сообщений
                         Log.d("WebSocket", "Received message: $text")

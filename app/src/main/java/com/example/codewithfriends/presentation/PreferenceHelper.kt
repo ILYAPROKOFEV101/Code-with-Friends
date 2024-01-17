@@ -2,8 +2,12 @@ package com.example.reaction.logik
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Message
+import android.util.Log
 import androidx.compose.foundation.layout.BoxScope
 import androidx.core.content.edit
+import com.google.common.reflect.TypeToken
+import com.google.gson.Gson
 
 object PreferenceHelper {
 
@@ -17,7 +21,7 @@ object PreferenceHelper {
     private const val KEY_STRING_2 = "key_string_2"
     private const val KEY_STRING_3 = "key_string_3"
     private const val KEY_STRING_4 = "key_string_4"
-
+    private const val KEY_MESSAGE_LIST = "messageList"
 
     private fun getSharedPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFERENCE_NAME, Context.MODE_PRIVATE)
@@ -111,6 +115,46 @@ object PreferenceHelper {
     fun getSoket(context: Context): String? {
         return getSharedPreferences(context).getString(KEY_STRING_4, "")
     }
+
+
+
+    private fun getMessageList(context: Context): List<Message> {
+        val jsonString = getSharedPreferences(context).getString(KEY_MESSAGE_LIST, "")
+        return if (jsonString.isNullOrBlank()) {
+            emptyList()
+        } else {
+            val type = object : TypeToken<List<Message>>() {}.type
+            Gson().fromJson(jsonString, type)
+        }
+    }
+
+
+    fun saveMessages(context: Context, messages: List<com.example.codewithfriends.chats.Message>) {
+        val currentMessagesSet = getMessageList(context)
+            .mapNotNull { it as? com.example.codewithfriends.chats.Message }
+            .toMutableSet()
+
+        // Добавление новых сообщений в множество
+        currentMessagesSet.addAll(messages)
+
+        // Вывод логов для каждого сообщения
+        for (message in currentMessagesSet) {
+            Log.d("PreferenceHelper", "Saved message: $message")
+        }
+
+        val jsonString = Gson().toJson(currentMessagesSet.toList())
+        getSharedPreferences(context).edit().putString(KEY_MESSAGE_LIST, jsonString).apply()
+
+        // Вывести лог с сохраненными сообщениями для проверки
+        Log.d("PreferenceHelper", "Saved messages: $jsonString")
+    }
+
+
+
+
+
+
+
 
 }
 
