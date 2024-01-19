@@ -170,12 +170,9 @@ class  MainActivity: ComponentActivity() {
 
 
                     val configuration = LocalConfiguration.current
-                    val screenHeight = configuration.screenHeightDp.dp
-                    val screenWidth = configuration.screenWidthDp.dp
 
-                    //  val isTablet = configuration.smallestScreenWidthDp >= 600
 
-                    //  val configuration = resources.configuration
+
                     val smallestScreenWidthDp = configuration.smallestScreenWidthDp
 
                     val isTablet = smallestScreenWidthDp >= 600
@@ -276,9 +273,6 @@ class  MainActivity: ComponentActivity() {
 
                                     Text(stringResource(id = R.string.login))
 
-                                  //  Spacer(modifier = Modifier.height(200.dp))
-
-                                   //
                                 }
                             }
 

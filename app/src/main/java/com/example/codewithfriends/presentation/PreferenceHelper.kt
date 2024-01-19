@@ -4,10 +4,11 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Message
 import android.util.Log
-import androidx.compose.foundation.layout.BoxScope
 import androidx.core.content.edit
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 object PreferenceHelper {
 
@@ -127,6 +128,51 @@ object PreferenceHelper {
             Gson().fromJson(jsonString, type)
         }
     }
+
+    fun clearAllMessages(context: Context) {
+        getSharedPreferences(context).edit().clear().apply()
+        Log.d("PreferenceHelper", "Cleared all messages")
+    }
+
+
+    fun getAllMessages(context: Context): List<com.example.codewithfriends.chats.Message> {
+        val jsonString = getSharedPreferences(context).getString(KEY_MESSAGE_LIST, null)
+        return Gson().fromJson(jsonString, object : TypeToken<List<com.example.codewithfriends.chats.Message>>() {}.type)
+            ?: emptyList()
+    }
+
+
+    fun extractTimeFromString(input: String): String? {
+        val pattern = "<time>([^<]+)</time>".toRegex()
+        val matchResult = pattern.find(input)
+        return matchResult?.groups?.get(1)?.value
+    }
+
+
+    fun findLatestTime(messages: List<com.example.codewithfriends.chats.Message>): Long? {
+        var latestTime: Long? = null
+
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+
+        for (message in messages) {
+            val time = extractTimeFromString(message.content)
+            if (time != null) {
+                val date = dateFormat.parse(time)
+                val timeMillis = date?.time
+                if (timeMillis != null && (latestTime == null || timeMillis > latestTime)) {
+                    latestTime = timeMillis
+                }
+            }
+        }
+
+        // Вывести лог с самым поздним временем
+        Log.d("LatestTime", "Latest time: $latestTime")
+
+        return latestTime
+    }
+
+
+
 
 
     fun saveMessages(context: Context, messages: List<com.example.codewithfriends.chats.Message>) {

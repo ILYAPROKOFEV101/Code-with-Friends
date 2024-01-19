@@ -115,6 +115,7 @@ import com.example.codewithfriends.Viewphote.ViewPhoto
 import com.example.codewithfriends.findroom.Getmyroom
 import com.example.codewithfriends.test.TestActivity
 import com.example.reaction.logik.PreferenceHelper
+import com.example.reaction.logik.PreferenceHelper.clearAllMessages
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
@@ -521,10 +522,10 @@ class Roomsetting : ComponentActivity() {
             mutableStateOf(false)
         }
         if (shows == true) {
-            ComposeAlertDialog(roomName, uid, roomId)
+            ComposeAlertDialog(roomName, uid, roomId, this)
         }
         if (delete == true) {
-            DeleteRoom(uid, roomId)
+            DeleteRoom(uid, roomId, this)
         }
 
         Card(
@@ -594,7 +595,7 @@ class Roomsetting : ComponentActivity() {
         }
     }
     @Composable
-    fun ComposeAlertDialog(roomName: String, uid: String, roomId: String) {
+    fun ComposeAlertDialog(roomName: String, uid: String, roomId: String, context: Context) {
 
         val Text = stringResource(id = R.string.want)
         var show by remember {
@@ -621,6 +622,7 @@ class Roomsetting : ComponentActivity() {
 
                                 val intent = Intent(this@Roomsetting, Main_menu::class.java)
                                  startActivity(intent)
+                                clearAllMessages(context)
                                       },
                             colors = ButtonDefaults.buttonColors(Color.Red),
                             modifier = Modifier
@@ -644,7 +646,7 @@ class Roomsetting : ComponentActivity() {
         }
     }
     @Composable
-    fun DeleteRoom(uid: String, roomId: String) {
+    fun DeleteRoom(uid: String, roomId: String, context: Context) {
 
         var show by remember {
             mutableStateOf(true)
@@ -670,7 +672,10 @@ class Roomsetting : ComponentActivity() {
                                 DeleteeRoom(uid, roomId)
                                 val intent = Intent(this@Roomsetting, Main_menu::class.java)
                                  startActivity(intent)
-                                      },
+                                // Вызов функции для очистки всех сообщений
+                                clearAllMessages(context)
+
+                            },
                             colors = ButtonDefaults.buttonColors(Color.Red),
                             modifier = Modifier
                                 .fillMaxWidth()

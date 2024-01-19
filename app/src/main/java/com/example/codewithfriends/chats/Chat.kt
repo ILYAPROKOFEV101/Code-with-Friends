@@ -12,7 +12,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -102,6 +101,8 @@ import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.codewithfriends.push.PushService
 import com.example.codewithfriends.roomsetting.Roomsetting
 import com.example.reaction.logik.PreferenceHelper
+import com.example.reaction.logik.PreferenceHelper.findLatestTime
+import com.example.reaction.logik.PreferenceHelper.getAllMessages
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.gms.auth.api.identity.Identity
@@ -129,6 +130,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.Timer
 import java.util.UUID
 
 
@@ -155,7 +157,7 @@ class Chat : ComponentActivity() {
     var lastShownMonth: Int? = null
     var lastShownDayOfMonth: Int? = null
 
-    private val messages = mutableStateOf(listOf<Message>()) // Хранение
+    private val messages = mutableStateOf<List<Message>>(emptyList()) // Инициализация списком сообщений из getAllMessages
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
     private var isConnected by mutableStateOf(false)
@@ -167,22 +169,24 @@ class Chat : ComponentActivity() {
             uploadImageToFirebaseStorage(selectedImageUri, storedRoomId!!)
         }
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
 
 
-
+// Инициализация messages с использованием getAllMessages
+        messages.value = getAllMessages(this)
 
         FirebaseMessaging.getInstance().token.addOnCompleteListener{ task ->
                 if (!task.isSuccessful){
                     return@addOnCompleteListener
                 }
-
                 val token = task.result
                 Log.e("Tag" , "Token -> $token")
-
             }
+
+
         val name = UID(
             userData = googleAuthUiClient.getSignedInUser()
         )
@@ -192,6 +196,7 @@ class Chat : ComponentActivity() {
         val id = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )
+
         storedRoomId = getRoomId(this)
 
 
@@ -236,16 +241,6 @@ class Chat : ComponentActivity() {
                         }
                     ) {
 
-                        val name = UID(
-                            userData = googleAuthUiClient.getSignedInUser()
-                        )
-                        val img = IMG(
-                            userData = googleAuthUiClient.getSignedInUser()
-                        )
-                        val id = ID(
-                            userData = googleAuthUiClient.getSignedInUser()
-                        )
-
 
                         Box(modifier = Modifier
                             .fillMaxWidth()
@@ -258,13 +253,20 @@ class Chat : ComponentActivity() {
 
                     }
 
+                    val allMessages: List<Message> = getAllMessages(this)
+
+
+                    // Обновляем состояние messages, добавляя новые сообщения к уже существующим
+                        //    messages.value += allMessages
+
                         Spacer(modifier = Modifier.height(100.dp))
+                    if (storedRoomId != null) {
 
-                        if (storedRoomId != null) {
-                            MessageList(messages.value, "$name", "$img", "$id")
-                        }
+                        MessageList(messages.value, "$name", "$img", "$id")
+                    }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+
+                    Spacer(modifier = Modifier.height(20.dp))
 
                         if (storedRoomId != null) {
                             Creator { message ->
@@ -349,6 +351,7 @@ class Chat : ComponentActivity() {
             userData = googleAuthUiClient.getSignedInUser()
         )
 
+
         // Автоматическое подключение при входе в активность
         setupWebSocket(storedRoomId!!, "$name", "$img", "$ids", this)
         println("подключение ")
@@ -359,11 +362,16 @@ class Chat : ComponentActivity() {
 
 
 
-    private fun setupWebSocket(roomId: String, username: String, url: String, id: String, context : Context) {
+    private fun setupWebSocket(roomId: String, username: String, url: String, id: String, context: Context) {
+
+        val latestTime = findLatestTime(messages.value)
+
+
+
         if (!isConnected) {
             try {
                 val request: Request = Request.Builder()
-                    .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id")
+                    .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id&lasttime=$latestTime")
                     .build()
 
                 webSocket = client.newWebSocket(request, object : WebSocketListener() {
