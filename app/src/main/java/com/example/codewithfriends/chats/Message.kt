@@ -1,8 +1,14 @@
 package com.example.codewithfriends.chats
 
-data class Message(
-    val sender: String,
-    val content: String
-)
+import kotlinx.serialization.Serializable
 
+
+@Serializable
+data class Message(
+    val img: String,
+    val uid: String,
+    val name: String,
+    val message: String,
+    val time: Long // Изменили тип на Int
+)
 

@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -531,8 +532,14 @@ class FindRoom : ComponentActivity() {
                     {
                             Button(
                                 onClick = {
-                                    val intent = Intent(this@FindRoom, Chat::class.java)
-                                    startActivity(intent)
+                                    if (room.id != null) {
+                                        val intent = Intent(this@FindRoom, Chat::class.java)
+                                        startActivity(intent)
+                                    } else {
+                                        // Обработка ситуации, когда идентификатор комнаты равен null
+                                        // например, вы можете вывести сообщение об ошибке
+                                        Toast.makeText(this@FindRoom, "Идентификатор комнаты пуст", Toast.LENGTH_SHORT).show()
+                                    }
 
                                 goToChatActivity(room.id)
                                 showCircle = !showCircle

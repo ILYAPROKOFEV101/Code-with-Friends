@@ -38,6 +38,7 @@ import okhttp3.WebSocketListener
 
 
 
+/*
 class TestActivity : ComponentActivity() {
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
@@ -168,3 +169,4 @@ fun MessageItem(message: com.example.codewithfriends.chats.Message) {
         overflow = TextOverflow.Ellipsis
     )
 }
+*/

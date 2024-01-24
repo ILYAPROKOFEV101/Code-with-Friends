@@ -15,7 +15,7 @@ class WebSocketClient(private val roomId: String, private val username: String, 
 
     fun connect() {
         val request = Request.Builder()
-            .url("wss://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id")
+            .url("wss://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id&latestTime=100000")
             .build()
 
         webSocket = client.newWebSocket(request, MyWebSocketListener())

@@ -101,8 +101,9 @@ import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.example.codewithfriends.push.PushService
 import com.example.codewithfriends.roomsetting.Roomsetting
 import com.example.reaction.logik.PreferenceHelper
-import com.example.reaction.logik.PreferenceHelper.findLatestTime
+
 import com.example.reaction.logik.PreferenceHelper.getAllMessages
+import com.example.reaction.logik.PreferenceHelper.saveRoomId
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.gms.auth.api.identity.Identity
@@ -113,10 +114,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 
 import kotlinx.coroutines.launch
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.java_websocket.client.WebSocketClient
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Retrofit
@@ -144,7 +150,6 @@ class Chat : ComponentActivity() {
     var kick = mutableStateOf(false)
     var photo by mutableStateOf("")
 
-    var developers = mutableStateOf(false)
 
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -157,34 +162,37 @@ class Chat : ComponentActivity() {
     var lastShownMonth: Int? = null
     var lastShownDayOfMonth: Int? = null
 
-    private val messages = mutableStateOf<List<Message>>(emptyList()) // Инициализация списком сообщений из getAllMessages
+    private val messages = mutableStateOf(mutableListOf<Message>())
+
+
+
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
     private var isConnected by mutableStateOf(false)
     private var storedRoomId: String? = null // Объявляем на уровне класса
 
-    private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let { selectedImageUri ->
-            // Здесь вы можете загрузить изображение в Firebase Storage
-            uploadImageToFirebaseStorage(selectedImageUri, storedRoomId!!)
+    private val pickImage =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let { selectedImageUri ->
+                // Здесь вы можете загрузить изображение в Firebase Storage
+                uploadImageToFirebaseStorage(selectedImageUri, storedRoomId!!)
+            }
         }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
 
+        // Инициализация messages с использованием getAllMessages
+        //messages.value = getAllMessages(this)
 
-// Инициализация messages с использованием getAllMessages
-        messages.value = getAllMessages(this)
-
-        FirebaseMessaging.getInstance().token.addOnCompleteListener{ task ->
-                if (!task.isSuccessful){
-                    return@addOnCompleteListener
-                }
-                val token = task.result
-                Log.e("Tag" , "Token -> $token")
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                return@addOnCompleteListener
             }
+            val token = task.result
+            Log.e("Tag", "Token -> $token")
+        }
 
 
         val name = UID(
@@ -217,6 +225,10 @@ class Chat : ComponentActivity() {
 
 
 
+
+
+
+
         setContent {
 
 
@@ -241,47 +253,43 @@ class Chat : ComponentActivity() {
                         }
                     ) {
 
-
-                        Box(modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp)
 
                         ) {
-                            upbar(storedRoomId!!, "$id", "$name", "$img", )
+                            upbar(storedRoomId!!, "$id", "$name", "$img",)
 
                         }
 
                     }
 
-                    val allMessages: List<Message> = getAllMessages(this)
-
-
-                    // Обновляем состояние messages, добавляя новые сообщения к уже существующим
-                        //    messages.value += allMessages
-
-                        Spacer(modifier = Modifier.height(100.dp))
+                    Spacer(modifier = Modifier.height(100.dp))
                     if (storedRoomId != null) {
 
                         MessageList(messages.value, "$name", "$img", "$id")
+// Где-то еще в вашем коде, где создается ваш пользовательский интерфейс
+                            // MessageList(messages.value)
+
                     }
 
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                        if (storedRoomId != null) {
-                            Creator { message ->
-                                // Здесь вы можете добавить логику для отправки сообщения через WebSocket
-                                sendMessage(message)
-                            }
+                    if (storedRoomId != null) {
+                        Creator { message ->
+                            // Здесь вы можете добавить логику для отправки сообщения через WebSocket
+                            sendMessage(message)
                         }
                     }
                 }
             }
-
-
+        }
 
 
     }
+
     private fun restartActivity() {
         recreate()
     }
@@ -298,44 +306,6 @@ class Chat : ComponentActivity() {
             // setupWebSocket(...)
         }
     }
-
-    private fun onMessageReceived(text: String) {
-        val messageIdSeparatorIndex = text.indexOf(':')
-        if (messageIdSeparatorIndex >= 0) {
-            val messageId = text.substring(0, messageIdSeparatorIndex).toIntOrNull()
-            val messageContent = text.substring(messageIdSeparatorIndex + 1)
-
-            if (messageId != null) {
-                // Проверяем, что сообщение с таким ID не было получено ранее
-                if (!hasReceivedMessageWithId(messageId)) {
-                    val newMessage = Message(
-                        sender = "",
-                        content = messageContent
-
-                    )
-                    messages.value = messages.value + newMessage // Add message to the list
-
-
-                    // Добавьте лог для отслеживания прихода новых сообщений
-                    Log.d("WebSocket", "Received message: $messageContent")
-                }
-            }
-        }
-    }
-
-    private fun hasReceivedMessageWithId(messageId: Int): Boolean {
-        // Проверяем, есть ли сообщение с таким ID в списке
-        return messages.value.any { message ->
-            val messageIdSeparatorIndex = message.content.indexOf(':')
-            if (messageIdSeparatorIndex >= 0) {
-                val messageReceivedId =
-                    message.content.substring(0, messageIdSeparatorIndex).toIntOrNull()
-                return messageReceivedId == messageId
-            }
-            return false
-        }
-    }
-
 
 
     override fun onResume() {
@@ -358,50 +328,82 @@ class Chat : ComponentActivity() {
     }
 
 
-
-
-
-
-    private fun setupWebSocket(roomId: String, username: String, url: String, id: String, context: Context) {
-
-        val latestTime = findLatestTime(messages.value)
-
+    private fun setupWebSocket(
+        roomId: String,
+        username: String,
+        url: String,
+        id: String,
+        context: Context
+    ) {
 
 
         if (!isConnected) {
             try {
                 val request: Request = Request.Builder()
-                    .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id&lasttime=$latestTime")
+                    .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id&lasttime=0")
                     .build()
 
+                Log.d(
+                    "websoket",
+                    "https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id&lasttime=10"
+                )
+
                 webSocket = client.newWebSocket(request, object : WebSocketListener() {
+
                     override fun onMessage(webSocket: WebSocket, text: String) {
-                        val newMessage = Message(
-                            sender = "",
-                            content = if (photo != "") {
-                                "$text <image>$photo</image>"
+                        try {
+                            if (text.startsWith("[")) {
+                                // Если пришел массив сообщений
+                                val jsonArray = JSONArray(text)
+
+                                val newMessages = mutableListOf<Message>()
+
+                                for (i in 0 until jsonArray.length()) {
+                                    val json = jsonArray.getJSONObject(i)
+                                    val newMessage = Message(
+                                        img = json.getString("img"),
+                                        uid = json.getString("uid"),
+                                        name = json.getString("name"),
+                                        message = json.getString("message"),
+                                        time = json.getLong("time")
+                                    )
+                                    newMessages.add(newMessage)
+                                }
+
+                                // Создать новый MutableList, добавив в него все старые сообщения и новые
+                                val updatedMessages = mutableListOf<Message>()
+                                updatedMessages.addAll(messages.value)
+                                updatedMessages.addAll(newMessages)
+
+                                // Обновить состояние messages новым MutableList
+                                messages.value = updatedMessages
                             } else {
-                                text
+                                // Если пришло отдельное сообщение
+                                val json = JSONObject(text)
+                                val newMessage = Message(
+                                    img = json.getString("img"),
+                                    uid = json.getString("uid"),
+                                    name = json.getString("name"),
+                                    message = json.getString("message"),
+                                    time = json.getLong("time")
+                                )
+
+                                // Создать новый MutableList, добавив в него все старые сообщения и новое
+                                val updatedMessages = mutableListOf<Message>()
+                                updatedMessages.addAll(messages.value)
+                                updatedMessages.add(newMessage)
+
+                                // Обновить состояние messages новым MutableList
+                                messages.value = updatedMessages
                             }
-                        )
-
-                        // Вызов метода onMessageReceived для обработки нового сообщения
-                        onMessageReceived(text)
-
-                        // Добавить новое сообщение к вашему списку сообщений
-                        messages.value = messages.value + newMessage
-
-                        // Сохранение обновленного списка в память
-                        PreferenceHelper.saveMessages(context, messages.value)
-
-
-                        // Добавьте лог для отслеживания прихода новых сообщений
-                        Log.d("WebSocket", "Received message: $text")
+                        } catch (e: JSONException) {
+                            // Если разбор JSON не удался, обработайте ошибку
+                            return
+                        }
                     }
 
                     override fun onOpen(webSocket: WebSocket, response: Response) {
                         isConnected = true
-
                     }
 
                     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
@@ -422,6 +424,7 @@ class Chat : ComponentActivity() {
             }
         }
     }
+
 
     override fun onDestroy() {
         super.onDestroy()
@@ -445,31 +448,7 @@ class Chat : ComponentActivity() {
 
 
 
-    fun splitMessageContent(content: String): Pair<String, String> {
-        val pattern = "\\[(https?://[^\\]]+)\\]".toRegex()
-        val matchResult = pattern.find(content)
-        val beforeUrl = content.substring(0, matchResult?.range?.start ?: content.length)
-        val afterUrl =
-            content.substring(matchResult?.range?.endInclusive?.plus(1) ?: content.length)
-        return Pair(beforeUrl, afterUrl)
-    }
 
-    fun extractUrlFromString(input: String): String? {
-        val pattern = "\\[(https?://[^\\]]*)\\]".toRegex()
-        val matchResult = pattern.find(input)
-        return matchResult?.groups?.get(1)?.value
-    }
-
-    fun extractTimeFromString(input: String): String? {
-        val pattern = "<time>([^<]+)</time>".toRegex()
-        val matchResult = pattern.find(input)
-        return matchResult?.groups?.get(1)?.value
-    }
-
-
-    fun removeTimeFromMessage(input: String): String {
-        return input.replace("<time>([^<]+)</time>".toRegex(), "")
-    }
 
     fun extractImageFromMessage(input: String): String? {
         val pattern = "<image>(.+?)</image>".toRegex()
@@ -478,252 +457,225 @@ class Chat : ComponentActivity() {
     }
 
 
-    // Функция для форматирования времени из UTC в местное время пользователя
-    fun formatTimeForUser(timeString: String): String {
-        val utcFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-        val utcDateTime = LocalDateTime.parse(timeString, utcFormatter)
-
-        val userTimeZone = ZoneId.systemDefault()
-        val userLocalDateTime = utcDateTime.atZone(ZoneOffset.UTC).withZoneSameInstant(userTimeZone)
-
-        val userFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-        return userFormatter.format(userLocalDateTime)
-    }
-
-
-    fun removeImageFromMessage(input: String): String {
-        return input.replace("<image>(.+?)</image>".toRegex(), "")
-    }
-
-    fun extractIMAGEFromMessage(input: String): String? {
-        val pattern = "<IMAGE>(.+?)</IMAGE>".toRegex()
-        val matchResult = pattern.find(input)
-        return matchResult?.groups?.get(1)?.value
-    }
-
-    fun removeIMAGEFromMessage(input: String): String {
-        return input.replace("<IMAGE>(.+?)</IMAGE>".toRegex(), "")
-    }
 
 
 
 
 
-    @Composable
-    fun MessageList(messages: List<Message>?, username: String, url: String, id: String) {
-        if (messages != null && messages.isNotEmpty()) {
-            if (messages.isNotEmpty()) { // Проверяем, что список не пуст
-                val currentUserUrl = url.take(60) // Получаем первые 30 символов URL
-                val listState = rememberLazyListState()
-                val lastVisibleItemIndex = messages.size - 1
-                val coroutineScope = rememberCoroutineScope()
-                val hasScrolled = rememberSaveable { mutableStateOf(false) }
-
-                var currentDay: LocalDate? = null
-                // Объявите форматтер для времени
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-
-                if (!hasScrolled.value || messages.last().sender == url) {
-                    LaunchedEffect(messages) {
-                        if (lastVisibleItemIndex >= 0) {
-                            coroutineScope.launch {
-                                // listState.animateScrollToItem(lastVisibleItemIndex)
-                                listState.scrollToItem(messages.size - 1)
-                                hasScrolled.value = true
-                            }
-                        }
-                    }
-                }
-
-
-                LaunchedEffect(messages) {
-                    if (lastVisibleItemIndex >= 0) {
-                        coroutineScope.launch {
-                            // listState.animateScrollToItem(lastVisibleItemIndex)
-                            listState.scrollToItem(messages.size - 1)
-                            hasScrolled.value = true
-                        }
-                    }
-                }
-
-
-
-
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 60.dp, top = 50.dp)
-                        .background(Color(0x2F3083FF))
-                        .wrapContentHeight(),
-                    reverseLayout = false,
-                    state = listState
-                ) {
-
-
-                    items(messages) { message ->
-                        val isMyMessage = message.sender == url
-                        val isMyUrlMessage = message.content.contains(currentUserUrl)
-
-                        // Использование функций в вашем коде
-                        val timeString = extractTimeFromString(message.content)
-                        val formattedTime = timeString?.let { formatTimeForUser(it) }
-
-
-                        // Используйте текущее время в миллисекундах
-                        val currentTimeMillis = System.currentTimeMillis()
-
-                    // Парсинг строки времени в LocalDateTime
-                        val messageDateTime = LocalDateTime.parse(timeString, formatter)
-
-                        // Проверка, совпадает ли месяц и день с момента последнего сообщения
-                        val showDayMarker = lastShownMonth == null || lastShownDayOfMonth == null ||
-                                messageDateTime.monthValue != lastShownMonth ||
-                                messageDateTime.dayOfMonth != lastShownDayOfMonth
-
-                        // Обновление текущего месяца и дня
-                        lastShownMonth = messageDateTime.monthValue
-                        lastShownDayOfMonth = messageDateTime.dayOfMonth
-
-                        if (showDayMarker) {
-                            // Отображение маркера дня
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = messageDateTime.format(DateTimeFormatter.ofPattern("MM-dd")),
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                            }
-                        }
-
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-
-                                .padding(8.dp),
-                            contentAlignment = if (isMyMessage || isMyUrlMessage) Alignment.CenterEnd else Alignment.CenterStart
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(0.dp),
-                                horizontalArrangement = if (isMyMessage || isMyUrlMessage) Arrangement.End else Arrangement.Start
-                            ) {
-                                val imageModifier = Modifier
-                                    .size(40.dp)
-                                    .clip(RoundedCornerShape(40.dp))
-                                val imageUrl = extractUrlFromString(message.content)
-                                val paint = extractImageFromMessage(message.content) ?: extractIMAGEFromMessage(message.content)
-                                val imageContent = removeImageFromMessage(message.content) ?: removeIMAGEFromMessage(message.content)
-                                val (beforeUrl, afterUrl) = splitMessageContent(
-                                    removeTimeFromMessage(imageContent)
-                                )
-                                /*val textWithImage = splitMessageContentWithImageAndText(
-                                    removeTimeFromMessage(message.content)
-                                )*/
-
-
-                                if (!(isMyMessage || isMyUrlMessage)) {
-                                    if (imageUrl != null) {
-                                        val painter: Painter =
-                                            rememberAsyncImagePainter(model = imageUrl)
-                                        Image(
-                                            painter = painter,
-                                            contentDescription = null,
-                                            modifier = imageModifier
-                                        )
-                                        Spacer(modifier = Modifier.width(2.dp))
-                                    }
-                                }
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth(0.8f)
-                                        .padding(2.dp),
-                                    backgroundColor = if (isMyMessage || isMyUrlMessage) Color(
-                                        0xE650B973
-                                    ) else Color(0xFFFFFFFF),
-                                    elevation = 10.dp,
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Column(modifier = Modifier
-                                        .padding(8.dp)
-                                        .background ( if (isMyMessage || isMyUrlMessage) Color(0xE650B973) else Color(0xFFFFFFFF))){
-                                        Text(
-                                            text = "${message.sender}$beforeUrl$afterUrl",
-                                            textAlign = TextAlign.Start,
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = Color.Black,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        val pattern =
-                                            "<time>(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})</time>".toRegex()
-
-
-
-
-                                        if (paint != null) {
-                                            Spacer(modifier = Modifier.height(20.dp))
-                                            if (paint.isNotEmpty()) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .height(400.dp)
-                                                        .background ( if (isMyMessage || isMyUrlMessage) Color(
-                                                            0xE650B973
-                                                        ) else Color(0xFFFFFFFF))
-                                                        .zIndex(1f), // Устанавливает z-индекс, чтобы поместиться наверху других
-                                                ) {
-                                                    Image(
-                                                        painter = if (paint.isNotEmpty()) {
-                                                            // Load image from URL
-                                                            rememberImagePainter(data = paint)
-                                                        } else {
-                                                            // Load a default image when URL is empty
-                                                            painterResource(id = R.drawable.android) // Replace with your default image resource
-                                                        },
-                                                        contentDescription = null,
-                                                        modifier = Modifier
-                                                            .fillMaxSize()
-                                                            .clip(RoundedCornerShape(20.dp))
-                                                            .clickable {
-                                                                openLargeImage("$paint")
-                                                            },
-                                                    )
-                                                }
-
-                                            }
-                                        }
-
-
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .wrapContentHeight(),
-                                            contentAlignment = Alignment.CenterEnd
-                                        ) {
-                                            Text(
-                                                text = formattedTime?.split(" ")?.get(1) ?: "", // Извлекаем только время
-                                                fontSize = 10.sp,
-                                                color = Color.Black,
-                                            )
-                                        }
-
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+   /* @Composable
+    fun MessageList(messages: List<Message>) {
+        LazyColumn {
+            items(messages) { message ->
+                Text(message.message)
             }
         }
-    }
+    }*/
 
+      @Composable
+       fun MessageList(messages: List<Message>?, username: String, url: String, id: String) {
+           Log.d("MessageList", "Number of messages: ${messages?.size}")
+
+           if (messages != null && messages.isNotEmpty()) {
+               if (messages.isNotEmpty()) { // Проверяем, что список не пуст
+                   val currentUserUrl = url.take(60) // Получаем первые 30 символов URL
+                   val listState = rememberLazyListState()
+                   val lastVisibleItemIndex = messages.size - 1
+                   val coroutineScope = rememberCoroutineScope()
+                   val hasScrolled = rememberSaveable { mutableStateOf(false) }
+
+                   var currentDay: LocalDate? = null
+                   // Объявите форматтер для времени
+                   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+
+                   if (!hasScrolled.value || messages.last().img == url) {
+                       LaunchedEffect(messages) {
+                           if (lastVisibleItemIndex >= 0) {
+                               coroutineScope.launch {
+                                   // listState.animateScrollToItem(lastVisibleItemIndex)
+                                   listState.scrollToItem(messages.size - 1)
+                                   hasScrolled.value = true
+                               }
+                           }
+                       }
+                   }
+
+
+                   LaunchedEffect(messages) {
+                       if (lastVisibleItemIndex >= 0) {
+                           coroutineScope.launch {
+                               // listState.animateScrollToItem(lastVisibleItemIndex)
+                               listState.scrollToItem(messages.size - 1)
+                               hasScrolled.value = true
+                           }
+                       }
+                   }
+
+
+
+
+                   LazyColumn(
+                       modifier = Modifier
+                           .fillMaxWidth()
+                           .padding(bottom = 60.dp, top = 50.dp)
+                           .background(Color(0x2F3083FF))
+                           .wrapContentHeight(),
+                       reverseLayout = false,
+                       state = listState
+                   ) {
+
+
+                       items(messages) { message ->
+                           val isMyMessage = message.uid == id
+
+
+                           // Использование функций в вашем коде
+
+
+
+                       // Парсинг строки времени в LocalDateTime
+
+
+                           // Проверка, совпадает ли месяц и день с момента последнего сообщения
+                           val showDayMarker = lastShownMonth == null || lastShownDayOfMonth == null
+
+
+
+
+                           val messageDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(message.time), ZoneId.systemDefault())
+
+                           // ... (ваш существующий код)
+
+                           if (showDayMarker) {
+                               // Отображение маркера дня
+                               Box(
+                                   modifier = Modifier
+                                       .fillMaxWidth()
+                                       .padding(8.dp),
+                                   contentAlignment = Alignment.Center
+                               ) {
+                                   Text(
+                                       text = messageDateTime.format(DateTimeFormatter.ofPattern("MM-dd")),
+                                       fontWeight = FontWeight.Bold,
+                                       color = Color.White
+                                   )
+                               }
+                           }
+
+
+                           Box(
+                               modifier = Modifier
+                                   .fillMaxWidth()
+                                   .padding(8.dp),
+                               contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
+                           ) {
+                               Row(
+                                   modifier = Modifier
+                                       .fillMaxWidth()
+                                       .padding(0.dp),
+                                   horizontalArrangement = if (isMyMessage) Arrangement.End else Arrangement.Start
+                               ) {
+                                   val imageModifier = Modifier
+                                       .size(40.dp)
+                                       .clip(RoundedCornerShape(40.dp))
+                                   val imageUrl = message.img
+                                   val paint = extractImageFromMessage(message.message)
+
+
+
+                                   if (!(isMyMessage)) {
+                                       if (imageUrl != null) {
+                                           val painter: Painter =
+                                               rememberAsyncImagePainter(model = imageUrl)
+                                           Image(
+                                               painter = painter,
+                                               contentDescription = null,
+                                               modifier = imageModifier
+                                           )
+                                           Spacer(modifier = Modifier.width(2.dp))
+                                       }
+                                   }
+                                   Card(
+                                       modifier = Modifier
+                                           .fillMaxWidth(0.8f)
+                                           .padding(2.dp),
+                                       backgroundColor = if (isMyMessage) Color(
+                                           0xE650B973
+                                       ) else Color(0xFFFFFFFF),
+                                       elevation = 10.dp,
+                                       shape = RoundedCornerShape(12.dp)
+                                   ) {
+                                       Column(modifier = Modifier
+                                           .padding(8.dp)
+                                           .background ( if (isMyMessage) Color(0xE650B973) else Color(0xFFFFFFFF))){
+                                           Text(
+                                               text = message.message,
+                                               textAlign = TextAlign.Start,
+                                               fontSize = 18.sp,
+                                               fontWeight = FontWeight.SemiBold,
+                                               color = Color.Black,
+                                               overflow = TextOverflow.Ellipsis
+                                           )
+
+
+                                           if (paint != null) {
+                                               Spacer(modifier = Modifier.height(20.dp))
+                                               if (paint.isNotEmpty()) {
+                                                   Box(
+                                                       modifier = Modifier
+                                                           .fillMaxWidth()
+                                                           .height(400.dp)
+                                                           .background ( if (isMyMessage) Color(
+                                                               0xE650B973
+                                                           ) else Color(0xFFFFFFFF))
+                                                           .zIndex(1f), // Устанавливает z-индекс, чтобы поместиться наверху других
+                                                   ) {
+                                                       Image(
+                                                           painter = if (paint.isNotEmpty()) {
+                                                               // Load image from URL
+                                                               rememberImagePainter(data = paint)
+                                                           } else {
+                                                               // Load a default image when URL is empty
+                                                               painterResource(id = R.drawable.android) // Replace with your default image resource
+                                                           },
+                                                           contentDescription = null,
+                                                           modifier = Modifier
+                                                               .fillMaxSize()
+                                                               .clip(RoundedCornerShape(20.dp))
+                                                               .clickable {
+                                                                   openLargeImage("$paint")
+                                                               },
+                                                       )
+                                                   }
+
+                                               }
+                                           }
+
+                                           Box(
+                                               modifier = Modifier
+                                                   .fillMaxWidth()
+                                                   .wrapContentHeight(),
+                                               contentAlignment = Alignment.CenterEnd
+                                           ) {
+                                               val localDateTime = messageDateTime.atZone(ZoneId.systemDefault()).toLocalDateTime()
+
+                                               Text(
+                                                   text = localDateTime.format(DateTimeFormatter.ofPattern("HH:mm")), // Извлекаем только время
+                                                   fontSize = 10.sp,
+                                                   color = Color.Black,
+                                               )
+                                           }
+
+
+                                       }
+                                   }
+                               }
+                           }
+                       }
+                   }
+               }
+
+    }
+  }
     fun openLargeImage( photo: String) {
         // Здесь реализуйте логику открытия большой версии изображения
         // Например, использование Intent для открытия новой активности с большим изображением
@@ -968,7 +920,7 @@ class Chat : ComponentActivity() {
                     Icon(
                         painter = painterResource(id = R.drawable.send),
                         contentDescription = "Send",
-                        tint = colorScheme.tertiary  // Set the tint color to colorScheme.background
+                      ///  tint = colorScheme.tertiary  // Set the tint color to colorScheme.background
 
                     )
                 }
@@ -996,6 +948,7 @@ class Chat : ComponentActivity() {
                     ) {
                         Text(text = stringResource(id = R.string.outroom), fontSize = 24.sp)
                       }
+
 
 
 

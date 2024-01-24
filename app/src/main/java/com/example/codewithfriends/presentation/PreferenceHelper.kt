@@ -149,7 +149,7 @@ object PreferenceHelper {
     }
 
 
-    fun findLatestTime(messages: List<com.example.codewithfriends.chats.Message>): Long? {
+   /* fun findLatestTime(messages: List<com.example.codewithfriends.chats.Message>): Long? {
         var latestTime: Long? = null
 
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
@@ -169,7 +169,7 @@ object PreferenceHelper {
         Log.d("LatestTime", "Latest time: $latestTime")
 
         return latestTime
-    }
+    }*/
 
 
 
