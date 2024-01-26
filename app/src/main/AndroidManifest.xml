@@ -68,7 +68,8 @@
             android:name=".chats.Chat"
             android:exported="false"
             android:label="@string/title_activity_chat"
-            android:theme="@style/NoAnimation" />
+            android:theme="@style/NoAnimation"
+            android:largeHeap="true"/>
         <activity
             android:name=".findroom.FindRoom"
             android:exported="false"

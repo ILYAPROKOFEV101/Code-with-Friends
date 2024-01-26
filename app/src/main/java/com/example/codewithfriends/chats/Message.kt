@@ -1,9 +1,11 @@
 package com.example.codewithfriends.chats
 
+import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 
 
 @Serializable
+@Immutable
 data class Message(
     val img: String,
     val uid: String,

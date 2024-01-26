@@ -63,13 +63,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.Task
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -87,10 +83,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
-import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
 import com.example.codewithfriends.MainViewModel
-import com.example.codewithfriends.Startmenu.Main_menu
 import com.example.codewithfriends.Viewphote.ViewPhoto
 import com.example.codewithfriends.createamspeck.ui.theme.CodeWithFriendsTheme
 import com.example.codewithfriends.findroom.FindRoom
@@ -98,24 +91,24 @@ import com.example.codewithfriends.presentation.profile.ID
 import com.example.codewithfriends.presentation.profile.IMG
 import com.example.codewithfriends.presentation.profile.UID
 import com.example.codewithfriends.presentation.sign_in.GoogleAuthUiClient
-import com.example.codewithfriends.push.PushService
 import com.example.codewithfriends.roomsetting.Roomsetting
 import com.example.reaction.logik.PreferenceHelper
+import com.example.reaction.logik.PreferenceHelper.loadMessagesFromMemory
 
-import com.example.reaction.logik.PreferenceHelper.getAllMessages
-import com.example.reaction.logik.PreferenceHelper.saveRoomId
+import com.example.reaction.logik.PreferenceHelper.saveMessages
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.gms.auth.api.identity.Identity
+import com.google.common.reflect.TypeToken
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 
+
 import kotlinx.coroutines.launch
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -123,20 +116,12 @@ import org.java_websocket.client.WebSocketClient
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
 import java.io.IOException
-import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.Timer
 import java.util.UUID
 
 
@@ -149,6 +134,7 @@ class Chat : ComponentActivity() {
     var show = mutableStateOf(false)
     var kick = mutableStateOf(false)
     var photo by mutableStateOf("")
+    private  val KEY_MESSAGE_LIST = "messageList"
 
 
     private val googleAuthUiClient by lazy {
@@ -162,6 +148,7 @@ class Chat : ComponentActivity() {
     var lastShownMonth: Int? = null
     var lastShownDayOfMonth: Int? = null
 
+    // Определите ваше состояние messages и его инициализацию
     private val messages = mutableStateOf(mutableListOf<Message>())
 
 
@@ -182,9 +169,16 @@ class Chat : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Получить контекст
+        val context = this
 
-        // Инициализация messages с использованием getAllMessages
-        //messages.value = getAllMessages(this)
+        // Вызвать функцию для загрузки сообщений
+        val loadedMessages = loadMessagesFromMemory(context)
+
+        // Преобразовать List в MutableList
+        messages.value = loadedMessages.toMutableList()
+
+        Log.e(" messages.value", "$messages")
 
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful) {
@@ -193,6 +187,8 @@ class Chat : ComponentActivity() {
             val token = task.result
             Log.e("Tag", "Token -> $token")
         }
+
+
 
 
         val name = UID(
@@ -290,6 +286,9 @@ class Chat : ComponentActivity() {
 
     }
 
+    // Функция для загрузки сообщений из памяти и обновления переменной messages
+
+
     private fun restartActivity() {
         recreate()
     }
@@ -335,12 +334,16 @@ class Chat : ComponentActivity() {
         id: String,
         context: Context
     ) {
-
+        val numberOfMessages = messages.value.size
+        Log.d(
+            "numberOfMessages",
+            "$numberOfMessages"
+        )
 
         if (!isConnected) {
             try {
                 val request: Request = Request.Builder()
-                    .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id&lasttime=0")
+                    .url("https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id&lasttime=$numberOfMessages")
                     .build()
 
                 Log.d(
@@ -375,8 +378,14 @@ class Chat : ComponentActivity() {
                                 updatedMessages.addAll(messages.value)
                                 updatedMessages.addAll(newMessages)
 
-                                // Обновить состояние messages новым MutableList
-                                messages.value = updatedMessages
+                                GlobalScope.launch(Dispatchers.Main) {
+                                    // Обновить состояние messages новым MutableList
+                                    messages.value = updatedMessages
+
+                                    // Сохранить обновленные сообщения в память устройства
+                                    saveMessages(context, updatedMessages)
+                                }
+
                             } else {
                                 // Если пришло отдельное сообщение
                                 val json = JSONObject(text)
@@ -389,12 +398,16 @@ class Chat : ComponentActivity() {
                                 )
 
                                 // Создать новый MutableList, добавив в него все старые сообщения и новое
-                                val updatedMessages = mutableListOf<Message>()
-                                updatedMessages.addAll(messages.value)
+                                val updatedMessages: MutableList<Message> = messages.value.toMutableList()
                                 updatedMessages.add(newMessage)
 
-                                // Обновить состояние messages новым MutableList
-                                messages.value = updatedMessages
+                                GlobalScope.launch(Dispatchers.Main) {
+                                    // Обновить состояние messages новым MutableList
+                                    messages.value = updatedMessages
+
+                                    // Сохранить обновленные сообщения в память устройства
+                                    saveMessages(context, updatedMessages)
+                                }
                             }
                         } catch (e: JSONException) {
                             // Если разбор JSON не удался, обработайте ошибку
@@ -445,11 +458,6 @@ class Chat : ComponentActivity() {
 
 
 
-
-
-
-
-
     fun extractImageFromMessage(input: String): String? {
         val pattern = "<image>(.+?)</image>".toRegex()
         val matchResult = pattern.find(input)
@@ -458,18 +466,18 @@ class Chat : ComponentActivity() {
 
 
 
-
-
-
-
-   /* @Composable
-    fun MessageList(messages: List<Message>) {
-        LazyColumn {
-            items(messages) { message ->
-                Text(message.message)
-            }
+    fun removeImageLinkFromMessage(message: String): String {
+        val imageUrl = extractImageFromMessage(message)
+        return if (imageUrl != null) {
+            // Если ссылка на изображение найдена, заменяем ее на пустую строку
+            message.replace("<image>$imageUrl</image>", "")
+        } else {
+            // Если ссылка на изображение не найдена, возвращаем исходное сообщение
+            message
         }
-    }*/
+    }
+
+
 
       @Composable
        fun MessageList(messages: List<Message>?, username: String, url: String, id: String) {
@@ -483,16 +491,14 @@ class Chat : ComponentActivity() {
                    val coroutineScope = rememberCoroutineScope()
                    val hasScrolled = rememberSaveable { mutableStateOf(false) }
 
-                   var currentDay: LocalDate? = null
-                   // Объявите форматтер для времени
-                   val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
-                   if (!hasScrolled.value || messages.last().img == url) {
-                       LaunchedEffect(messages) {
+                   LaunchedEffect(hasScrolled.value, messages) {
+                       if (!hasScrolled.value || messages.last().img == url) {
+                           val lastVisibleItemIndex = messages.size - 1
                            if (lastVisibleItemIndex >= 0) {
                                coroutineScope.launch {
                                    // listState.animateScrollToItem(lastVisibleItemIndex)
-                                   listState.scrollToItem(messages.size - 1)
+                                   listState.scrollToItem(lastVisibleItemIndex)
                                    hasScrolled.value = true
                                }
                            }
@@ -500,17 +506,7 @@ class Chat : ComponentActivity() {
                    }
 
 
-                   LaunchedEffect(messages) {
-                       if (lastVisibleItemIndex >= 0) {
-                           coroutineScope.launch {
-                               // listState.animateScrollToItem(lastVisibleItemIndex)
-                               listState.scrollToItem(messages.size - 1)
-                               hasScrolled.value = true
-                           }
-                       }
-                   }
-
-
+                   var lastShownDate: LocalDate? by remember { mutableStateOf(null) }
 
 
                    LazyColumn(
@@ -522,28 +518,27 @@ class Chat : ComponentActivity() {
                        reverseLayout = false,
                        state = listState
                    ) {
-
-
                        items(messages) { message ->
                            val isMyMessage = message.uid == id
-
-
-                           // Использование функций в вашем коде
-
-
-
-                       // Парсинг строки времени в LocalDateTime
-
-
-                           // Проверка, совпадает ли месяц и день с момента последнего сообщения
-                           val showDayMarker = lastShownMonth == null || lastShownDayOfMonth == null
+                           val paint = extractImageFromMessage(message.message)
 
 
 
 
                            val messageDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(message.time), ZoneId.systemDefault())
 
-                           // ... (ваш существующий код)
+
+                           // Проверка, совпадает ли месяц и день с момента последнего сообщения
+                           val showDayMarker = lastShownMonth == null || lastShownDayOfMonth == null ||
+                                   messageDateTime.monthValue != lastShownMonth ||
+                                   messageDateTime.dayOfMonth != lastShownDayOfMonth
+                           // Проверка, совпадает ли месяц и день с момента последнего сообщения
+
+                           // Обновление текущего месяца и дня
+                           lastShownMonth = messageDateTime.monthValue
+                           lastShownDayOfMonth = messageDateTime.dayOfMonth
+
+
 
                            if (showDayMarker) {
                                // Отображение маркера дня
@@ -562,12 +557,14 @@ class Chat : ComponentActivity() {
                            }
 
 
+
                            Box(
                                modifier = Modifier
                                    .fillMaxWidth()
                                    .padding(8.dp),
-                               contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
-                           ) {
+                              contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
+                               )
+                           {
                                Row(
                                    modifier = Modifier
                                        .fillMaxWidth()
@@ -578,7 +575,7 @@ class Chat : ComponentActivity() {
                                        .size(40.dp)
                                        .clip(RoundedCornerShape(40.dp))
                                    val imageUrl = message.img
-                                   val paint = extractImageFromMessage(message.message)
+
 
 
 
@@ -594,6 +591,7 @@ class Chat : ComponentActivity() {
                                            Spacer(modifier = Modifier.width(2.dp))
                                        }
                                    }
+
                                    Card(
                                        modifier = Modifier
                                            .fillMaxWidth(0.8f)
@@ -606,9 +604,12 @@ class Chat : ComponentActivity() {
                                    ) {
                                        Column(modifier = Modifier
                                            .padding(8.dp)
-                                           .background ( if (isMyMessage) Color(0xE650B973) else Color(0xFFFFFFFF))){
+                                         //  .background ( if (isMyMessage) Color(0xE650B973) else Color(0xFFFFFFFF))
+                                       )
+                                       {
+
                                            Text(
-                                               text = message.message,
+                                               text = removeImageLinkFromMessage(message.message),
                                                textAlign = TextAlign.Start,
                                                fontSize = 18.sp,
                                                fontWeight = FontWeight.SemiBold,
@@ -617,45 +618,15 @@ class Chat : ComponentActivity() {
                                            )
 
 
-                                           if (paint != null) {
-                                               Spacer(modifier = Modifier.height(20.dp))
-                                               if (paint.isNotEmpty()) {
-                                                   Box(
-                                                       modifier = Modifier
-                                                           .fillMaxWidth()
-                                                           .height(400.dp)
-                                                           .background ( if (isMyMessage) Color(
-                                                               0xE650B973
-                                                           ) else Color(0xFFFFFFFF))
-                                                           .zIndex(1f), // Устанавливает z-индекс, чтобы поместиться наверху других
-                                                   ) {
-                                                       Image(
-                                                           painter = if (paint.isNotEmpty()) {
-                                                               // Load image from URL
-                                                               rememberImagePainter(data = paint)
-                                                           } else {
-                                                               // Load a default image when URL is empty
-                                                               painterResource(id = R.drawable.android) // Replace with your default image resource
-                                                           },
-                                                           contentDescription = null,
-                                                           modifier = Modifier
-                                                               .fillMaxSize()
-                                                               .clip(RoundedCornerShape(20.dp))
-                                                               .clickable {
-                                                                   openLargeImage("$paint")
-                                                               },
-                                                       )
-                                                   }
 
-                                               }
-                                           }
 
                                            Box(
                                                modifier = Modifier
                                                    .fillMaxWidth()
                                                    .wrapContentHeight(),
                                                contentAlignment = Alignment.CenterEnd
-                                           ) {
+                                           )
+                                           {
                                                val localDateTime = messageDateTime.atZone(ZoneId.systemDefault()).toLocalDateTime()
 
                                                Text(
@@ -670,10 +641,43 @@ class Chat : ComponentActivity() {
                                    }
                                }
                            }
+
+                           if (paint != null)
+
+                           {
+
+                                       if (paint.isNotEmpty()) {
+                                           Box(
+                                               modifier = Modifier
+                                                   .fillMaxWidth()
+                                                   .padding(start = 40.dp, end = 40.dp)
+                                                   // .padding(start = 50.dp, end = 50.dp)
+                                                   .height(300.dp),
+                                                   //.zIndex(1f), // Устанавливает z-индекс, чтобы поместиться наверху других
+                                               contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
+                                           ) {
+                                               Image(
+                                                   painter = if (paint.isNotEmpty()) {
+                                                       // Load image from URL
+                                                       rememberImagePainter(data = paint)
+                                                   } else {
+                                                       // Load a default image when URL is empty
+                                                       painterResource(id = R.drawable.android) // Replace with your default image resource
+                                                   },
+                                                   contentDescription = null,
+                                                   modifier = Modifier
+                                                       .fillMaxSize()
+                                                       .clip(RoundedCornerShape(20.dp))
+                                                       .clickable {
+                                                           openLargeImage("$paint")
+                                                       },
+                                        )
+                                }
+                              }
+                           }
                        }
                    }
                }
-
     }
   }
     fun openLargeImage( photo: String) {

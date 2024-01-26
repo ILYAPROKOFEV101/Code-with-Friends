@@ -7,6 +7,9 @@ import android.util.Log
 import androidx.core.content.edit
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -23,6 +26,9 @@ object PreferenceHelper {
     private const val KEY_STRING_3 = "key_string_3"
     private const val KEY_STRING_4 = "key_string_4"
     private const val KEY_MESSAGE_LIST = "messageList"
+    // Константы для работы с SharedPreferences
+    private const val SHARED_PREFERENCES_NAME = "YourSharedPreferencesName"
+
 
     private fun getSharedPreferences(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFERENCE_NAME, Context.MODE_PRIVATE)
@@ -119,7 +125,7 @@ object PreferenceHelper {
 
 
 
-    private fun getMessageList(context: Context): List<Message> {
+    fun getMessageList(context: Context): List<Message> {
         val jsonString = getSharedPreferences(context).getString(KEY_MESSAGE_LIST, "")
         return if (jsonString.isNullOrBlank()) {
             emptyList()
@@ -135,48 +141,32 @@ object PreferenceHelper {
     }
 
 
-    fun getAllMessages(context: Context): List<com.example.codewithfriends.chats.Message> {
-        val jsonString = getSharedPreferences(context).getString(KEY_MESSAGE_LIST, null)
-        return Gson().fromJson(jsonString, object : TypeToken<List<com.example.codewithfriends.chats.Message>>() {}.type)
-            ?: emptyList()
-    }
 
 
-    fun extractTimeFromString(input: String): String? {
-        val pattern = "<time>([^<]+)</time>".toRegex()
-        val matchResult = pattern.find(input)
-        return matchResult?.groups?.get(1)?.value
-    }
 
 
-   /* fun findLatestTime(messages: List<com.example.codewithfriends.chats.Message>): Long? {
-        var latestTime: Long? = null
 
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
-        for (message in messages) {
-            val time = extractTimeFromString(message.content)
-            if (time != null) {
-                val date = dateFormat.parse(time)
-                val timeMillis = date?.time
-                if (timeMillis != null && (latestTime == null || timeMillis > latestTime)) {
-                    latestTime = timeMillis
-                }
-            }
+    // Ваша функция для загрузки сообщений из памяти
+    fun loadMessagesFromMemory(context: Context): List<com.example.codewithfriends.chats.Message> {
+        val jsonString = getSharedPreferences(context).getString(KEY_MESSAGE_LIST, "")
+        Log.d("Debug", "Loaded JSON: $jsonString") // Добавьте эту строку для отладки
+        return if (jsonString.isNullOrBlank()) {
+            emptyList()
+        } else {
+            val type = object : TypeToken<List<com.example.codewithfriends.chats.Message>>() {}.type
+            val loadedMessages = Gson().fromJson<List<com.example.codewithfriends.chats.Message>>(jsonString, type)
+            Log.d("Debug", "Loaded messages: $loadedMessages") // Добавьте эту строку для отладки
+            loadedMessages
         }
-
-        // Вывести лог с самым поздним временем
-        Log.d("LatestTime", "Latest time: $latestTime")
-
-        return latestTime
-    }*/
+    }
 
 
 
 
 
     fun saveMessages(context: Context, messages: List<com.example.codewithfriends.chats.Message>) {
-        val currentMessagesSet = getMessageList(context)
+        val currentMessagesSet: MutableSet<com.example.codewithfriends.chats.Message> = getMessageList(context)
             .mapNotNull { it as? com.example.codewithfriends.chats.Message }
             .toMutableSet()
 
@@ -197,8 +187,7 @@ object PreferenceHelper {
 
 
 
-
-
+    // Функция для получения сообщений из памяти
 
 
 
