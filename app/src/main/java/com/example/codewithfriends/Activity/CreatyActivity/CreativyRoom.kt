@@ -128,7 +128,7 @@ class CreativyRoom : ComponentActivity() {
 
     private var storedRoomId: String? = null // Объявляем на уровне класса
 
-    private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    private var pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { selectedImageUri ->
             // Здесь вы можете загрузить изображение в Firebase Storage
             uploadImageToFirebaseStorage(selectedImageUri)
@@ -684,7 +684,7 @@ class CreativyRoom : ComponentActivity() {
         // Path to store the image: "images/{roomid}/{imageName}"
         val imageRef = storageRef.child("images/$uniqueId/$imageName")
 
-        val uploadTask = imageRef.putFile(selectedImageUri)
+        var uploadTask = imageRef.putFile(selectedImageUri)
 
         // Add a listener to handle successful or unsuccessful upload
         uploadTask.addOnCompleteListener { task ->

@@ -9,6 +9,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -63,6 +64,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -71,6 +76,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -151,20 +157,28 @@ class Chat : ComponentActivity() {
     // Определите ваше состояние messages и его инициализацию
     private val messages = mutableStateOf(mutableListOf<Message>())
 
+    private var selectedImageUri: Uri? by mutableStateOf(null)
+    private var pickImage =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let { selectedImageUri = it }
+        }
 
 
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
     private var isConnected by mutableStateOf(false)
+    private var proces by mutableStateOf(false)
+
     private var storedRoomId: String? = null // Объявляем на уровне класса
 
+/*
     private val pickImage =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let { selectedImageUri ->
                 // Здесь вы можете загрузить изображение в Firebase Storage
                 uploadImageToFirebaseStorage(selectedImageUri, storedRoomId!!)
             }
-        }
+        }*/
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -262,11 +276,8 @@ class Chat : ComponentActivity() {
                     }
 
                     Spacer(modifier = Modifier.height(100.dp))
-                    if (storedRoomId != null) {
-
+                    if (storedRoomId != null && show.value) {
                         MessageList(messages.value, "$name", "$img", "$id")
-// Где-то еще в вашем коде, где создается ваш пользовательский интерфейс
-                            // MessageList(messages.value)
 
                     }
 
@@ -274,10 +285,18 @@ class Chat : ComponentActivity() {
                     Spacer(modifier = Modifier.height(20.dp))
 
                     if (storedRoomId != null) {
-                        Creator { message ->
-                            // Здесь вы можете добавить логику для отправки сообщения через WebSocket
-                            sendMessage(message)
-                        }
+                        Creator(
+                            onSendMessage = { message ->
+                                // Здесь вы можете добавить логику для отправки сообщения через WebSocket
+                                sendMessage(message)
+
+                                // Используйте selectedImageUri и pickImage по вашему усмотрению
+                            },
+                            selectedImageUri = selectedImageUri,
+                            pickImage = pickImage
+                        )
+
+
                     }
                 }
             }
@@ -575,10 +594,7 @@ class Chat : ComponentActivity() {
                                        .size(40.dp)
                                        .clip(RoundedCornerShape(40.dp))
                                    val imageUrl = message.img
-
-
-
-
+                                   
                                    if (!(isMyMessage)) {
                                        if (imageUrl != null) {
                                            val painter: Painter =
@@ -812,46 +828,89 @@ class Chat : ComponentActivity() {
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
     @Composable
     fun Creator(
-        onSendMessage: (String) -> Unit // Функция для отправки сообщения
+        onSendMessage: (String) -> Unit ,
+        selectedImageUri: Uri?,
+        pickImage: ActivityResultLauncher<String>
     ) {
         val keyboardController = LocalSoftwareKeyboardController.current
         var textSize by remember { mutableStateOf(20.sp) }
         var text by remember { mutableStateOf("") }
         var submittedText by remember { mutableStateOf("") }
         var showimg by remember { mutableStateOf(false) }
+        var main by remember { mutableStateOf(true) }
+
 
         Column(
             modifier = Modifier
                 .fillMaxSize(), // Занимает всю доступную вертикальную высоту
             verticalArrangement = Arrangement.Bottom
         ) {
-            if(photo != "" && showimg == true) {
+            if(showimg == true) {
                 Box(modifier = Modifier
                     .width(400.dp)
                     .height(400.dp)
                     .zIndex(1f), // Устанавливает z-индекс, чтобы поместиться наверху других элементов
                     contentAlignment = Alignment.BottomCenter // Выравнивание по нижнему кра
                 ) {
-                    Image(
-                        painter = if (photo.isNotEmpty()) {
-                            // Load image from URL
-                            rememberImagePainter(data = photo)
-                        } else {
-                            // Load a default image when URL is empty
-                            painterResource(id = R.drawable.android) // Replace with your default image resource
-                        },
-                        contentDescription = null,
+                    if (selectedImageUri != null) {
+                        Image(
+                            painter = rememberImagePainter(selectedImageUri),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight()
+                                .padding(bottom = 15.dp, top = 15.dp, start = 70.dp, end = 70.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .clickable {},
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 100.dp , end = 100.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .height(50.dp)
+                    .alpha(0.9f) // Пример половинной прозрачности
+                    .background(Color(0xFF4795CA)),
+                    horizontalArrangement = Arrangement.Center,
+                        //verticalArrangement = Arrangement.Center
+                ){
+                    IconButton(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                            .padding(bottom = 15.dp, top = 15.dp, start = 70.dp, end = 70.dp)
-
-                            .clip(RoundedCornerShape(20.dp))
-                            .clickable {},
-                        contentScale = ContentScale.Crop
+                            .size(100.dp), // Выравнивание по центру вертикально
+                        onClick = {
+                            showimg = false
+                            photo = ""
+                        }
+                    ){
+                        Icon(
+                        imageVector = Icons.Default.Cancel,
+                        contentDescription = "Cancel"
                     )
+                    }
+                    IconButton(
+                        modifier = Modifier
+                            .size(100.dp), // Выравнивание по центру вертикально
+                        onClick = {
+                            //showimg = false
+                            proces = true
+                            selectedImageUri?.let {
+                                uploadImageToFirebaseStorage(storedRoomId!!)
+                            }
+                        }
+                    ){
+                        Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Check",
+                            tint = Color.Black
+                    )
+
+                    }
                 }
             }
+
+
 
             Spacer(modifier = Modifier.height(20.dp))
             Row(
@@ -867,16 +926,21 @@ class Chat : ComponentActivity() {
                         .weight(0.1f)
                         .align(Alignment.CenterVertically), // Выравнивание по центру вертикально
                     onClick = {
-                        showimg = !showimg
+
+                            showimg = !showimg
+
+
                         pickImage.launch("image/*")
-                        photo = ""
+
                     }
                 ) {
                     if (showimg == false) {
                         Icon(
                             imageVector = Icons.Default.AddPhotoAlternate,
                             contentDescription = "Send"
+
                         )
+                        showimg = false
                     }
                 }
                 TextField(
@@ -899,38 +963,58 @@ class Chat : ComponentActivity() {
                     ),
                     maxLines = 10 // Устанавливаем максимальное количество строк, чтобы TextField мог увеличиваться по высоте
                 )
+
                 IconButton(
                     modifier = Modifier
                         .weight(0.1f)
                         .align(Alignment.CenterVertically), // Выравнивание по центру вертикально
                     onClick = {
+
                         if (show.value) {
+
                             submittedText = text
-                            text = ""
-                            if(submittedText != "" || photo != ""){
-                                onSendMessage(
-                                    if (photo != "") {
-                                        "$submittedText <image>$photo</image>"
-                                    } else {
-                                        "$submittedText"
-                                    }
-                                ) // Вызываем функцию для отправки сообщения
+
+                            if(proces == false) { // глобальная для тогочтобы отслеживать фото щас грузится
+                                 text = "" //обнуление текста
+                                if (submittedText != "" || photo != "") {
+                                    onSendMessage(
+                                        if (photo != "") {
+                                            "$submittedText photo: <image>$photo</image>" // Вызываем функцию для отправки сообщения
+                                        } else {
+                                            "$submittedText" // Вызываем функцию для отправки сообщения
+                                        }
+                                    )
+                                    // Обнулить selectedImageUri после успешной загрузки
+
+                                }
+                                 showimg = false
+                            } else {
+                                showToast("идёт загрузка фота.")
                             }
 
                         }
-                        photo = ""
+
+
+
+
+
+
+
                     }
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.send),
                         contentDescription = "Send",
-                      ///  tint = colorScheme.tertiary  // Set the tint color to colorScheme.background
-
                     )
                 }
             }
         }
     }
+
+
+
+
+
 
 
 
@@ -954,11 +1038,6 @@ class Chat : ComponentActivity() {
                       }
 
 
-
-
-
-
-
                 } else {
                         Button(
                             colors = ButtonDefaults.buttonColors(Color(0xFF1472FF)),
@@ -975,14 +1054,20 @@ class Chat : ComponentActivity() {
                             Text(text = stringResource(id = R.string.room), fontSize = 24.sp)
                         }
 
-
-
-                    // Другие элементы, которые вы хотите отобразить вместо кнопки,
-                    // когда showButton равно false
                 }
             }
 
-    private fun uploadImageToFirebaseStorage(selectedImageUri: Uri, roomid: String) {
+    private fun uploadImageToFirebaseStorage(roomid: String) {
+
+
+
+        if (selectedImageUri == null) {
+            // Обработка случая, когда изображение не выбрано
+            showToast("Выберите изображение перед загрузкой.")
+            return
+        }
+
+        proces = true
 
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
@@ -997,28 +1082,32 @@ class Chat : ComponentActivity() {
             .setContentType("image/png") // Указываем тип контента как PNG
             .build()
 
-        val uploadTask = imageRef.putFile(selectedImageUri, metadata)
+        val uploadTask = imageRef.putFile(selectedImageUri!!, metadata)
 
         // Add a listener to handle successful or unsuccessful upload
         uploadTask.addOnCompleteListener { task ->
+
             if (task.isSuccessful) {
                 // Get the download URL from the task result
                 imageRef.downloadUrl.addOnSuccessListener { uri ->
                     photo = uri.toString()
                     // Do something with the URL, such as save it to Firestore
-
+                    proces = false
                     // Покажите Toast об успешной загрузке
                     showToast(getString(R.string.addPhoto))
 
+                    // Обнулить selectedImageUri после успешной загрузки
+                    selectedImageUri = null
                 }
             } else {
                 // Handle unsuccessful upload
-
+                proces = false
                 // Покажите Toast об ошибке загрузки
                 showToast(getString(R.string.upload_error_message))
             }
         }
     }
+
 
 
 }

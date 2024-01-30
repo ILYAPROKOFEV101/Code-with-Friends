@@ -139,7 +139,7 @@ class Addtask : ComponentActivity() {
 
     private var storedRoomId: String? = null // Объявляем на уровне класса
 
-    private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    private var pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { selectedImageUri ->
             // Здесь вы можете загрузить изображение в Firebase Storage
             uploadImageToFirebaseStorage(selectedImageUri, storedRoomId!!)
@@ -560,7 +560,7 @@ class Addtask : ComponentActivity() {
             .setContentType("image/png") // Указываем тип контента как PNG
             .build()
 
-        val uploadTask = imageRef.putFile(selectedImageUri, metadata)
+        var uploadTask = imageRef.putFile(selectedImageUri, metadata)
 
         // Add a listener to handle successful or unsuccessful upload
         uploadTask.addOnCompleteListener { task ->
