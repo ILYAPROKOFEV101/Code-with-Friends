@@ -160,4 +160,5 @@ This Privacy Policy comes into effect upon its publication and remains in force 
     <string name="title_activity_view_photo">ViewPhoto</string>
     <string name="title_activity_complaint">ComplaintActivity</string>
     <string name="title_activity_sendban">Sendban</string>
+    <string name="title_activity_caht">Caht_Activity</string>
 </resources>

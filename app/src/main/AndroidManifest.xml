@@ -9,7 +9,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.NOTIFICATION" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
 
@@ -24,6 +26,12 @@
         android:theme="@style/Theme.CodeWithFriends"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <activity
+            android:name=".chattest.Caht_Activity"
+            android:exported="false"
+            android:label="@string/title_activity_caht"
+            android:largeHeap="true"
+            android:theme="@style/NoAnimation" />
         <activity
             android:name=".Complaint.Sendban"
             android:exported="false"
@@ -50,11 +58,6 @@
             android:label="@string/title_activity_team_speak"
             android:theme="@style/NoAnimation" />
         <activity
-            android:name=".chats.ui.theme.TestActivity"
-            android:exported="false"
-            android:label="@string/title_activity_test"
-            android:theme="@style/NoAnimation" />
-        <activity
             android:name=".firebase.Addtask"
             android:exported="false"
             android:label="@string/title_activity_addtask"
@@ -68,8 +71,8 @@
             android:name=".chats.Chat"
             android:exported="false"
             android:label="@string/title_activity_chat"
-            android:theme="@style/NoAnimation"
-            android:largeHeap="true"/>
+            android:largeHeap="true"
+            android:theme="@style/NoAnimation" />
         <activity
             android:name=".findroom.FindRoom"
             android:exported="false"
@@ -104,6 +107,7 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
         <receiver
             android:name=".push.YourBroadcastReceiver"
             android:exported="false">
@@ -111,8 +115,6 @@
                 <action android:name="your_action" />
             </intent-filter>
         </receiver>
-
-
     </application>
 
 </manifest>
