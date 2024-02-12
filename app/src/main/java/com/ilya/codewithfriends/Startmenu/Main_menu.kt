@@ -91,10 +91,15 @@ class Main_menu : ComponentActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val name = UID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        val img = IMG(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
         val id = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )
-
         val loadingComponent = LoadingComponent()
         loadingComponent.userexsist("$id", this)
 
@@ -103,11 +108,13 @@ class Main_menu : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
 
+
+
         setContent {
             val viewModel = viewModel<MainViewModel>()
             val isLoading by viewModel.isLoading.collectAsState()
             val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
-
+            Adduser("$name", "$id", "$img")
             Column(
                 modifier = Modifier
                     .fillMaxSize()

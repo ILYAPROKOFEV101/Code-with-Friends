@@ -40,6 +40,7 @@ interface Addids{
     fun Sanduser(@Body request: ids): Call<Void>
 }
 
+
 interface GetmyAPI {
     @GET("/getimg/{roomId}")
     fun GETIMG(@Path("roomId") roomId: String): Call<List<Room2>>

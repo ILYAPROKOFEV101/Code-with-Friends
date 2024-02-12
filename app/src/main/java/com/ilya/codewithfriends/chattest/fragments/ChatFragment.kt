@@ -1,4 +1,4 @@
-package com.ilya.codewithfriends.chattest
+package com.ilya.codewithfriends.chattest.fragments
 
 
 import android.content.Context
@@ -82,7 +82,6 @@ import com.ilya.codewithfriends.presentation.profile.ID
 import com.ilya.codewithfriends.presentation.profile.IMG
 import com.ilya.codewithfriends.presentation.profile.UID
 import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
-import com.ilya.reaction.logik.PreferenceHelper
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -103,6 +102,7 @@ import java.util.UUID
 class ChatFragment : Fragment() {
 
     private val client = OkHttpClient()
+    // Глобальная переменная для хранения WebSocket
     private var webSocket: WebSocket? = null
     private var isConnected = false
     // Определите ваше состояние messages и его инициализацию
@@ -203,7 +203,8 @@ class ChatFragment : Fragment() {
                         val creator = Creator(
                             onSendMessage = { message ->
                                 // Здесь вы можете добавить логику для отправки сообщения через WebSocket
-                                sendMessage(message,storedRoomId, "$name","$img" , "$id" )
+
+                                sendMessage(message )
 
                                 // Используйте selectedImageUri и pickImage по вашему усмотрению
                             },
@@ -218,7 +219,7 @@ class ChatFragment : Fragment() {
         }
     }
 
-    private fun sendMessage(message: String, socketValue: String, nameValue: String,imgValue: String,idValue: String ) {
+   /* private fun sendMessage(message: String, socketValue: String, nameValue: String,imgValue: String,idValue: String ) {
 
         val webSocketClient = com.ilya.codewithfriends.chats.WebSocketClient(
             "$socketValue",
@@ -232,7 +233,19 @@ class ChatFragment : Fragment() {
 
 
 
+    }*/
+
+    // Функция для отправки сообщения через WebSocket
+    fun sendMessage(message: String) {
+        // Проверяем, что WebSocket подключен
+        if (webSocket != null) {
+            webSocket?.send(message)
+        } else {
+            // WebSocket не подключен, выполните необходимые действия
+        }
     }
+
+
 
 
 
@@ -249,7 +262,8 @@ class ChatFragment : Fragment() {
                 .url("https://getpost-ilya1.up.railway.app/chat/h5nba2s9RS?username=Ilya Prokofev&avatarUrl=https://lh3.googleusercontent.com/a/ACg8ocK46D7NZhtOalEonz0ZoAlqNL4tPOmBxWw21UVpp49x=s96-c&uid=2KZ14uxSeZMrcD630Q1A9vEMZ9C3&lasttime=0")
                 .build()
 
-            client.newWebSocket(request, object : WebSocketListener() {
+            // Установка соединения с WebSocket
+            webSocket = client.newWebSocket(request, object : WebSocketListener() {
                 override fun onMessage(webSocket: WebSocket, text: String) {
                     try {
                         if (text.startsWith("[")) {
@@ -548,6 +562,9 @@ class ChatFragment : Fragment() {
                     }
                 }
 
+                LaunchedEffect(messages.size) {
+                    listState.animateScrollToItem(messages.size - 1)
+                }
 
                 var lastShownDate: LocalDate? by remember { mutableStateOf(null) }
 

@@ -1,7 +1,6 @@
 package com.ilya.codewithfriends.chattest
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +14,8 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentManager
 import com.google.android.gms.auth.api.identity.Identity
+import com.ilya.codewithfriends.chattest.fragments.ChatFragment
+import com.ilya.codewithfriends.chattest.fragments.Chatmenu
 import com.ilya.codewithfriends.chattest.ui.theme.CodeWithFriendsTheme
 import com.ilya.codewithfriends.presentation.profile.ID
 import com.ilya.codewithfriends.presentation.profile.IMG
@@ -64,8 +65,9 @@ class Caht_Activity : FragmentActivity(), FragmentManagerProvider {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val fragmentManager = remember { supportFragmentManager }
-                    ChatScreen(fragmentManager, "bgbruge")
+                        //    ChatScreen(fragmentManager, "bgbruge")
                         //  Log.d("storedRoomId","$storedRoomId")
+                    ChatmenuContent() // Вызываем ChatmenuContent
                 }
             }
         }
@@ -95,6 +97,27 @@ fun ChatScreen(fragmentManager: FragmentManager, storedRoomId: String?) {
             fragmentTransaction.replace(view.id, chatFragment)
             fragmentTransaction.commit()
 
+        }
+    )
+}
+
+@Composable
+fun ChatmenuContent() {
+    AndroidView(
+        factory = { context ->
+            // Создаем FragmentContainerView
+            FragmentContainerView(context).apply {
+                id = View.generateViewId()
+            }
+        },
+        update = { view ->
+            // Получаем FragmentManager
+            val fragmentManager = (view.context as FragmentActivity).supportFragmentManager
+            // Создаем и добавляем Chatmenu фрагмент
+            val fragmentTransaction = fragmentManager.beginTransaction()
+            val chatmenuFragment = Chatmenu()
+            fragmentTransaction.replace(view.id, chatmenuFragment)
+            fragmentTransaction.commit()
         }
     )
 }
