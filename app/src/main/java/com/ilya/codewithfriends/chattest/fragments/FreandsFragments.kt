@@ -2,6 +2,7 @@ package com.ilya.codewithfriends.chattest.fragments
 
 
 
+import Find_frends
 import GetUserByNameService
 import addsoket
 import android.content.Context
@@ -128,14 +129,14 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 
-class Chatmenu : Fragment() {
+class FreandsFragments : Fragment() {
 
 
     var text by mutableStateOf("")
     var roomid by mutableStateOf("")
     var trans by mutableStateOf(false)
 
-    private var user = mutableStateOf(emptyList<newUserData>())
+    private var user = mutableStateOf(emptyList<MyFrends>())
 
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -149,7 +150,18 @@ class Chatmenu : Fragment() {
         super.onCreate(savedInstanceState)
 
 
+        val id = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
 
+        Find_frends("$id") { userDataList ->
+            // Преобразование списка в MutableList
+            user.value = userDataList.toMutableList()
+
+            Log.d("Usernameshow", "Username: ${user.value}")
+
+
+        }
 
 
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
@@ -160,16 +172,7 @@ class Chatmenu : Fragment() {
             Log.e("Tag", "Token -> $token")
         }
 
-        val name = UID(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
-        val img = IMG(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
-        val id = ID(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
-        val storedRoomId = arguments?.getString("STORED_ROOM_ID_KEY")
+
 
 
     }
@@ -201,15 +204,13 @@ class Chatmenu : Fragment() {
                     ) {
                         if(trans == false) {
                             Spacer(modifier = Modifier.height(20.dp))
-                            finduser()
-                            Spacer(modifier = Modifier.height(20.dp))
                             if (user.value != null) {
                                 ShowUser(user.value, "$id")
                             }
                         }
-                        /*else{
+                        else{
                             open()
-                        }*/
+                        }
 
                     }
                 }
@@ -219,10 +220,6 @@ class Chatmenu : Fragment() {
 
 
 
-    private fun showToast(message: String, context: Context) {
-        // Вывести Toast с заданным сообщением
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-    }
 
 
     fun generateUniqueId(): String {
@@ -237,7 +234,7 @@ class Chatmenu : Fragment() {
     }
 
     @Composable
-    fun ShowUser(user: List<newUserData>, myid: String) {
+    fun ShowUser(user: List<MyFrends>, myid: String) {
 
         LazyColumn(
             modifier = Modifier
@@ -270,7 +267,7 @@ class Chatmenu : Fragment() {
                             Image(
                                 painter = if (!user.username.isNullOrEmpty()) {
                                     // Load image from URL
-                                    rememberImagePainter(data = user.imageUrl)
+                                    rememberImagePainter(data = user.image_url)
                                 } else {
                                     // Load a default image when URL is empty
                                     painterResource(id = R.drawable.android) // Replace with your default image resource
@@ -296,22 +293,12 @@ class Chatmenu : Fragment() {
                                     .align(Alignment.CenterEnd)
                                     .background(Color.White),
                                 onClick = {
-
-                                    if(clicked == false){
-                                        addsoket("${user.userId}", uniqueId , "$myid")
-                                    } else  {
-                                      // roomid = uniqueId
+                                        roomid = user.sokets
                                         trans = true
-                                    }
-                                    clicked = true // Устанавливаем флаг нажатия в true
                                 }
                             ) {
                                 Icon(
-                                    painter = if (clicked) {
-                                        painterResource(id = R.drawable.forum) // Показываем иконку "forum"
-                                    } else {
-                                        painterResource(id = R.drawable.person_add) // Показываем иконку "person_add"
-                                    },
+                                    painter = painterResource(id = R.drawable.forum), // Показываем иконку "forum"
                                     contentDescription = "Cancel",
                                     tint = Color.Blue
                                 )
@@ -320,97 +307,14 @@ class Chatmenu : Fragment() {
 
                     }
                 }
-                Log.d("Usernameshow", "Username: ${user.username}, User ID: ${user.userId}, Image URL: ${user.imageUrl}")
+                Log.d("Usernameshow", "Username: ${user.username}, User ID: ${user.user_id}, Image URL: ${user.image_url}")
                 Spacer(modifier = Modifier.height(10.dp))
             }
         }
     }
 
 
-    @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
-    @Composable
-    fun finduser() {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(30.dp))
-                .background(Color.White)
-                .height(80.dp)
-                .border(2.dp, Color.Blue, RoundedCornerShape(30.dp))
 
-        )
-        {
-            val keyboardControllers = LocalSoftwareKeyboardController.current
-            var showtext by remember {
-                mutableStateOf(false)
-            }
-
-            TextField(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .weight(0.8f),
-                value = text, // Текущее значение текста в поле
-                onValueChange = {
-                    text = it
-                }, // Обработчик изменения текста, обновляющий переменную "text"
-                textStyle = TextStyle(fontSize = 24.sp),
-                // textStyle = TextStyle.Default, // Стиль текста, используемый в поле ввода (используется стандартный стиль)
-
-                colors = TextFieldDefaults.textFieldColors(
-                    focusedIndicatorColor = Color.Transparent, // Цвет индикатора при фокусе на поле (прозрачный - отключает индикатор)
-                    unfocusedIndicatorColor = Color.Transparent, // Цвет индикатора при потере фокуса на поле (прозрачный - отключает индикатор)
-                    disabledIndicatorColor = Color.Transparent, // Цвет индикатора, когда поле неактивно (прозрачный - отключает индикатор)
-                    containerColor = Color.White
-                ),
-
-
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Done, // Действие на кнопке "Готово" на клавиатуре (закрытие клавиатуры)
-                    keyboardType = KeyboardType.Text // Тип клавиатуры (обычный текст)
-                ),
-
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        keyboardControllers?.hide() // Обработчик действия при нажатии на кнопку "Готово" на клавиатуре (скрыть клавиатуру)
-                        if (text != "") {
-                            showtext = !showtext
-                        }
-                    }
-                ),
-            )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(80.dp)
-
-            ) {
-                IconButton(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .align(Alignment.CenterEnd)
-                        .background(Color.White),
-                    onClick = {
-                        getUserByName("$text") { userDataList ->
-                            // Преобразование списка в MutableList
-                            user.value = userDataList.toMutableList()
-
-                            Log.d("Usernameshow", "Username: ${user.value}")
-
-
-                        }
-                    }
-                )
-                {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Cancel",
-                        tint = Color.Black
-                    )
-                }
-            }
-        }
-    }
 
 
 

@@ -16,6 +16,7 @@ import androidx.fragment.app.FragmentManager
 import com.google.android.gms.auth.api.identity.Identity
 import com.ilya.codewithfriends.chattest.fragments.ChatFragment
 import com.ilya.codewithfriends.chattest.fragments.Chatmenu
+import com.ilya.codewithfriends.chattest.fragments.FreandsFragments
 import com.ilya.codewithfriends.chattest.ui.theme.CodeWithFriendsTheme
 import com.ilya.codewithfriends.presentation.profile.ID
 import com.ilya.codewithfriends.presentation.profile.IMG
@@ -67,7 +68,8 @@ class Caht_Activity : FragmentActivity(), FragmentManagerProvider {
                     val fragmentManager = remember { supportFragmentManager }
                         //    ChatScreen(fragmentManager, "bgbruge")
                         //  Log.d("storedRoomId","$storedRoomId")
-                    ChatmenuContent() // Вызываем ChatmenuContent
+                   // ChatmenuContent() // Вызываем ChatmenuContent
+                    Freands()
                 }
             }
         }
@@ -79,7 +81,7 @@ class Caht_Activity : FragmentActivity(), FragmentManagerProvider {
 }
 
 @Composable
-fun ChatScreen(fragmentManager: FragmentManager, storedRoomId: String?) {
+fun ChatScreen(storedRoomId: String?) {
     AndroidView(
         factory = { context ->
             FragmentContainerView(context).apply {
@@ -87,6 +89,8 @@ fun ChatScreen(fragmentManager: FragmentManager, storedRoomId: String?) {
             }
         },
         update = { view ->
+
+            val fragmentManager = (view.context as FragmentActivity).supportFragmentManager
             val fragmentTransaction = fragmentManager.beginTransaction()
             val chatFragment = ChatFragment().apply {
                 arguments = Bundle().apply {
@@ -116,6 +120,26 @@ fun ChatmenuContent() {
             // Создаем и добавляем Chatmenu фрагмент
             val fragmentTransaction = fragmentManager.beginTransaction()
             val chatmenuFragment = Chatmenu()
+            fragmentTransaction.replace(view.id, chatmenuFragment)
+            fragmentTransaction.commit()
+        }
+    )
+}
+@Composable
+fun Freands() {
+    AndroidView(
+        factory = { context ->
+            // Создаем FragmentContainerView
+            FragmentContainerView(context).apply {
+                id = View.generateViewId()
+            }
+        },
+        update = { view ->
+            // Получаем FragmentManager
+            val fragmentManager = (view.context as FragmentActivity).supportFragmentManager
+            // Создаем и добавляем Chatmenu фрагмент
+            val fragmentTransaction = fragmentManager.beginTransaction()
+            val chatmenuFragment = FreandsFragments()
             fragmentTransaction.replace(view.id, chatmenuFragment)
             fragmentTransaction.commit()
         }

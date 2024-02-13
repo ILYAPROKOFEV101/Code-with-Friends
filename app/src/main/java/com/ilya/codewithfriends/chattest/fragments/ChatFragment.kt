@@ -132,7 +132,7 @@ class ChatFragment : Fragment() {
 
     private var proces by mutableStateOf(false)
 
-    private var storedRoomId = "h5nba2s9RS" // Объявляем на уровне класса
+    private lateinit var storedRoomId: String
 
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -144,9 +144,6 @@ class ChatFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
-
 
 
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
@@ -166,7 +163,7 @@ class ChatFragment : Fragment() {
         val id = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )
-        val storedRoomId = arguments?.getString("STORED_ROOM_ID_KEY")
+        storedRoomId = arguments?.getString("STORED_ROOM_ID_KEY") ?: ""
 
         // Вызываем setupWebSocket здесь, чтобы гарантировать, что WebSocket подключается до создания представления
         setupWebSocket("$storedRoomId", "$name", "$img", "$id", requireContext())
@@ -179,7 +176,6 @@ class ChatFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val storedRoomId = "h5nba2s9RS"
         //= arguments?.getString("STORED_ROOM_ID_KEY")
         Log.d("storedRoomId","$storedRoomId")
         // Создаем ComposeView и устанавливаем контент
@@ -259,7 +255,7 @@ class ChatFragment : Fragment() {
         val numberOfMessages = messages.value.size
         if (!isConnected) {
             val request: Request = Request.Builder()
-                .url("https://getpost-ilya1.up.railway.app/chat/h5nba2s9RS?username=Ilya Prokofev&avatarUrl=https://lh3.googleusercontent.com/a/ACg8ocK46D7NZhtOalEonz0ZoAlqNL4tPOmBxWw21UVpp49x=s96-c&uid=2KZ14uxSeZMrcD630Q1A9vEMZ9C3&lasttime=0")
+                .url("https://getpost-ilya1.up.railway.app/local_chat/$roomId?username=$username&avatarUrl=$url&uid=$id&lasttime=0")
                 .build()
 
             // Установка соединения с WebSocket
@@ -422,6 +418,8 @@ class ChatFragment : Fragment() {
                             selectedImageUri?.let {
                                 uploadImageToFirebaseStorage(storedRoomId!!)
                             }
+
+
                         }
                     ){
                         Icon(

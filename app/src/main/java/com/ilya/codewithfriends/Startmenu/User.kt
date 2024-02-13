@@ -61,33 +61,4 @@ fun Adduser(username: String, user_id: String, image_url: String) {
         }
     })
 }
-/*
-fun Adduser(username: String, user_id: String, image_url: String) {
-    val retrofit = Retrofit.Builder()
-        .baseUrl("https://getpost-ilya1.up.railway.app/")
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
 
-    val apiService = retrofit.create(Add_User::class.java)
-
-    // Создаем объект с данными пользователя
-    val userData = new_User(username, user_id, image_url)
-
-    // Отправляем POST-запрос на сервер
-    val call = apiService.Sanduser(userData)
-
-    call.enqueue(object : Callback<Void> {
-        override fun onResponse(call: Call<Void>, response: Response<Void>) {
-            if (response.isSuccessful) {
-                // Запрос успешно отправлен
-            } else {
-                // Обработка ошибки
-            }
-        }
-
-        override fun onFailure(call: Call<Void>, t: Throwable) {
-            // Обработка ошибки
-        }
-    })
-}
-*/
