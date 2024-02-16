@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import com.ilya.codewithfriends.MainActivity
 import com.ilya.codewithfriends.Startmenu.Main_menu
 import com.ilya.codewithfriends.chats.Chat
+import com.ilya.codewithfriends.chattest.Caht_Activity
 import com.ilya.codewithfriends.findroom.FindRoom
 import com.ilya.codewithfriends.roomsetting.Roomsetting
 import com.ilya.reaction.logik.PreferenceHelper
@@ -113,7 +114,7 @@ class TestActivity () {
 
                                     1 -> {
                                         if(storedRoomId?.isNullOrEmpty() == false){
-                                            val intent = Intent(context, Chat::class.java)
+                                            val intent = Intent(context, Caht_Activity::class.java)
                                             if (context !is MainActivity) {
                                                 context.startActivity(intent)
                                              //   (context as? Activity)?.finish() // Закрываем текущую активити, если это не MainActivity

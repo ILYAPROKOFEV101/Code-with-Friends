@@ -90,6 +90,7 @@ import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentManager
 
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -182,6 +183,8 @@ class Chatmenu : Fragment() {
         // Создаем ComposeView и устанавливаем контент
         return ComposeView(requireContext()).apply {
             setContent {
+                val navController = rememberNavController()
+
                 val viewModel = viewModel<MainViewModel>()
                 val isLoading by viewModel.isLoading.collectAsState()
                 val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
@@ -233,7 +236,8 @@ class Chatmenu : Fragment() {
     @Composable
     fun open()
     {
-        ChatScreen( "$roomid")
+        val navController = rememberNavController()
+        ChatScreen( navController,"$roomid")
     }
 
     @Composable

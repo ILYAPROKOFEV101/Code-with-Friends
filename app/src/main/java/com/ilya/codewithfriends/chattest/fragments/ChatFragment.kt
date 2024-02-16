@@ -514,14 +514,6 @@ class ChatFragment : Fragment() {
                                 context?.let { showToast("идёт загрузка фота.", it) }
                             }
 
-
-
-
-
-
-
-
-
                     }
                 ) {
                     Icon(
@@ -698,9 +690,7 @@ class ChatFragment : Fragment() {
                         }
 
                         if (paint != null)
-
                         {
-
                             if (paint.isNotEmpty()) {
                                 Box(
                                     modifier = Modifier
