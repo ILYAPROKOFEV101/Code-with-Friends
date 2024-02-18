@@ -3,6 +3,7 @@ package com.ilya.codewithfriends.Startmenu
 import LoadingComponent
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -71,6 +72,8 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.gms.auth.api.identity.Identity
 import com.ilya.codewithfriends.chattest.Caht_Activity
+import com.ilya.reaction.logik.PreferenceHelper.getDataFromSharedPreferences
+import getKeyFromServer
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -107,6 +110,10 @@ class Main_menu : ComponentActivity() {
         getNumberFromServer("$id")
         super.onCreate(savedInstanceState)
 
+        Adduser("$name", "$id", "$img")
+
+
+
 
 
 
@@ -114,7 +121,21 @@ class Main_menu : ComponentActivity() {
             val viewModel = viewModel<MainViewModel>()
             val isLoading by viewModel.isLoading.collectAsState()
             val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
-            Adduser("$name", "$id", "$img")
+
+
+            val retrievedValue = getDataFromSharedPreferences(this, "my_key")
+            Log.d("Resultmydata", "$retrievedValue" )
+
+
+            getKeyFromServer( "$id", this,
+                onSuccess = { key ->
+                    Log.d("Resultmydata", "$key" )
+                },
+                onError = { error ->
+                    Log.e("Errormy", "Failed to get key: ${error.message}")
+                }
+            )
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -367,7 +388,7 @@ class Main_menu : ComponentActivity() {
                     Button( colors = ButtonDefaults.buttonColors(Color.Blue),
                         onClick = {
                             if(selectedNumber <= 0 ){
-                                val intent = Intent(this@Main_menu, Caht_Activity::class.java)//CreativyRoom
+                                val intent = Intent(this@Main_menu, CreativyRoom::class.java)//CreativyRoom
                                 startActivity(intent)
                                // finish()
                             }else {
@@ -391,6 +412,12 @@ class Main_menu : ComponentActivity() {
         // Вывести Toast с заданным сообщением
         Toast.makeText(this@Main_menu, message, Toast.LENGTH_SHORT).show()
     }
+
+
+
+
+
+
 
     fun sendPostRequest(uid : String, img : String, name: String) {
         // Создайте экземпляр Retrofit

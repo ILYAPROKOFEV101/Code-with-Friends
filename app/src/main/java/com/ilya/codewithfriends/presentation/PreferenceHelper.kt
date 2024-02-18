@@ -182,7 +182,19 @@ object PreferenceHelper {
 
 
 
-    // Функция для получения сообщений из памяти
+    // Функция для сохранения строки по уникальному ключу в SharedPreferences
+    fun saveDataToSharedPreferences(context: Context, key: String, value: String) {
+        val sharedPreferences = context.getSharedPreferences("my_preferences", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        editor.putString(key, value)
+        editor.apply()
+    }
+
+    // Функция для получения строки из SharedPreferences по уникальному ключу
+    fun getDataFromSharedPreferences(context: Context, key: String): String? {
+        val sharedPreferences = context.getSharedPreferences("my_preferences", Context.MODE_PRIVATE)
+        return sharedPreferences.getString(key, null)
+    }
 
 
 

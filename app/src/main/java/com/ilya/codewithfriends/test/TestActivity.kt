@@ -113,7 +113,6 @@ class TestActivity () {
                                     }
 
                                     1 -> {
-                                        if(storedRoomId?.isNullOrEmpty() == false){
                                             val intent = Intent(context, Caht_Activity::class.java)
                                             if (context !is MainActivity) {
                                                 context.startActivity(intent)
@@ -121,13 +120,6 @@ class TestActivity () {
                                             } else {
                                                 context.startActivity(intent)
                                             }
-
-                                        }else {
-
-                                            val intent = Intent(context, FindRoom::class.java)
-                                            context.startActivity(intent)
-                                            (context as? Activity)?.finish() // Закрываем текущую активити
-                                        }
                                     }
 
                                     2 -> {

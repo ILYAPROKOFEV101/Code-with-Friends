@@ -328,13 +328,6 @@ class FreandsFragments : Fragment() {
 
 
 
-
-    fun generateUniqueId(): String {
-        val characters = ('a'..'z') + ('A'..'Z') + ('0'..'9')
-        return List(15) { characters.random() }.joinToString("")
-    }
-
-
     @Composable
     fun findfriends(navController: NavController){
         Card(
@@ -368,6 +361,10 @@ class FreandsFragments : Fragment() {
     @Composable
     fun ShowUser(user: List<MyFrends>, Myroom: List<Room>, context: Context, navController: NavController) {
 
+        val id = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+
 
         Box(modifier = Modifier
             .fillMaxWidth()
@@ -388,79 +385,90 @@ class FreandsFragments : Fragment() {
                 Spacer(modifier = Modifier.height(10.dp))
             }
             item {
-                Text(text = "Friends", textAlign = TextAlign.Center, fontSize = 24.sp)
-                Spacer(modifier = Modifier.height(10.dp))
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    ){
+                    Text(text = "Friends", textAlign = TextAlign.Center, fontSize = 24.sp)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    }
+
             }
 
             items(user) { user ->
-                
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                        .padding(end = 5.dp, start = 5.dp)
-                        .clip(RoundedCornerShape(30.dp))
-                        .background(Color.White)
-                    , elevation = 40.dp
-                ) {
-
-                    Row(
-                        Modifier
-                            .fillMaxSize()
+                if (user.user_id != id) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp)
+                            .padding(end = 5.dp, start = 5.dp)
+                            .clip(RoundedCornerShape(30.dp))
+                            .background(Color.White), elevation = 40.dp
                     ) {
-                        Box(
+
+                        Row(
                             Modifier
-                                .fillMaxHeight()
-                                .width(80.dp)
+                                .fillMaxSize()
                         ) {
-                            Image(
-                                painter = if (!user.username.isNullOrEmpty()) {
-                                    // Load image from URL
-                                    rememberImagePainter(data = user.image_url)
-                                } else {
-                                    // Load a default image when URL is empty
-                                    painterResource(id = R.drawable.android) // Replace with your default image resource
-                                },
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(RoundedCornerShape(30.dp))
-
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(5.dp))
-                            Text(text = "${user.username}", fontSize = 24.sp, modifier = Modifier.weight(0.5f),)
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .weight(0.3f)
-                        ) {
-                            IconButton(
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .align(Alignment.CenterEnd)
-                                    .background(Color.White),
-                                onClick = {
-
-                                        //trans = true
-                                    navController.navigate("chat/${user.sokets}")
-                                }
+                            Box(
+                                Modifier
+                                    .fillMaxHeight()
+                                    .width(80.dp)
                             ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.forum), // Показываем иконку "forum"
-                                    contentDescription = "Cancel",
-                                    tint = Color.Blue
+                                Image(
+                                    painter = if (!user.username.isNullOrEmpty()) {
+                                        // Load image from URL
+                                        rememberImagePainter(data = user.image_url)
+                                    } else {
+                                        // Load a default image when URL is empty
+                                        painterResource(id = R.drawable.android) // Replace with your default image resource
+                                    },
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(30.dp))
+
                                 )
                             }
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = user.username,
+                                fontSize = 24.sp,
+                                modifier = Modifier.weight(0.5f),
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .weight(0.3f)
+                            ) {
+                                IconButton(
+                                    modifier = Modifier
+                                        .size(80.dp)
+                                        .align(Alignment.CenterEnd)
+                                        .background(Color.White),
+                                    onClick = {
+
+                                        //trans = true
+                                        navController.navigate("chat/${user.sokets}")
+                                    }
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.forum), // Показываем иконку "forum"
+                                        contentDescription = "Cancel",
+                                        tint = Color.Blue
+                                    )
+                                }
+                            }
+
                         }
-
                     }
+                    Log.d(
+                        "Usernameshow",
+                        "Username: ${user.username}, User ID: ${user.user_id}, Image URL: ${user.image_url}"
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
-                Log.d("Usernameshow", "Username: ${user.username}, User ID: ${user.user_id}, Image URL: ${user.image_url}")
-                Spacer(modifier = Modifier.height(10.dp))
             }
-
         }
     }
     @Composable
@@ -519,7 +527,6 @@ class FreandsFragments : Fragment() {
                             contentScale = ContentScale.Crop
                         )
 
-
                     }
                     Column(
                         modifier = Modifier
@@ -535,14 +542,13 @@ class FreandsFragments : Fragment() {
                                 .clip(CircleShape)
                         ) {
                             Text(
-                                text = "${room.roomName}",
+                                text = room.roomName,
                                 modifier = Modifier.padding(top = 10.dp, start = 10.dp),
                                 style = TextStyle(
                                     fontSize = 24.sp,
                                     color = Color.Black  // Set the text color to colorScheme.background
                                 )
                             )
-
                         }
                         Box(
                             modifier = Modifier
@@ -553,7 +559,7 @@ class FreandsFragments : Fragment() {
                         )
                         {
                             Text(
-                                text = "${room.language}", modifier = Modifier
+                                text = room.language, modifier = Modifier
                                     .padding(start = 10.dp),
                                 style = TextStyle(fontSize = 24.sp),
                                 color = Color.Black
@@ -575,8 +581,6 @@ class FreandsFragments : Fragment() {
                         onClick = {
 
                             navController.navigate("RoomChat/${room.id}")
-
-
                         },
                         colors = ButtonDefaults.buttonColors(creatroom),
                         modifier = Modifier.fillMaxSize(),
@@ -601,7 +605,7 @@ class FreandsFragments : Fragment() {
                 ) {
                     item {
                         Text(
-                            text = "${room.aboutRoom}",
+                            text = room.aboutRoom,
                             modifier = Modifier.padding(start = 10.dp),
                             style = TextStyle(fontSize = 24.sp),
                             color = Color.Black

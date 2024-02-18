@@ -233,12 +233,6 @@ class Chatmenu : Fragment() {
         return List(15) { characters.random() }.joinToString("")
     }
 
-    @Composable
-    fun open()
-    {
-        val navController = rememberNavController()
-        ChatScreen( navController,"$roomid")
-    }
 
     @Composable
     fun ShowUser(user: List<newUserData>, myid: String) {
@@ -252,84 +246,93 @@ class Chatmenu : Fragment() {
             items(user) { user ->
                 var clicked by remember { mutableStateOf(false) }
                 val uniqueId = generateUniqueId()
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                        .padding(end = 5.dp, start = 5.dp)
-                        .clip(RoundedCornerShape(30.dp))
-                        .background(Color.White)
-                    , elevation = 40.dp
-                ) {
+                if (user.userId != myid) {
 
-                    Row(
-                        Modifier
-                            .fillMaxSize()
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp)
+                            .padding(end = 5.dp, start = 5.dp)
+                            .clip(RoundedCornerShape(30.dp))
+                            .background(Color.White), elevation = 40.dp
                     ) {
-                        Box(
+
+                        Row(
                             Modifier
-                                .fillMaxHeight()
-                                .width(80.dp)
+                                .fillMaxSize()
                         ) {
-                            Image(
-                                painter = if (!user.username.isNullOrEmpty()) {
-                                    // Load image from URL
-                                    rememberImagePainter(data = user.imageUrl)
-                                } else {
-                                    // Load a default image when URL is empty
-                                    painterResource(id = R.drawable.android) // Replace with your default image resource
-                                },
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(RoundedCornerShape(30.dp))
-
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(5.dp))
-                            Text(text = "${user.username}", fontSize = 24.sp, modifier = Modifier.weight(0.5f),)
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .weight(0.3f)
-                        ) {
-                            IconButton(
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .align(Alignment.CenterEnd)
-                                    .background(Color.White),
-                                onClick = {
-
-                                    if(clicked == false){
-                                        addsoket("${user.userId}", uniqueId , "$myid")
-                                    } else  {
-                                      // roomid = uniqueId
-                                        trans = true
-                                    }
-                                    clicked = true // Устанавливаем флаг нажатия в true
-                                }
+                            Box(
+                                Modifier
+                                    .fillMaxHeight()
+                                    .width(80.dp)
                             ) {
-                                Icon(
-                                    painter = if (clicked) {
-                                        painterResource(id = R.drawable.forum) // Показываем иконку "forum"
+                                Image(
+                                    painter = if (!user.username.isNullOrEmpty()) {
+                                        // Load image from URL
+                                        rememberImagePainter(data = user.imageUrl)
                                     } else {
-                                        painterResource(id = R.drawable.person_add) // Показываем иконку "person_add"
+                                        // Load a default image when URL is empty
+                                        painterResource(id = R.drawable.android) // Replace with your default image resource
                                     },
-                                    contentDescription = "Cancel",
-                                    tint = Color.Blue
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(30.dp))
+
                                 )
                             }
-                        }
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = user.username,
+                                fontSize = 24.sp,
+                                modifier = Modifier.weight(0.5f),
+                            )
 
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .weight(0.3f)
+                            ) {
+                                IconButton(
+                                    modifier = Modifier
+                                        .size(80.dp)
+                                        .align(Alignment.CenterEnd)
+                                        .background(Color.White),
+                                    onClick = {
+
+                                        if (clicked == false) {
+                                            addsoket("${user.userId}", uniqueId, "$myid")
+                                        } else {
+                                            // roomid = uniqueId
+                                            trans = true
+                                        }
+                                        clicked = true // Устанавливаем флаг нажатия в true
+                                    }
+                                ) {
+                                    Icon(
+                                        painter = if (clicked) {
+                                            painterResource(id = R.drawable.forum) // Показываем иконку "forum"
+                                        } else {
+                                            painterResource(id = R.drawable.person_add) // Показываем иконку "person_add"
+                                        },
+                                        contentDescription = "Cancel",
+                                        tint = Color.Blue
+                                    )
+                                }
+                            }
+
+                        }
                     }
+                    Log.d(
+                        "Usernameshow",
+                        "Username: ${user.username}, User ID: ${user.userId}, Image URL: ${user.imageUrl}"
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
-                Log.d("Usernameshow", "Username: ${user.username}, User ID: ${user.userId}, Image URL: ${user.imageUrl}")
-                Spacer(modifier = Modifier.height(10.dp))
             }
         }
     }
-
 
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
     @Composable
