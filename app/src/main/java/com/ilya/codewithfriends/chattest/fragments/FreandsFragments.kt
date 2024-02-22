@@ -431,7 +431,7 @@ class FreandsFragments : Fragment() {
                             }
                             Spacer(modifier = Modifier.width(5.dp))
                             Text(
-                                text = user.username,
+                                text =  user.username,
                                 fontSize = 24.sp,
                                 modifier = Modifier.weight(0.5f),
                             )

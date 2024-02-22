@@ -1,6 +1,8 @@
 package com.ilya.codewithfriends.Startmenu
 
 import LoadingComponent
+import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -80,6 +82,16 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
+import android.app.NotificationManager
+
+import android.content.Context.NOTIFICATION_SERVICE
+import android.content.pm.PackageManager
+import android.media.AudioManager
+import android.media.audiofx.BassBoost
+import android.os.Build
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+
 
 class Main_menu : ComponentActivity() {
 
@@ -89,6 +101,13 @@ class Main_menu : ComponentActivity() {
             oneTapClient = Identity.getSignInClient(applicationContext)
         )
     }
+
+
+
+
+    private val NOTIFICATION_LISTENER_PERMISSION_CODE = 1001 // Произвольный код для обработки результатов запроса разрешения
+
+
     var selectedNumber = 0
     var aboutme by mutableStateOf("")
 
@@ -113,6 +132,13 @@ class Main_menu : ComponentActivity() {
         Adduser("$name", "$id", "$img")
 
 
+// Проверяем, есть ли уже разрешение
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE) != PackageManager.PERMISSION_GRANTED) {
+            // Запрашиваем разрешение, если его нет
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE), NOTIFICATION_LISTENER_PERMISSION_CODE)
+        } else {
+            
+        }
 
 
 
@@ -483,3 +509,9 @@ class Main_menu : ComponentActivity() {
     }
 
     }
+
+fun areNotificationsEnabled(context: Context): Boolean {
+    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    return notificationManager.areNotificationsEnabled()
+}
+

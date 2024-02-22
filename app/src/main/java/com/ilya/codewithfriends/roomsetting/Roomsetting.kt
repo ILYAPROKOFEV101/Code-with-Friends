@@ -112,6 +112,7 @@ import com.ilya.reaction.logik.PreferenceHelper
 import com.ilya.reaction.logik.PreferenceHelper.clearAllMessages
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.ilya.codewithfriends.Vois.ViceActivity
 
 
 class Roomsetting : ComponentActivity() {
@@ -1330,7 +1331,7 @@ class Roomsetting : ComponentActivity() {
             Button(
                 colors = ButtonDefaults.buttonColors(Color.Green),
                 onClick = {
-                    val intent = Intent(this@Roomsetting, TeamSpeak::class.java)
+                    val intent = Intent(this@Roomsetting, ViceActivity::class.java)
                     startActivity(intent)
                 },
                 modifier = Modifier
