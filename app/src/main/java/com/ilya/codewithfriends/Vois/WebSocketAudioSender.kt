@@ -31,68 +31,17 @@ import java.io.FileOutputStream
 import java.io.IOException
 import kotlin.concurrent.thread
 
-class WebSocketAudioSender {
-
-    private var webSocket: WebSocket? = null
-    private var isSending = false
-
-    fun startSending(file: File, url: String) {
-        val client = OkHttpClient.Builder().build()
-        val request = Request.Builder().url(url).build()
-
-        client.newWebSocket(request, object : WebSocketListener() {
-            override fun onOpen(webSocket: WebSocket, response: Response) {
-                super.onOpen(webSocket, response)
-                this@WebSocketAudioSender.webSocket = webSocket
-                isSending = true
-
-                GlobalScope.launch(Dispatchers.IO) {
-                    val bufferSize = 4096 // Размер буфера
-                    val buffer = ByteArray(bufferSize)
-                    val inputStream = FileInputStream(file)
-                    try {
-                        var bytesRead = 0 // Инициализация переменной bytesRead
-                        while (isSending && inputStream.read(buffer).also { bytesRead = it } != -1) {
-                            webSocket.send(buffer.toByteString(0, bytesRead))
-                        }
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    } finally {
-                        try {
-                            inputStream.close()
-                        } catch (e: IOException) {
-                            e.printStackTrace()
-                        }
-                        // Закрытие WebSocket после отправки всех данных
-                        webSocket.close(1000, "File sent")
-                    }
-                }
-            }
-
-            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                super.onFailure(webSocket, t, response)
-                // Обработка ошибки
-                t.printStackTrace()
-            }
-        })
-    }
-
-    fun stopSending() {
-        isSending = false
-        webSocket?.cancel()
-    }
-}
 
 class AudioSender(private val webSocketUrl: String) {
 
-    private var webSocket: WebSocket? = null
+    private var webSocket: okhttp3.WebSocket? = null
 
     fun sendAudio(audioFile: File) {
         val client = OkHttpClient.Builder().build()
-        val request = Request.Builder().url(webSocketUrl).build()
+        val request = okhttp3.Request.Builder().url(webSocketUrl).build()
 
-        client.newWebSocket(request, object : WebSocketListener() {
-            override fun onOpen(webSocket: WebSocket, response: Response) {
+        client.newWebSocket(request, object : okhttp3.WebSocketListener() {
+            override fun onOpen(webSocket: okhttp3.WebSocket, response: okhttp3.Response) {
                 super.onOpen(webSocket, response)
                 this@AudioSender.webSocket = webSocket
 
@@ -102,16 +51,16 @@ class AudioSender(private val webSocketUrl: String) {
                     inputStream.read(buffer)
                     inputStream.close()
 
-                    // Отправляем содержимое файла через WebSocket
-                    webSocket.send(ByteString.of(*buffer))
-                    // Отправляем сообщение о завершении передачи данных
+                    // Send the content of the file via WebSocket
+                    webSocket.send(okio.ByteString.of(*buffer))
+                    // Send a message indicating the end of file transmission
                     webSocket.send("EndOfFile")
                 }
             }
 
-            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+            override fun onFailure(webSocket: okhttp3.WebSocket, t: Throwable, response: okhttp3.Response?) {
                 super.onFailure(webSocket, t, response)
-                // Обработка ошибок
+                // Handle errors
             }
         })
     }

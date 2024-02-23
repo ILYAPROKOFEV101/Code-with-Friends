@@ -30,6 +30,9 @@ import androidx.core.content.ContextCompat
 import com.ilya.codewithfriends.Vois.ui.theme.CodeWithFriendsTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.DataOutputStream
 import java.io.File
@@ -45,6 +48,8 @@ class ViceActivity : ComponentActivity() {
     private lateinit var audioFile: File
     private lateinit var audioSender: AudioSender
     private val webSocketUrl = "wss://getpost-ilya1.up.railway.app/file" // Замените на ваш URL WebSocket
+
+    private var audioSendJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -139,20 +144,40 @@ class ViceActivity : ComponentActivity() {
             recorder?.stop()
             recorder?.release()
             outputStream.close()
-
-            // Send audio via WebSocket after recording is complete
-            audioSender = AudioSender(webSocketUrl)
-            audioSender.sendAudio(audioFile)
         }
+
+        // Start sending audio periodically
+        startSendingAudioPeriodically()
     }
 
     private fun stopRecording() {
         isRecording = false
-        if (::audioSender.isInitialized) {
-            audioSender.stopSending()
+        // Stop sending audio periodically
+        stopSendingAudioPeriodically()
+    }
+
+    private fun startSendingAudioPeriodically() {
+        audioSendJob?.cancel() // Cancel the previous job if exists
+
+        audioSendJob = GlobalScope.launch(Dispatchers.IO) {
+            while (isRecording) {
+                if (audioFile.exists()) {
+                    sendAudio(audioFile) // Send audio if the file exists
+                }
+                delay(1000) // Delay for 1 second
+            }
         }
     }
 
+    private fun stopSendingAudioPeriodically() {
+        audioSendJob?.cancel() // Cancel sending audio
+    }
+
+    private fun sendAudio(audioFile: File) {
+        // Send audio via WebSocket
+        audioSender = AudioSender(webSocketUrl)
+        audioSender.sendAudio(audioFile)
+    }
 
     companion object {
         const val SAMPLE_RATE = 44100 // Change to your desired sample rate
