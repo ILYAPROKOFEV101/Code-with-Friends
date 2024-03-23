@@ -108,6 +108,7 @@ import com.ilya.codewithfriends.presentation.profile.IMG
 import com.ilya.codewithfriends.presentation.profile.UID
 import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.ilya.codewithfriends.presentation.sign_in.UserData
+import com.ilya.reaction.logik.PreferenceHelper
 import getUserByName
 
 import kotlinx.coroutines.Dispatchers
@@ -164,9 +165,7 @@ class Chatmenu : Fragment() {
         val name = UID(
             userData = googleAuthUiClient.getSignedInUser()
         )
-        val img = IMG(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
+
         val id = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )

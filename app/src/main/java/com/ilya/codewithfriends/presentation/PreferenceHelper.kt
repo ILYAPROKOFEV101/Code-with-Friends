@@ -119,7 +119,6 @@ object PreferenceHelper {
     }
 
 
-
     fun getMessageList(context: Context): List<Message> {
         val jsonString = getSharedPreferences(context).getString(KEY_MESSAGE_LIST, "")
         return if (jsonString.isNullOrBlank()) {
@@ -129,6 +128,7 @@ object PreferenceHelper {
             Gson().fromJson(jsonString, type)
         }
     }
+
 
     fun clearAllMessages(context: Context) {
         getSharedPreferences(context).edit().clear().apply()

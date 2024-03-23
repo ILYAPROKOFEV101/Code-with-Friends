@@ -82,6 +82,7 @@ import com.ilya.codewithfriends.presentation.profile.ID
 import com.ilya.codewithfriends.presentation.profile.IMG
 import com.ilya.codewithfriends.presentation.profile.UID
 import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
+import com.ilya.reaction.logik.PreferenceHelper
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -115,7 +116,6 @@ class ChatFragment : Fragment() {
 
     private lateinit var webSocketClient: WebSocketClient
     var photo by mutableStateOf("")
-    private  val KEY_MESSAGE_LIST = "messageList"
 
 
 
@@ -157,9 +157,7 @@ class ChatFragment : Fragment() {
         val name = UID(
             userData = googleAuthUiClient.getSignedInUser()
         )
-        val img = IMG(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
+        val img =  PreferenceHelper.getimg(requireContext())
         val id = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )
@@ -257,6 +255,10 @@ class ChatFragment : Fragment() {
             val request: Request = Request.Builder()
                 .url("https://getpost-ilya1.up.railway.app/local_chat/$roomId?username=$username&avatarUrl=$url&uid=$id&lasttime=0")
                 .build()
+            Log.d(
+                "websoket",
+                "https://getpost-ilya1.up.railway.app/chat/$roomId?username=$username&avatarUrl=$url&uid=$id&lasttime=10"
+            )
 
             // Установка соединения с WebSocket
             webSocket = client.newWebSocket(request, object : WebSocketListener() {
@@ -555,8 +557,6 @@ class ChatFragment : Fragment() {
                 LaunchedEffect(messages.size) {
                     listState.animateScrollToItem(messages.size - 1)
                 }
-
-                var lastShownDate: LocalDate? by remember { mutableStateOf(null) }
 
 
                 LazyColumn(

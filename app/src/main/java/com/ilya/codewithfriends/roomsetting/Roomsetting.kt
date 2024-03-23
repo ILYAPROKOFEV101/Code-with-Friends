@@ -9,6 +9,7 @@ import android.os.Looper
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -113,6 +114,7 @@ import com.ilya.reaction.logik.PreferenceHelper.clearAllMessages
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.ilya.codewithfriends.Vois.ViceActivity
+import com.ilya.codewithfriends.findroom.Getmyroom
 
 
 class Roomsetting : ComponentActivity() {
@@ -173,9 +175,12 @@ class Roomsetting : ComponentActivity() {
 
             val rooms = remember { mutableStateOf(emptyList<Room>()) }
 
+            val ivite_list = remember { mutableStateOf(emptyList<Usrs_ivite>()) }
+
             val participants = remember { mutableStateOf(emptyList<Participant>()) }
 
             GET_MYROOM(storedRoomId!!, data_from_myroom)
+            Get_invite_list(storedRoomId!!, ivite_list)
             // Проверяем, есть ли данные комнаты
 
 
@@ -191,13 +196,6 @@ class Roomsetting : ComponentActivity() {
             }
 
 
-            val name = UID(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
-            val img = IMG(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
-
             storedRoomId = getRoomId(this)
 
 
@@ -207,10 +205,9 @@ class Roomsetting : ComponentActivity() {
             PreferenceHelper.saveid(this, "$id")
 
 
-            PreferenceHelper.savename(this, "$name")
 
-                // Сохранение значения для ключа KEY_STRING_3
-            PreferenceHelper.saveimg(this, "$img")
+
+
 
             // Сохранение значения для ключа KEY_STRING_4
             PreferenceHelper.saveSoket(this, "$storedRoomId")
@@ -218,6 +215,7 @@ class Roomsetting : ComponentActivity() {
 
             Handler(Looper.getMainLooper()).postDelayed({
                 getData(storedRoomId!!, rooms)
+
                 whoinroom(storedRoomId!!, participants)
 
 
@@ -262,6 +260,10 @@ class Roomsetting : ComponentActivity() {
                                                 data_from_myroom
                                     )
                                 }
+                                Spacer(modifier = Modifier.height(30.dp))
+                            }
+                            item {
+                                User_ivite(ivite_list.value)
                                 Spacer(modifier = Modifier.height(30.dp))
                             }
 
@@ -355,6 +357,10 @@ class Roomsetting : ComponentActivity() {
     }
     }
 
+
+
+
+
     private fun getData(roomId: String, rooms: MutableState<List<Room>>) {
         val url = "https://getpost-ilya1.up.railway.app/aboutroom/$roomId"
 
@@ -385,6 +391,58 @@ class Roomsetting : ComponentActivity() {
         val requestQueue = Volley.newRequestQueue(this)
         requestQueue.add(request)
     }
+
+
+
+
+    private fun Get_invite_list(roomId: String, ivitelist: MutableState<List<Usrs_ivite>>) {
+        // Создаем Retrofit клиент
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://getpost-ilya1.up.railway.app/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        // Создаем API интерфейс
+        val api = retrofit.create(Git_ivite::class.java)
+
+        // Создаем запрос
+        val request = api.get_ivite(roomId)
+
+        Log.d("Getivite", "Starting request for room ID: $roomId")
+
+        // Выполняем запрос
+        request.enqueue(object : Callback<List<Usrs_ivite>> {
+            override fun onFailure(call: Call<List<Usrs_ivite>>, t: Throwable) {
+                // Ошибка
+                Log.e("Getivite", "Failed to get invite list for room ID: $roomId", t)
+                // Проверка на ошибку 404
+                if (t.message?.contains("404") ?: false) {
+                    Log.d("Getivite", "Data not found for room ID: $roomId")
+                } else {
+                    Log.e("Getivite", "Unknown error occurred for room ID: $roomId")
+                }
+            }
+
+            override fun onResponse(call: Call<List<Usrs_ivite>>, response: Response<List<Usrs_ivite>>) {
+                // Успех
+                if (response.isSuccessful) {
+                    // Получаем данные
+                    val newRooms = response.body() ?: emptyList()
+
+                    // Логируем полученные данные
+                    Log.d("Getivite", "Invite list retrieved successfully for room ID: $roomId")
+                    Log.d("Getivite", "Received invite list: $newRooms")
+
+                    // Обновляем состояние
+                    ivitelist.value = newRooms
+                } else {
+                    // Ошибка
+                    Log.e("Getivite", "Error getting invite list for room ID: $roomId, Response code: ${response.code()}, Error body: ${response.errorBody()?.string()}")
+                }
+            }
+        })
+    }
+
 
 
 
@@ -589,6 +647,92 @@ class Roomsetting : ComponentActivity() {
             }
         }
     }
+
+    @Composable
+    fun User_ivite(inviteList: List<Usrs_ivite>) {
+        var expanded by remember { mutableStateOf(false) }
+
+        // Анимируем высоту карточки
+        val cardHeight by animateDpAsState(
+            targetValue = if (expanded) 600.dp else 80.dp
+        )
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(cardHeight) // Используем анимированную высоту
+                .padding(start = 10.dp, end = 10.dp)
+                .border(4.dp, Color.Blue, shape = RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(20.dp))
+                .clickable { expanded = !expanded },
+            colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface),
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+
+                Text(
+                    text = "Invite List",
+                    fontSize = 24.sp,
+                    modifier = Modifier.padding(16.dp)
+                )
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .height(550.dp)
+                        .clip(RoundedCornerShape(30.dp)),
+                    reverseLayout = false,
+                ) {
+
+                    items(inviteList) { ivitelist ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(80.dp)
+                                .clip(RoundedCornerShape(30.dp))
+                                .border(2.dp, Color.Blue, shape = RoundedCornerShape(30.dp)),
+                            colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
+                        ) {
+                            Row(modifier = Modifier.fillMaxSize()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .weight(0.3f)
+                                ) {
+                                    Image(
+                                        painter = rememberImagePainter(ivitelist.url),
+                                        contentDescription = null, // Устанавливаем null для contentDescription
+                                        modifier = Modifier
+                                            .size(70.dp)
+                                            .padding(5.dp)
+                                            .clip(RoundedCornerShape(30.dp))
+                                    )
+                                }
+
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .weight(0.7f)
+
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(30.dp)
+                                    ) {
+                                        Text(ivitelist.name)
+
+                                    }
+
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     @Composable
     fun ComposeAlertDialog(roomName: String, uid: String, roomId: String, context: Context) {
 
@@ -640,6 +784,10 @@ class Roomsetting : ComponentActivity() {
             )
         }
     }
+
+
+
+
     @Composable
     fun DeleteRoom(uid: String, roomId: String, context: Context) {
 

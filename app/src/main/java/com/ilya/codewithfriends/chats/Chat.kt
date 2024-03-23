@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 
 
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,7 +30,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -78,6 +81,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -106,6 +110,13 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
+import com.ilya.codewithfriends.APIclass.JoinDataManager
+import com.ilya.codewithfriends.Complaint.Complaint
+import com.ilya.codewithfriends.Complaint.Complainttouser
+import com.ilya.codewithfriends.findroom.Join
+
+import com.ilya.codewithfriends.findroom.join_room
+import com.ilya.reaction.logik.PreferenceHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 
@@ -118,10 +129,15 @@ import org.java_websocket.client.WebSocketClient
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.Month
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -163,15 +179,6 @@ class Chat : ComponentActivity() {
 
     private var storedRoomId: String? = null // Объявляем на уровне класса
 
-/*
-    private val pickImage =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            uri?.let { selectedImageUri ->
-                // Здесь вы можете загрузить изображение в Firebase Storage
-                uploadImageToFirebaseStorage(selectedImageUri, storedRoomId!!)
-            }
-        }*/
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -200,9 +207,7 @@ class Chat : ComponentActivity() {
         val name = UID(
             userData = googleAuthUiClient.getSignedInUser()
         )
-        val img = IMG(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
+        val img =  PreferenceHelper.getimg(this)
         val id = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )
@@ -224,11 +229,6 @@ class Chat : ComponentActivity() {
             getData(storedRoomId!!, "$id", "$name")
 
         }
-
-
-
-
-
 
 
         setContent {
@@ -270,7 +270,6 @@ class Chat : ComponentActivity() {
                     Spacer(modifier = Modifier.height(100.dp))
                     if (storedRoomId != null && show.value) {
                         MessageList(messages.value, "$name", "$img", "$id")
-
                     }
 
 
@@ -327,9 +326,7 @@ class Chat : ComponentActivity() {
         val name = UID(
             userData = googleAuthUiClient.getSignedInUser()
         )
-        val img = IMG(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
+        val img =  PreferenceHelper.getimg(this)
         val ids = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )
@@ -530,8 +527,8 @@ class Chat : ComponentActivity() {
                        modifier = Modifier
                            .fillMaxWidth()
                            .padding(bottom = 60.dp, top = 50.dp)
-                           .background(Color(0x2F3083FF))
-                           .wrapContentHeight(),
+                           //.background(Color(0x2FFFFFFF))
+                           .fillMaxHeight(),
                        reverseLayout = false,
                        state = listState
                    ) {
@@ -540,6 +537,17 @@ class Chat : ComponentActivity() {
                            val paint = extractImageFromMessage(message.message)
 
 
+                           val maxTextWidth = 0.8f // Максимальная ширина текста
+                           val messageText = removeImageLinkFromMessage(message.message) // Текст сообщения
+
+// Если ширина текста превышает максимальную ширину, обрезаем текст и добавляем многоточие
+                           val displayedText = if (messageText.length > maxTextWidth * 1000) {
+                               // Умножаем на 1000, чтобы преобразовать ширину в пиксели
+                               val maxWidthIndex = (maxTextWidth * 1000).toInt()
+                               messageText.substring(0, maxWidthIndex) + "..."
+                           } else {
+                               messageText
+                           }
 
 
                            val messageDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(message.time), ZoneId.systemDefault())
@@ -554,8 +562,36 @@ class Chat : ComponentActivity() {
                            // Обновление текущего месяца и дня
                            lastShownMonth = messageDateTime.monthValue
                            lastShownDayOfMonth = messageDateTime.dayOfMonth
+                           val currentDate = LocalDate.now()
+                           val isToday = messageDateTime.toLocalDate() == currentDate
 
+                           val dayOfWeekText = when (messageDateTime.dayOfWeek) {
+                               DayOfWeek.MONDAY -> getString(R.string.monday)
+                               DayOfWeek.TUESDAY -> getString(R.string.tuesday)
+                               DayOfWeek.WEDNESDAY -> getString(R.string.wednesday)
+                               DayOfWeek.THURSDAY -> getString(R.string.thursday)
+                               DayOfWeek.FRIDAY -> getString(R.string.friday)
+                               DayOfWeek.SATURDAY -> getString(R.string.saturday)
+                               DayOfWeek.SUNDAY -> getString(R.string.sunday)
+                           }
 
+                           val monthText = when (messageDateTime.month) {
+                               Month.JANUARY -> getString(R.string.january)
+                               Month.FEBRUARY -> getString(R.string.february)
+                               Month.MARCH -> getString(R.string.march)
+                               Month.APRIL -> getString(R.string.april)
+                               Month.MAY -> getString(R.string.may)
+                               Month.JUNE -> getString(R.string.june)
+                               Month.JULY -> getString(R.string.july)
+                               Month.AUGUST -> getString(R.string.august)
+                               Month.SEPTEMBER -> getString(R.string.september)
+                               Month.OCTOBER -> getString(R.string.october)
+                               Month.NOVEMBER -> getString(R.string.november)
+                               Month.DECEMBER -> getString(R.string.december)
+                           }
+
+                           val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+                           val formattedText = "${messageDateTime.dayOfMonth} ${monthText} ${dayOfWeekText} "
 
                            if (showDayMarker) {
                                // Отображение маркера дня
@@ -565,11 +601,21 @@ class Chat : ComponentActivity() {
                                        .padding(8.dp),
                                    contentAlignment = Alignment.Center
                                ) {
-                                   Text(
-                                       text = messageDateTime.format(DateTimeFormatter.ofPattern("MM-dd")),
-                                       fontWeight = FontWeight.Bold,
-                                       color = Color.White
-                                   )
+                                   if (isToday) {
+                                       // Вывод "сегодня" вместо даты
+                                       Text(
+                                           text = stringResource(id = R.string.today),
+                                           fontWeight = FontWeight.Bold,
+                                           color = Color(0xFF595D67),
+                                       )
+                                   } else {
+                                       // Вывод даты в обычном формате
+                                       Text(
+                                           text = formattedText,
+                                           fontWeight = FontWeight.Bold,
+                                           color = Color(0xFF595D67),
+                                       )
+                                   }
                                }
                            }
 
@@ -592,7 +638,7 @@ class Chat : ComponentActivity() {
                                        .size(40.dp)
                                        .clip(RoundedCornerShape(40.dp))
                                    val imageUrl = message.img
-                                   
+
                                    if (!(isMyMessage)) {
                                        if (imageUrl != null) {
                                            val painter: Painter =
@@ -608,11 +654,14 @@ class Chat : ComponentActivity() {
 
                                    Card(
                                        modifier = Modifier
-                                           .fillMaxWidth(0.8f)
-                                           .padding(2.dp),
-                                       backgroundColor = if (isMyMessage) Color(
-                                           0xE650B973
-                                       ) else Color(0xFFFFFFFF),
+                                           .wrapContentWidth()
+                                           .padding(
+                                                end = if (isMyMessage) 0.dp else screenWidth * 0.2f,
+                                               top = 2.dp,
+                                                start = if (isMyMessage) screenWidth * 0.2f else 0.dp,
+                                               bottom = 2.dp
+                                           ),
+                                       backgroundColor = if (isMyMessage) Color(0xFF315FF3) else Color(0xFFFFFFFF),
                                        elevation = 10.dp,
                                        shape = RoundedCornerShape(12.dp)
                                    ) {
@@ -627,16 +676,15 @@ class Chat : ComponentActivity() {
                                                textAlign = TextAlign.Start,
                                                fontSize = 18.sp,
                                                fontWeight = FontWeight.SemiBold,
-                                               color = Color.Black,
+                                               color = if (isMyMessage) Color(0xFFFFFFFF) else Color(
+                                                   0xFF1B1B1B
+                                               ),
                                                overflow = TextOverflow.Ellipsis
                                            )
 
-
-
-
                                            Box(
                                                modifier = Modifier
-                                                   .fillMaxWidth()
+                                                  // .fillMaxWidth()
                                                    .wrapContentHeight(),
                                                contentAlignment = Alignment.CenterEnd
                                            )
@@ -645,8 +693,10 @@ class Chat : ComponentActivity() {
 
                                                Text(
                                                    text = localDateTime.format(DateTimeFormatter.ofPattern("HH:mm")), // Извлекаем только время
-                                                   fontSize = 10.sp,
-                                                   color = Color.Black,
+                                                   fontSize = 12.sp,
+                                                   color = if (isMyMessage) Color(0xFFFFFFFF) else Color(
+                                                       0xFF1B1B1B
+                                                   ),
                                                )
                                            }
 
@@ -657,9 +707,7 @@ class Chat : ComponentActivity() {
                            }
 
                            if (paint != null)
-
                            {
-
                                        if (paint.isNotEmpty()) {
                                            Box(
                                                modifier = Modifier
@@ -690,6 +738,7 @@ class Chat : ComponentActivity() {
                               }
                            }
                        }
+
                    }
                }
     }
@@ -781,42 +830,6 @@ class Chat : ComponentActivity() {
 
 
 
-    private fun pushData(
-        roomId: String, user_id: String, username: String, image_url: String
-    ) {
-        val baseUrl = "https://getpost-ilya1.up.railway.app/join"
-        val uriBuilder = Uri.parse(baseUrl).buildUpon()
-            .appendQueryParameter("roomId", roomId)
-            .appendQueryParameter("user_id", user_id)
-            .appendQueryParameter("username", username)
-            .appendQueryParameter("image_url", image_url)
-            .build()
-
-
-        val url = uriBuilder.toString()
-
-        val client = OkHttpClient()
-        val mediaType = "application/x-www-form-urlencoded".toMediaType()
-
-        val requestBody = "".toRequestBody(mediaType)
-
-        val request = Request.Builder()
-            .url(url)
-            .post(requestBody)
-            .build()
-
-        client.newCall(request).enqueue(object : okhttp3.Callback {
-            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
-                if (response.isSuccessful) {
-                    // Обработка успешного ответа сервера
-                }
-            }
-
-            override fun onFailure(call: okhttp3.Call, e: IOException) {
-                e.printStackTrace()
-            }
-        })
-    }
 
 
 
@@ -866,7 +879,7 @@ class Chat : ComponentActivity() {
                 }
                 Row(modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 100.dp , end = 100.dp)
+                    .padding(start = 100.dp, end = 100.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .height(50.dp)
                     .alpha(0.9f) // Пример половинной прозрачности
@@ -1008,6 +1021,7 @@ class Chat : ComponentActivity() {
             }
         }
     }
+    val joinDataManager = JoinDataManager()
 
 
 
@@ -1019,7 +1033,6 @@ class Chat : ComponentActivity() {
 
     @Composable
     fun upbar(roomId: String, id: String, name: String, img: String){
-
                 if (show.value) {
                     Button(
                         colors = ButtonDefaults.buttonColors(Color(0xB900CE0A)),
@@ -1031,11 +1044,9 @@ class Chat : ComponentActivity() {
                             val intent = Intent(this@Chat, Roomsetting::class.java)
                             startActivity(intent)
                         }
-                    ) {
+                        ) {
                         Text(text = stringResource(id = R.string.outroom), fontSize = 24.sp)
-                      }
-
-
+                            }
                 } else {
                         Button(
                             colors = ButtonDefaults.buttonColors(Color(0xFF1472FF)),
@@ -1044,19 +1055,16 @@ class Chat : ComponentActivity() {
                                 .fillMaxWidth(),
                             shape = RoundedCornerShape(20.dp),
                             onClick = {
-                                pushData(roomId,"$id", "$name","$img",)
-
+                                joinDataManager.pushData_join(roomId,id, name,"",)
                                 restartActivity()
                             }
                         ) {
                             Text(text = stringResource(id = R.string.room), fontSize = 24.sp)
                         }
-
                 }
             }
 
     private fun uploadImageToFirebaseStorage(roomid: String) {
-
 
 
         if (selectedImageUri == null) {
@@ -1109,3 +1117,42 @@ class Chat : ComponentActivity() {
 
 
 }
+
+/*
+fun pushData_join(
+    roomId: String, user_id: String, username: String, password: String
+) {
+    Log.d("PushDataJoin", "Starting pushData_join method with roomId: $roomId, user_id: $user_id, username: $username, password :$password")
+
+    // Создайте экземпляр Retrofit
+    val retrofit = Retrofit.Builder()
+        .baseUrl("https://getpost-ilya1.up.railway.app/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    // Создайте экземпляр службы API
+    val apiService = retrofit.create(Join::class.java)
+
+    // Создайте объект TaskRequest
+    val request = join_room(roomId, user_id, username, password)
+
+    // Отправьте POST-запрос с передачей roomId в качестве параметра пути
+    val call = apiService.Join_in_room(request)
+    call.enqueue(object : retrofit2.Callback<Void> {
+        override fun onResponse(call: Call<Void>, response: retrofit2.Response<Void>) {
+            if (response.isSuccessful) {
+                // Запрос успешно отправлен
+                Log.d("PushDataJoin", "Data successfully pushed to server")
+                // Можете выполнить какие-либо дополнительные действия здесь
+            } else {
+                // Обработайте ошибку, если есть
+                Log.e("PushDataJoin", "Failed to push data to server. Error code: ${response.code()}")
+            }
+        }
+
+        override fun onFailure(call: Call<Void>, t: Throwable) {
+            // Обработайте ошибку при отправке запроса
+            Log.e("PushDataJoin", "Failed to push data to server. Error message: ${t.message}")
+        }
+    })
+}*/

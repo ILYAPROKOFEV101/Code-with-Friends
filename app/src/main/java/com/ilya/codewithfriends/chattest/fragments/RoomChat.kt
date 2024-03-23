@@ -114,6 +114,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import com.ilya.codewithfriends.chats.Message
+import com.ilya.reaction.logik.PreferenceHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 
@@ -352,9 +353,7 @@ class RoomChat : Fragment() {
         val name = UID(
             userData = googleAuthUiClient.getSignedInUser()
         )
-        val img = IMG(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
+        val img =  PreferenceHelper.getimg(requireContext())
         val ids = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )
@@ -417,7 +416,7 @@ class RoomChat : Fragment() {
                                 updatedMessages.addAll(messages.value)
                                 updatedMessages.addAll(newMessages)
 
-                                GlobalScope.launch(Dispatchers.Main) {
+                        GlobalScope.launch(Dispatchers.Main) {
                                     // Обновить состояние messages новым MutableList
                                     messages.value = updatedMessages
 

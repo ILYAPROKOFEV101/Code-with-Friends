@@ -15,28 +15,77 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+private val LightColors = lightColorScheme(
+    primary = com.ilya.codewithfriends.findroom.ui.theme.CustomColor1,  // Replace md_theme_light_primary with your custom color
+    onPrimary = com.ilya.codewithfriends.findroom.ui.theme.light_onCustomColor1,
+    primaryContainer = com.ilya.codewithfriends.findroom.ui.theme.light_CustomColor1Container,
+    onPrimaryContainer = com.ilya.codewithfriends.findroom.ui.theme.light_onCustomColor1Container,
+    secondary = com.ilya.codewithfriends.findroom.ui.theme.CustomColor2,
+    onSecondary = com.ilya.codewithfriends.findroom.ui.theme.light_onCustomColor2,
+    secondaryContainer = com.ilya.codewithfriends.findroom.ui.theme.light_CustomColor2Container,
+    onSecondaryContainer = com.ilya.codewithfriends.findroom.ui.theme.light_onCustomColor2Container,
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-)
 
+    tertiary = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_tertiary,
+    onTertiary = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_onTertiary,
+    tertiaryContainer = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_tertiaryContainer,
+    onTertiaryContainer = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_onTertiaryContainer,
+    error = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_error,
+    errorContainer = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_errorContainer,
+    onError = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_onError,
+    onErrorContainer = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_onErrorContainer,
+    background = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_background,
+    onBackground = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_onBackground,
+    surface = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_surface,
+    onSurface = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_onSurface,
+    surfaceVariant = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_surfaceVariant,
+    onSurfaceVariant = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_onSurfaceVariant,
+    outline = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_outline,
+    inverseOnSurface = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_inverseOnSurface,
+    inverseSurface = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_inverseSurface,
+    inversePrimary = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_inversePrimary,
+    surfaceTint = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_surfaceTint,
+    outlineVariant = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_outlineVariant,
+    scrim = com.ilya.codewithfriends.findroom.ui.theme.md_theme_light_scrim,
+
+    )
+
+
+private val DarkColors = darkColorScheme(
+    primary = com.ilya.codewithfriends.findroom.ui.theme.dark_CustomColor1,  // Replace md_theme_dark_primary with your custom color
+    onPrimary = com.ilya.codewithfriends.findroom.ui.theme.dark_onCustomColor1,
+    primaryContainer = com.ilya.codewithfriends.findroom.ui.theme.dark_CustomColor1Container,
+    onPrimaryContainer = com.ilya.codewithfriends.findroom.ui.theme.dark_onCustomColor1Container,
+    secondary = com.ilya.codewithfriends.findroom.ui.theme.dark_CustomColor2,
+    onSecondary = com.ilya.codewithfriends.findroom.ui.theme.dark_onCustomColor2,
+    secondaryContainer = com.ilya.codewithfriends.findroom.ui.theme.dark_CustomColor2Container,
+    onSecondaryContainer = com.ilya.codewithfriends.findroom.ui.theme.dark_onCustomColor2Container,
+
+    tertiary = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_tertiary,
+    onTertiary = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_onTertiary,
+    tertiaryContainer = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_tertiaryContainer,
+    onTertiaryContainer = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_onTertiaryContainer,
+    error = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_error,
+    errorContainer = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_errorContainer,
+    onError = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_onError,
+    onErrorContainer = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_onErrorContainer,
+    background = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_background,
+    onBackground = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_onBackground,
+    surface = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_surface,
+    onSurface = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_onSurface,
+    surfaceVariant = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_surfaceVariant,
+    onSurfaceVariant = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_onSurfaceVariant,
+    outline = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_outline,
+    inverseOnSurface = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_inverseOnSurface,
+    inverseSurface = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_inverseSurface,
+    inversePrimary = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_inversePrimary,
+    surfaceTint = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_surfaceTint,
+    outlineVariant = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_outlineVariant,
+    scrim = com.ilya.codewithfriends.findroom.ui.theme.md_theme_dark_scrim,
+
+
+    )
 @Composable
 fun CodeWithFriendsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -50,8 +99,8 @@ fun CodeWithFriendsTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> DarkColors
+        else -> LightColors
     }
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -64,7 +113,7 @@ fun CodeWithFriendsTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = com.ilya.codewithfriends.findroom.ui.theme.Typography,
         content = content
     )
 }

@@ -45,3 +45,7 @@ interface GetmyAPI {
     @GET("/getimg/{roomId}")
     fun GETIMG(@Path("roomId") roomId: String): Call<List<Room2>>
 }
+interface Git_ivite {
+    @GET("/invitesget/{roomId}")
+    fun get_ivite(@Path("roomId") roomId: String): Call<List<Usrs_ivite>>
+}

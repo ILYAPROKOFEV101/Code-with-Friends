@@ -86,11 +86,33 @@ import android.app.NotificationManager
 
 import android.content.Context.NOTIFICATION_SERVICE
 import android.content.pm.PackageManager
+import android.icu.number.Scale
 import android.media.AudioManager
 import android.media.audiofx.BassBoost
+import android.net.Uri
 import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import coil.annotation.ExperimentalCoilApi
+import coil.compose.AsyncImage
+import coil.compose.rememberImagePainter
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
+import com.ilya.codewithfriends.presentation.sign_in.UserData
+import com.ilya.reaction.logik.PreferenceHelper.saveimg
+import com.ilya.reaction.logik.PreferenceHelper.savename
+import java.util.UUID
 
 
 class Main_menu : ComponentActivity() {
@@ -102,6 +124,18 @@ class Main_menu : ComponentActivity() {
         )
     }
 
+
+    var photo by mutableStateOf("")
+
+    private var selectedImageUri: Uri? by mutableStateOf(null)
+    private var pickImage =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let { selectedImageUri = it }
+        }
+
+
+
+    private var proces by mutableStateOf(false)
 
 
 
@@ -116,14 +150,14 @@ class Main_menu : ComponentActivity() {
         val name = UID(
             userData = googleAuthUiClient.getSignedInUser()
         )
-        val img = IMG(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
+        val img =  PreferenceHelper.getimg(this)
         val id = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )
         val loadingComponent = LoadingComponent()
         loadingComponent.userexsist("$id", this)
+
+        val imgValue = PreferenceHelper.getimg(this)
 
 
         getNumberFromServer("$id")
@@ -136,8 +170,6 @@ class Main_menu : ComponentActivity() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE) != PackageManager.PERMISSION_GRANTED) {
             // Запрашиваем разрешение, если его нет
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE), NOTIFICATION_LISTENER_PERMISSION_CODE)
-        } else {
-            
         }
 
 
@@ -190,9 +222,11 @@ class Main_menu : ComponentActivity() {
                             val id = ID(
                                 userData = googleAuthUiClient.getSignedInUser()
                             )
-
+                                if(imgValue == ""){
+                                    saveimg( this@Main_menu, "$img")
+                                }
                             item {
-                                Create_Acount()
+                                Create_Acount(if(imgValue == ""){"$img"} else {"$imgValue"}, LocalContext.current)
                             }
                             item {
                                 Edit("$id", "$img", "$name")
@@ -210,14 +244,35 @@ class Main_menu : ComponentActivity() {
         }
 
     }
-
-    @Preview(showBackground = true)
+    @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
     @Composable
-    fun Create_Acount() {
+    fun Create_Acount(imgValue: String, context: Context) {
+
+        var showimg by remember { mutableStateOf(false) }
+        var edit by remember { mutableStateOf(false) }
+
+
 
         //   val userText = getUserText(context) // userText содержит "Привет, это текстовые данные пользователя!"
         val userText = ""
         PreferenceHelper.setUserText(this, userText)
+
+        val id = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        val name2 = UID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+
+        val img =  PreferenceHelper.getimg(this)
+        var name =  PreferenceHelper.getname(this)
+
+        if (name == ""){
+           name = name2
+        }
+        var text by remember { mutableStateOf("") }
+        val focusRequester = remember { FocusRequester() }
+        val textSize by remember { mutableStateOf(24.sp) } // Состояние для хранения размера текста
 
         Column(
             modifier = Modifier // общий элемент
@@ -231,7 +286,6 @@ class Main_menu : ComponentActivity() {
                     .height(150.dp),
                 verticalAlignment = Alignment.Top
             ) {
-
                 Box(
                     modifier = Modifier // аватарка
                         .padding(start = 5.dp, top = 8.dp)
@@ -239,11 +293,33 @@ class Main_menu : ComponentActivity() {
                         .width(110.dp)
                         .padding(2.dp)
                 ) {
-                    ProfileIcon(
-                        userData = googleAuthUiClient.getSignedInUser()
+                    val painter = rememberImagePainter(
+                        data = if (imgValue.isNullOrEmpty()) {
+                            img
+                        } else {
+                            imgValue
+                        },
+                        builder = {
+                            crossfade(true)
+                        }
                     )
-                }
 
+
+                    Image(
+                            painter = painter,
+                            contentDescription = "Profile picture",
+                            modifier = Modifier
+                                .size(90.dp)
+                                .clip(RoundedCornerShape(30.dp))
+                                .clickable {
+                                    showimg = !showimg
+
+                                    pickImage.launch("image/*")
+
+                                },
+                            contentScale = ContentScale.Crop
+                        )
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxHeight()
@@ -252,12 +328,114 @@ class Main_menu : ComponentActivity() {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(55.dp)
+                            .height(100.dp)
                             .padding(5.dp)
                     ) {
-                        ProfileName(
-                            userData = googleAuthUiClient.getSignedInUser()
-                        )
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
+                            .fillMaxWidth(),
+                            verticalArrangement = Arrangement.Top,
+                            horizontalAlignment = Alignment.Start
+
+                        ) {
+                            if (!edit) {
+                                Row(Modifier.fillMaxSize()) {
+                                    androidx.compose.material.Text(
+                                        text = "$name",
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 30.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    IconButton(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(50.dp),
+                                        onClick = {
+                                            edit = !edit
+                                        }
+                                    )
+                                    {
+                                        Icon(
+                                            modifier = Modifier
+                                                .width(60.dp),
+                                            painter = painterResource(id = R.drawable.edit),
+                                            contentDescription = "Edit",
+                                            // Цвет иконки
+                                        )
+                                    }
+                                }
+
+                            } else {
+                                  Row(Modifier.fillMaxSize().fillMaxWidth()) {
+                                      TextField(
+                                          value = text, // Текущее значение текста в поле
+                                          onValueChange = {
+                                              text = it
+                                          }, // Обработчик изменения текста, обновляющий переменную "text"
+                                          textStyle = TextStyle(fontSize = textSize),
+                                          // textStyle = TextStyle.Default, // Стиль текста, используемый в поле ввода (используется стандартный стиль)
+
+                                          colors = TextFieldDefaults.textFieldColors(
+                                              focusedIndicatorColor = Color.Transparent, // Цвет индикатора при фокусе на поле (прозрачный - отключает индикатор)
+                                              unfocusedIndicatorColor = Color.Transparent, // Цвет индикатора при потере фокуса на поле (прозрачный - отключает индикатор)
+                                              disabledIndicatorColor = Color.Transparent, // Цвет индикатора, когда поле неактивно (прозрачный - отключает индикатор)
+                                              containerColor = Color.White
+                                          ),
+
+                                          /*label = { // Метка, которая отображается над полем ввода
+                                              Text(
+                                                  text = stringResource(id = R.string.Your_name),
+                                                  fontSize = 20.sp,
+                                                  textAlign = TextAlign.Center
+                                              )
+                                          },*/
+
+                                          keyboardOptions = KeyboardOptions(
+                                              imeAction = ImeAction.Done, // Действие на кнопке "Готово" на клавиатуре (закрытие клавиатуры)
+
+                                              keyboardType = KeyboardType.Text // Тип клавиатуры (обычный текст)
+                                          ),
+
+                                          keyboardActions = KeyboardActions(
+                                              onDone = {
+                                                    edit = !edit
+                                                  savename(context, text)
+                                                  changeUserName("$id", text)
+                                              }
+                                          ),
+
+                                          modifier = Modifier
+                                              .weight(0.8f)
+                                              .height(55.dp)
+                                              .clip(RoundedCornerShape(30.dp)) // Закругление углов поля
+                                              .background(Color.LightGray) // Цвет фона поля
+                                              .focusRequester(focusRequester = focusRequester) // Позволяет управлять фокусом поля ввода
+                                      )
+
+                                      IconButton(
+                                          modifier = Modifier
+                                              .weight(0.2f)
+                                              .height(50.dp),
+                                          onClick = {
+                                              edit = !edit
+                                              savename(context, text)
+                                              changeUserName("$id", text)
+                                          }
+                                      )
+                                      {
+                                          Icon(
+                                              modifier = Modifier
+                                                  .width(60.dp),
+                                              imageVector = Icons.Default.Save,
+                                              contentDescription = "Save",
+                                              // Цвет иконки
+                                          )
+                                      }
+
+                                  }
+                            }
+                        }
                     }
                     Box(
                         modifier = Modifier
@@ -267,6 +445,128 @@ class Main_menu : ComponentActivity() {
 
                     }
                 }
+            }
+        }
+
+        if(showimg == true) {
+            Box(modifier = Modifier
+                .width(400.dp)
+                .height(400.dp)
+                .zIndex(1f), // Устанавливает z-индекс, чтобы поместиться наверху других элементов
+                contentAlignment = Alignment.BottomCenter // Выравнивание по нижнему кра
+            ) {
+                if (selectedImageUri != null) {
+                    Image(
+                        painter = rememberImagePainter(selectedImageUri),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(bottom = 15.dp, top = 15.dp, start = 70.dp, end = 70.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .clickable {},
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 100.dp, end = 100.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .height(50.dp)
+                .alpha(0.9f) // Пример половинной прозрачности
+                .background(Color(0xFF4795CA)),
+                horizontalArrangement = Arrangement.Center,
+                //verticalArrangement = Arrangement.Center
+            ){
+                IconButton(
+                    modifier = Modifier
+                        .size(100.dp), // Выравнивание по центру вертикально
+                    onClick = {
+                        showimg = false
+                        photo = ""
+                    }
+                ){
+                    Icon(
+                        imageVector = Icons.Default.Cancel,
+                        contentDescription = "Cancel"
+                    )
+                }
+                IconButton(
+                    modifier = Modifier
+                        .size(100.dp), // Выравнивание по центру вертикально
+                    onClick = {
+                        //showimg = false
+                        proces = true
+                        selectedImageUri?.let {
+                            uploadImageToFirebaseStorage("$id")
+                        }
+                    }
+                ){
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Check",
+                        tint = Color.Black
+                    )
+
+                }
+            }
+        }
+    }
+
+    private fun showToast(message: String, context: Context) {
+        // Вывести Toast с заданным сообщением
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    fun uploadImageToFirebaseStorage(uid: String) {
+
+        if (selectedImageUri == null) {
+            // Обработка случая, когда изображение не выбрано
+            showToast("Выберите изображение перед загрузкой.", this)
+            return
+        }
+
+        proces = true
+
+        val storage = FirebaseStorage.getInstance()
+        val storageRef = storage.reference
+
+        // Create a unique name for the image to avoid overwriting
+        val imageName = UUID.randomUUID().toString()
+
+        // Path to store the image: "images/{roomid}/{imageName}"
+        val imageRef = storageRef.child("images/$uid/$imageName")
+
+        val metadata = StorageMetadata.Builder()
+            .setContentType("image/png") // Указываем тип контента как PNG
+            .build()
+
+        val uploadTask = imageRef.putFile(selectedImageUri!!, metadata)
+
+        // Add a listener to handle successful or unsuccessful upload
+        uploadTask.addOnCompleteListener { task ->
+
+            if (task.isSuccessful) {
+                // Get the download URL from the task result
+                imageRef.downloadUrl.addOnSuccessListener { uri ->
+                    photo = uri.toString()
+                    // Do something with the URL, such as save it to Firestore
+                    PreferenceHelper.saveimg(this, "$photo")
+                    changeUserURL(uid, photo)
+
+                    proces = false
+                    // Покажите Toast об успешной загрузке
+                    showToast(getString(R.string.addPhoto), this)
+
+                    // Обнулить selectedImageUri после успешной загрузки
+                    selectedImageUri = null
+                }
+            } else {
+                // Handle unsuccessful upload
+                proces = false
+                // Покажите Toast об ошибке загрузки
+                showToast(getString(R.string.upload_error_message), this)
             }
         }
     }
@@ -279,7 +579,6 @@ class Main_menu : ComponentActivity() {
         val focusRequester = remember { FocusRequester() }
         val keyboardController = LocalSoftwareKeyboardController.current
         val textSize by remember { mutableStateOf(24.sp) } // Состояние для хранения размера текста
-        //   val userText = getUserText(context) // userText содержит "Привет, это текстовые данные пользователя!"
         val userText = ""
         PreferenceHelper.setUserText(this, userText)
 
@@ -413,9 +712,11 @@ class Main_menu : ComponentActivity() {
 
                     Button( colors = ButtonDefaults.buttonColors(Color.Blue),
                         onClick = {
+                            val intent = Intent(this@Main_menu, CreativyRoom::class.java)//CreativyRoom
+                            startActivity(intent)
+
                             if(selectedNumber <= 0 ){
-                                val intent = Intent(this@Main_menu, CreativyRoom::class.java)//CreativyRoom
-                                startActivity(intent)
+
                                // finish()
                             }else {
                                 showToast(getString(R.string.myroom))

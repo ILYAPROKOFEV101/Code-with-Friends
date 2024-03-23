@@ -30,6 +30,17 @@ data class Room2(
     val url: String
 )
 
+data class Over_DeletetItem(
+    val deletet: String,
+    val over: String
+)
+
+data class Usrs_ivite (
+    val uid: String,
+    val name:String,
+    val url: String,
+    val id:String
+)
 
 
 

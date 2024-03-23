@@ -1,5 +1,6 @@
 package com.ilya.codewithfriends.Activity.CreatyActivity
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -38,6 +39,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -71,6 +73,9 @@ import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.ilya.reaction.logik.PreferenceHelper
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.storage.FirebaseStorage
+import com.ilya.codewithfriends.presentation.profile.UID
+import com.ilya.codewithfriends.roomsetting.Roomsetting
+
 import kotlinx.coroutines.launch
 
 import okhttp3.MediaType.Companion.toMediaType
@@ -99,6 +104,7 @@ class CreativyRoom : ComponentActivity() {
 
     var text by mutableStateOf("")
     var texts by mutableStateOf("")
+    var password by mutableStateOf("")
     var photo by mutableStateOf("")
     var showCircle by mutableStateOf(true)
 
@@ -184,6 +190,10 @@ class CreativyRoom : ComponentActivity() {
                 }
 
                 item {
+                    Spacer(modifier = Modifier.height(30.dp))
+                }
+                item {
+                    WriteoboutPassword()
                     Spacer(modifier = Modifier.height(30.dp))
                 }
 
@@ -423,6 +433,66 @@ class CreativyRoom : ComponentActivity() {
     }
 
 
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+    @Composable
+    fun WriteoboutPassword(){
+        val keyboardControllers = LocalSoftwareKeyboardController.current
+        var showtext by remember {
+            mutableStateOf(false) }
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                .clip(RoundedCornerShape(30.dp))
+                .border(width = 2.dp, color = MaterialTheme.colorScheme.secondary, RoundedCornerShape(30.dp))
+            ,
+            colors = CardDefaults.cardColors(Color.White),
+        ){
+            TextField(modifier = Modifier.fillMaxSize(),
+                value = password, // Текущее значение текста в поле
+                onValueChange = { password = it }, // Обработчик изменения текста, обновляющий переменную "text"
+                textStyle = TextStyle(fontSize = 24.sp),
+                // textStyle = TextStyle.Default, // Стиль текста, используемый в поле ввода (используется стандартный стиль)
+
+                colors = TextFieldDefaults.textFieldColors(
+                    focusedIndicatorColor = Color.Transparent, // Цвет индикатора при фокусе на поле (прозрачный - отключает индикатор)
+                    unfocusedIndicatorColor = Color.Transparent, // Цвет индикатора при потере фокуса на поле (прозрачный - отключает индикатор)
+                    disabledIndicatorColor = Color.Transparent, // Цвет индикатора, когда поле неактивно (прозрачный - отключает индикатор)
+                    containerColor = Color.White
+                ),
+                label = { // Метка, которая отображается над полем ввода
+                    Text(
+                        text = if (!showtext) stringResource(id = R.string.password) else "",
+                        fontSize = 30.sp,
+                        color = Color.Black,
+                        textAlign = TextAlign.Center , modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 20.dp)
+                    )
+
+                },
+
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Done, // Действие на кнопке "Готово" на клавиатуре (закрытие клавиатуры)
+                    keyboardType = KeyboardType.Text // Тип клавиатуры (обычный текст)
+                ),
+
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyboardControllers?.hide() // Обработчик действия при нажатии на кнопку "Готово" на клавиатуре (скрыть клавиатуру)
+                        if (texts != "") {
+                            showtext = !showtext
+                        }
+
+                    }
+                ),
+
+                )
+        }
+
+    }
+
+
     fun generateUniqueId(): String {
         val characters = ('a'..'z') + ('A'..'Z') + ('0'..'9')
         return List(10) { characters.random() }.joinToString("")
@@ -432,20 +502,26 @@ class CreativyRoom : ComponentActivity() {
 
 
 
+
     private fun pushData(
         uniqueAdmin: String? = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )
     ) {
+        var username =  PreferenceHelper.getname(this)
+        username = UID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
         val baseUrl = "https://getpost-ilya1.up.railway.app/user"
-        val url = "$baseUrl?id=$uniqueId&Lenguage=$selectedLanguage&Placeinroom=$selectedPlace&Roomname=$text&Aboutroom=$texts&Admin=$uniqueAdmin"
+        val url = "$baseUrl?id=$uniqueId&Lenguage=$selectedLanguage&Placeinroom=$selectedPlace&Roomname=$text&Aboutroom=$texts&Admin=$uniqueAdmin&Username=$username"
 
         val client = OkHttpClient()
         val mediaType = "application/json; charset=utf-8".toMediaType()
 
         val json = """
         {
-            "url": "$photo"
+            "url": "$photo",
+            "password": "${if(password != "") {password} else {null}}"
         }
     """.trimIndent()
 
@@ -483,25 +559,26 @@ class CreativyRoom : ComponentActivity() {
         Button(
 
             onClick = {
-                if(selectedNumber <= 0) {
+               /// if(selectedNumber <= 0) {
                     if (
                         uniqueId != "" &&
                         selectedLanguage != "" &&
                         selectedPlace != null && text != "" && texts != "" && photo != ""
-
-
                     ) {
-
                         sendPostRequest(uid)
+                        PreferenceHelper.saveRoomId(this, uniqueId)
                         coroutineScope.launch {
                             pushData()
                         }
+                        intent = Intent(this@CreativyRoom, Roomsetting::class.java)
+                        startActivity(intent)
+
                     } else {
                         showToast(getString(R.string.datainbalank))
                     }
-                }else {
+                /*}else {
                     showToast(getString(R.string.myroom))
-                }
+                }*/
 
         },modifier = Modifier
             .fillMaxWidth()

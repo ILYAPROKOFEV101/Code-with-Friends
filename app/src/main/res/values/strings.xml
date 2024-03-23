@@ -34,6 +34,7 @@
     <string name="reply_label">send</string>
     <string name="label">send</string>
     <string name="find">Find user</string>
+    <string name="passwrd">write your password</string>
 
 
     <string name="Nothinkchose">nothing selected</string>
@@ -100,6 +101,7 @@ This Privacy Policy comes into effect upon its publication and remains in force 
     <string name="myroom">you already have a room</string>
     <string name="savedata">Save information about you</string>
     <string name="deleteroom">Delete Room</string>
+    <string name="Your_name">Write your name</string>
 
 
     <string name="login">Log in with Google</string>
@@ -163,4 +165,27 @@ This Privacy Policy comes into effect upon its publication and remains in force 
     <string name="title_activity_sendban">Sendban</string>
     <string name="title_activity_caht">Caht_Activity</string>
     <string name="title_activity_vice">ViceActivity</string>
+
+    <string name="today">Today</string>
+    <string name="monday">Monday</string>
+    <string name="tuesday">Tuesday</string>
+    <string name="wednesday">Wednesday</string>
+    <string name="thursday">Thursday</string>
+    <string name="friday">Friday</string>
+    <string name="saturday">Saturday</string>
+    <string name="sunday">Sunday</string>
+
+    <string name="january">January</string>
+    <string name="february">February</string>
+    <string name="march">March</string>
+    <string name="april">April</string>
+    <string name="may">May</string>
+    <string name="june">June</string>
+    <string name="july">July</string>
+    <string name="august">August</string>
+    <string name="september">September</string>
+    <string name="october">October</string>
+    <string name="november">November</string>
+    <string name="december">December</string>
+
 </resources>

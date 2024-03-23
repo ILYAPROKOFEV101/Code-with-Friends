@@ -21,3 +21,28 @@ interface GET_KEY {
     @GET("/getkey/{uid}")
     fun getKey(@Path("uid") uid: String): Call<String>
 }
+
+interface ApiService {
+    // POST запрос для изменения URL
+    @POST("/change/{uid}")
+    fun changeUrl(@Path("uid") uid: String, @Body changeDC: Change_DC): Call<Void>
+
+    // POST запрос для изменения имени пользователя
+    @POST("/changeName/{uid}")
+    fun changeName(@Path("uid") uid: String, @Body changeDCName: Change_DC_Name): Call<Void>
+}
+
+interface ChangeUserNameService {
+    @POST("/change_name/{uid}")
+    fun changeUserName(
+        @Path("uid") uid: String,
+        @Body changeDCName: Change_DC_Name
+    ): Call<Void>
+}
+interface ChangeUserURLService {
+    @POST("/change/{uid}")
+    fun changeUserURL(
+        @Path("uid") uid: String,
+        @Body changeDCURL: Change_DC
+    ): Call<Void>
+}

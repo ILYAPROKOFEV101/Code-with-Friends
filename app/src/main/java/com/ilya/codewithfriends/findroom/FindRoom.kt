@@ -1,6 +1,7 @@
 package com.ilya.codewithfriends.findroom
 
 import LoadingComponent
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -31,6 +32,7 @@ import okhttp3.OkHttpClient
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 
 
 import androidx.compose.foundation.layout.Column
@@ -39,8 +41,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -82,18 +87,36 @@ import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.delay
 
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.ExperimentalComposeUiApi
 
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ilya.codewithfriends.APIclass.JoinDataManager
 
 import com.ilya.codewithfriends.MainViewModel
+import com.ilya.codewithfriends.Startmenu.Main_menu
+
 import com.ilya.codewithfriends.findroom.ui.theme.CodeWithFriendsTheme
+import com.ilya.codewithfriends.presentation.profile.UID
 import com.ilya.codewithfriends.test.TestActivity
+import com.ilya.reaction.logik.PreferenceHelper
 import com.ilya.reaction.logik.PreferenceHelper.getRoomId
 
 
@@ -112,8 +135,12 @@ class FindRoom : ComponentActivity() {
    private val handler = Handler()
 
 
+
+
+
     var myroom by  mutableStateOf(false)
     var select by  mutableStateOf(false)
+    var showAlertDialog by  mutableStateOf(false)
 
     val languages = listOf(
         "android development",
@@ -137,6 +164,8 @@ class FindRoom : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
+        val joinDataManager = JoinDataManager()
+
         setContent {
             val viewModel = viewModel<MainViewModel>()
             val isLoading by viewModel.isLoading.collectAsState()
@@ -154,7 +183,7 @@ class FindRoom : ComponentActivity() {
 
                     // Задержка перехода на новую страницу через 3 секунды
                     Handler(Looper.getMainLooper()).postDelayed({
-                        getData(rooms)
+                        getData("$id", rooms)
                     }, 500) // 3000 миллисекунд (3 секунды)
 
                     // Вызывайте getData только после установки ContentView
@@ -195,7 +224,9 @@ class FindRoom : ComponentActivity() {
         }
     }
 
-    private fun getData(rooms: MutableState<List<Room>>) {
+    val joinDataManager = JoinDataManager()
+
+    private fun getData(uid: String,rooms: MutableState<List<Room>>) {
         // Создаем Retrofit клиент
         val retrofit = Retrofit.Builder()
             .baseUrl("https://getpost-ilya1.up.railway.app/")
@@ -206,7 +237,7 @@ class FindRoom : ComponentActivity() {
         val api = retrofit.create(Api::class.java)
 
         // Создаем запрос
-        val request = api.getRooms()
+        val request = api.getRooms(uid)
 
         // Выполняем запрос
         request.enqueue(object : Callback<List<Room>> {
@@ -230,6 +261,7 @@ class FindRoom : ComponentActivity() {
 
                     // Обновляем состояние
                     rooms.value = newRooms
+                    Log.d("Hello","$newRooms" )
                 } else {
                     // Ошибка
                     Log.e("getData", "Ошибка получения данных: ")
@@ -286,8 +318,6 @@ class FindRoom : ComponentActivity() {
     @Composable
     fun NOTFound(){
 
-
-
         Column(Modifier.fillMaxSize()) {
             Image(
                  painter = painterResource(id = R.drawable.notfound),
@@ -307,10 +337,8 @@ class FindRoom : ComponentActivity() {
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp)
             )
 
-
         }
     }
-
 
 
 
@@ -330,10 +358,14 @@ class FindRoom : ComponentActivity() {
         )
 
 
-        LazyColumn(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
+        LazyColumn(modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()) {
+
                 item {
                     Selecte()
                 }
+
             if (rooms.isNotEmpty()) {
 
                 if(myroom == true){
@@ -341,7 +373,6 @@ class FindRoom : ComponentActivity() {
                         if (room.Admin == id) {
                             RoomItem(room)//hello
                         }
-
                     }
 
                     if (showroom == true) {
@@ -377,10 +408,27 @@ class FindRoom : ComponentActivity() {
 
 
 
+    @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
     @Composable
    fun RoomItem(room: Room){
     val joinroom: Color = colorResource(id = R.color.joinroom)
     val creatroom: Color = colorResource(id = R.color.creatroom)
+
+        var show by remember {
+            mutableStateOf(false)
+        }
+        var password by remember {
+            mutableStateOf("")
+        }
+        var username =  PreferenceHelper.getname(this)
+        username = UID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        val uid = ID(
+            userData = googleAuthUiClient.getSignedInUser()
+        )
+        var name =  PreferenceHelper.getname(this)
+        val img =  PreferenceHelper.getimg(this)
 
 
 
@@ -482,29 +530,56 @@ class FindRoom : ComponentActivity() {
                         .height(65.dp)
                         .fillMaxWidth())
                     {
-                            Button(
-                                onClick = {
-                                    if (room.id != null) {
+                        Button(
+                            onClick = {
+                                if (room.id != null) {
+                                    // Вызов функции Writepassword
+                                    if(room.hasPassword){
+                                        show = !show
+                                    } else {
                                         val intent = Intent(this@FindRoom, Chat::class.java)
                                         startActivity(intent)
-                                    } else {
-                                        // Обработка ситуации, когда идентификатор комнаты равен null
-                                        // например, вы можете вывести сообщение об ошибке
-                                        Toast.makeText(this@FindRoom, "Идентификатор комнаты пуст", Toast.LENGTH_SHORT).show()
                                     }
+                                } else {
+                                    // Обработка ситуации, когда идентификатор комнаты равен null
+                                    // например, вы можете вывести сообщение об ошибке
+                                    Toast.makeText(this@FindRoom, "Идентификатор комнаты пуст", Toast.LENGTH_SHORT).show()
+                                }
 
                                 goToChatActivity(room.id)
                                 showCircle = !showCircle
-
-
                             },
+
                                 colors = ButtonDefaults.buttonColors(creatroom),
                                 modifier = Modifier.fillMaxSize(),
                                 shape = RoundedCornerShape(20.dp),
 
                                   ) {
-                                Text(text = "Join in room: ${room.placeInRoom}", modifier = Modifier, style = TextStyle(fontSize = 24.sp))
+
+                            Text(
+                                text = "Join in room: ${room.placeInRoom}",
+                                modifier = Modifier,
+                                style = TextStyle(fontSize = 24.sp)
+                            )
+                            showluck(show = room.hasPassword)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            if (room.hasPassword) {
+                                IconButton(
+                                    modifier = Modifier
+                                        .size(80.dp),
+                                    onClick = {
+                                        joinDataManager.post_invite("$uid", room.id, "$name", "$img")
+                                        Log.d("igetdatt", "$uid , ${room.id}, $name $img")
+                                    }
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.post_invite), // Показываем иконку "person_add"
+                                        contentDescription = "Cancel",
+                                        tint = Color.Blue
+                                    )
                                 }
+                            }
+                        }
 
                     }
 
@@ -517,10 +592,123 @@ class FindRoom : ComponentActivity() {
                         item {  Text(text = "${room.aboutRoom}", modifier = Modifier.padding( start = 10.dp), style = TextStyle(fontSize = 24.sp), color = Color.Black  ) }
                     }
 
+                        
                 }
             }
         Spacer(modifier = Modifier.height(10.dp))
 
+
+
+            if(show) {
+                AlertDialog(
+                    modifier = Modifier.clip(RoundedCornerShape(30.dp)),
+                    onDismissRequest = { /* ... */ },
+                    buttons = {
+                        Column(modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                        ) {
+                            TextField(
+                                modifier = Modifier
+                                    .wrapContentHeight()
+                                    .fillMaxWidth()
+                                    .padding(5.dp)
+                                    .border(
+                                        2.dp, Color.Blue,
+                                        shape = RoundedCornerShape(30.dp)
+                                    )
+                                    .clip(RoundedCornerShape(30.dp)),
+                                value = password, // Текущее значение текста в поле
+                                onValueChange = {
+                                    password = it
+                                }, // Обработчик изменения текста, обновляющий переменную "text"
+                                textStyle = TextStyle(fontSize = 24.sp),
+
+                                colors = TextFieldDefaults.textFieldColors(
+                                    focusedIndicatorColor = Color.Transparent, // Цвет индикатора при фокусе на поле (прозрачный - отключает индикатор)
+                                    unfocusedIndicatorColor = Color.Transparent, // Цвет индикатора при потере фокуса на поле (прозрачный - отключает индикатор)
+                                    disabledIndicatorColor = Color.Transparent, // Цвет индикатора, когда поле неактивно (прозрачный - отключает индикатор)
+                                    containerColor = Color.White
+                                ),
+
+
+                                keyboardOptions = KeyboardOptions(
+                                    imeAction = ImeAction.Done, // Действие на кнопке "Готово" на клавиатуре (закрытие клавиатуры)
+                                    keyboardType = KeyboardType.Text // Тип клавиатуры (обычный текст)
+                                ),
+
+                                keyboardActions = KeyboardActions(
+                                    onDone = {
+                                        joinDataManager.pushData_join(room.id, "$uid", "$username", password)
+                                        show = !show
+                                    }
+                                ),
+                            )
+                            Button(modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(20.dp))
+                                .padding(5.dp)
+                                .height(50.dp),
+                                colors = ButtonDefaults.buttonColors(Color.Green),
+                                onClick = {
+                                    joinDataManager.pushData_join(room.id,"$uid", "$username",password)
+                                    val intent = Intent(this@FindRoom, Chat::class.java)
+                                    startActivity(intent)
+                                    show = !show
+
+                                }
+                            ) {
+                                Text(text = "Join in room", fontSize = 24.sp)
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Button(modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(20.dp))
+                                .padding(5.dp)
+                                .height(50.dp),
+                                colors = ButtonDefaults.buttonColors(Color.Red),
+                                onClick = {
+                                    show = !show
+                                }
+                            ) {
+                                Text(text = "No", fontSize = 24.sp)
+                            }
+
+                        }
+                    })
+
+            }
+
+
+    }
+
+    @Composable
+    fun showluck(show: Boolean){
+        Box(modifier = Modifier
+            .fillMaxHeight()
+            .width(60.dp)){
+            if (show) {
+                Icon(
+                    modifier = Modifier
+                        .size(80.dp),
+                    painter = painterResource(id = R.drawable.lock),
+                    contentDescription = "lock",
+                    tint = Color.Blue
+                    // Цвет иконки
+                )
+            } else {
+                Icon(
+                    modifier = Modifier
+                        .size(80.dp),
+                    painter = painterResource(id = R.drawable.lock24px),
+                    contentDescription = "open",
+                    tint = Color.Blue
+                    
+                )
+            }
+        }
     }
 
 
@@ -613,9 +801,7 @@ class FindRoom : ComponentActivity() {
     }
 
     fun goToChatActivity(roomId: String) {
-
         saveRoomId(this, roomId)
-
     }
 
 

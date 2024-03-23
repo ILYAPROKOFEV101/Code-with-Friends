@@ -1,35 +1,15 @@
 package com.ilya.codewithfriends.Vois
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
+import android.media.AudioAttributes
 import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
-import android.util.Base64
-import androidx.core.app.ActivityCompat
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.CoroutineScope
+import android.media.AudioManager
+import android.media.AudioTrack
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.WebSocket
-import okhttp3.WebSocketListener
-import okio.ByteString
-import okio.ByteString.Companion.toByteString
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
-import kotlin.concurrent.thread
 
 
 class AudioSender(private val webSocketUrl: String) {
@@ -66,6 +46,57 @@ class AudioSender(private val webSocketUrl: String) {
     }
 
     fun stopSending() {
-        webSocket?.close(1000, null)
+        webSocket?.close(500, null)
     }
 }
+
+
+class AudioPlayer {
+
+    private var audioTrack: AudioTrack? = null
+
+    fun play(audioData: ByteArray) {
+        // Stop any ongoing playback
+        stop()
+
+        // Create an AudioTrack
+        val minBufferSize = AudioTrack.getMinBufferSize(
+            44100,
+            AudioFormat.CHANNEL_OUT_MONO,
+            AudioFormat.ENCODING_PCM_16BIT
+        )
+        audioTrack = AudioTrack(
+            AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build(),
+            AudioFormat.Builder()
+                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setSampleRate(44100)
+                .build(),
+            minBufferSize,
+            AudioTrack.MODE_STREAM,
+            AudioManager.AUDIO_SESSION_ID_GENERATE
+        )
+
+        // Start playback
+        audioTrack?.play()
+
+        // Write data to the AudioTrack
+        audioTrack?.write(audioData, 0, audioData.size)
+
+        // Wait for playback to finish
+        while (audioTrack?.playState == AudioTrack.PLAYSTATE_PLAYING) {
+            // Do nothing, just wait
+        }
+
+        // Release resources
+        stop()
+    }
+
+    private fun stop() {
+        audioTrack?.stop()
+        audioTrack?.release()
+        audioTrack = null
+    }
+}
+
+

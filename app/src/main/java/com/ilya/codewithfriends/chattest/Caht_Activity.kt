@@ -34,6 +34,7 @@ import com.ilya.codewithfriends.presentation.profile.ID
 import com.ilya.codewithfriends.presentation.profile.IMG
 import com.ilya.codewithfriends.presentation.profile.UID
 import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
+import com.ilya.reaction.logik.PreferenceHelper
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -66,9 +67,7 @@ class Caht_Activity : FragmentActivity(), FragmentManagerProvider {
         val name = UID(
             userData = googleAuthUiClient.getSignedInUser()
         )
-        val img = IMG(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
+        val img =  PreferenceHelper.getimg(this)
         val id = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )
