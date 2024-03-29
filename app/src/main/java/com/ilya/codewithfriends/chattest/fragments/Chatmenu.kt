@@ -193,7 +193,7 @@ class Chatmenu : Fragment() {
                 SwipeRefresh(
                     state = swipeRefresh,
                     onRefresh = {
-
+                        recreate(requireActivity())
                     }
                 ) {
                     Column(
@@ -209,9 +209,6 @@ class Chatmenu : Fragment() {
                                 ShowUser(user.value, "$id")
                             }
                         }
-                        /*else{
-                            open()
-                        }*/
 
                     }
                 }

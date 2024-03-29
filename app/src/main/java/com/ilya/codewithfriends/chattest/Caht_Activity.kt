@@ -23,6 +23,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.auth.api.identity.Identity
+import com.ilya.codewithfriends.Viewphote.ViewPhoto_fragment
 import com.ilya.codewithfriends.chattest.fragments.ChatFragment
 import com.ilya.codewithfriends.chattest.fragments.Chatmenu
 import com.ilya.codewithfriends.chattest.fragments.FreandsFragments
@@ -74,7 +75,7 @@ class Caht_Activity : FragmentActivity(), FragmentManagerProvider {
 
 
 
-        setContent {
+        /*setContent {
 
             val navController = rememberNavController()
             val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
@@ -96,6 +97,34 @@ class Caht_Activity : FragmentActivity(), FragmentManagerProvider {
                 composable("RoomChat") {
                     ChatRoomm(navController, "roomId")
                 }
+
+            }
+
+        }*/
+
+        setContent {
+
+            val navController = rememberNavController()
+            val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
+            // Вызывайте getData только после установки ContentView
+            //   GET_MYROOM("$id", data_from_myroom)
+            NavHost(
+                navController = navController,
+                startDestination = "friends"
+            ) {
+                composable("friends") {
+                    Freands(navController)
+                }
+                composable("chatmenu") {
+                    ChatmenuContent(navController)
+                }
+                composable("chat") {
+                    ChatScreen(navController, "roomId")
+                }
+                composable("RoomChat") {
+                    ChatRoomm(navController, "roomId")
+                }
+
             }
 
         }
@@ -132,6 +161,33 @@ fun ChatScreen(navController: NavController, storedRoomId: String?) {
     )
 
 
+}
+
+@Composable
+fun ViewPhoto(navController: NavController,photo: String?) {
+    AndroidView(
+        factory = { context ->
+            // Создаем FragmentContainerView
+            FragmentContainerView(context).apply {
+                id = View.generateViewId()
+            }
+        },
+        update = { view ->
+            // Получаем FragmentManager
+            val fragmentManager = (view.context as FragmentActivity).supportFragmentManager
+            // Создаем и добавляем Chatmenu фрагмент
+            val fragmentTransaction = fragmentManager.beginTransaction()
+
+            val ViewPhoto_fragment = ViewPhoto_fragment().apply {
+                arguments = Bundle().apply {
+                    putString("VIEWPHOTO", photo)
+                }
+            }
+
+            fragmentTransaction.replace(view.id, ViewPhoto_fragment)
+            fragmentTransaction.commit()
+        }
+    )
 }
 
 @Composable

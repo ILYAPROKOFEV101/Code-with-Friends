@@ -7,7 +7,7 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface Apiuser {
-    @POST("user/{uid}")
+    @POST("postuser/{uid}")
     fun Sanduser(@Path("uid") roomId: String, @Body request: User): Call<Void>
 }
 

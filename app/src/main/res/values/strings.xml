@@ -35,10 +35,12 @@
     <string name="label">send</string>
     <string name="find">Find user</string>
     <string name="passwrd">write your password</string>
+    <string name="adduser">add user</string>
+    <string name="aboutuser">about user</string>
 
 
     <string name="Nothinkchose">nothing selected</string>
-    <string name="all">ALL ROOM</string>
+    <string name="all">ALL ROOMS</string>
     <string name="Muroom">MY ROOM</string>
     <string name="SpeshelRoom">SELECT</string>
     <string name="policy">

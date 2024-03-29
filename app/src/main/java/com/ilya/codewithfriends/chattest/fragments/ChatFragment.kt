@@ -179,9 +179,6 @@ class ChatFragment : Fragment() {
         // Создаем ComposeView и устанавливаем контент
         return ComposeView(requireContext()).apply {
             setContent {
-                val name = UID(
-                    userData = googleAuthUiClient.getSignedInUser()
-                )
                 val img = IMG(
                     userData = googleAuthUiClient.getSignedInUser()
                 )
@@ -196,11 +193,7 @@ class ChatFragment : Fragment() {
                         // Создание экземпляра Creator
                         val creator = Creator(
                             onSendMessage = { message ->
-                                // Здесь вы можете добавить логику для отправки сообщения через WebSocket
-
                                 sendMessage(message )
-
-                                // Используйте selectedImageUri и pickImage по вашему усмотрению
                             },
                             selectedImageUri = selectedImageUri,
                             pickImage = pickImage
@@ -213,23 +206,6 @@ class ChatFragment : Fragment() {
         }
     }
 
-   /* private fun sendMessage(message: String, socketValue: String, nameValue: String,imgValue: String,idValue: String ) {
-
-        val webSocketClient = com.ilya.codewithfriends.chats.WebSocketClient(
-            "$socketValue",
-            "$nameValue",
-            "$imgValue",
-            "$idValue"
-        )
-        webSocketClient.connect()
-
-        webSocketClient.sendMessage("$message")
-
-
-
-    }*/
-
-    // Функция для отправки сообщения через WebSocket
     fun sendMessage(message: String) {
         // Проверяем, что WebSocket подключен
         if (webSocket != null) {
@@ -238,9 +214,6 @@ class ChatFragment : Fragment() {
             // WebSocket не подключен, выполните необходимые действия
         }
     }
-
-
-
 
 
     private fun setupWebSocket(
@@ -322,8 +295,6 @@ class ChatFragment : Fragment() {
 
 
 
-
-
     fun extractImageFromMessage(input: String): String? {
         val pattern = "<image>(.+?)</image>".toRegex()
         val matchResult = pattern.find(input)
@@ -340,7 +311,6 @@ class ChatFragment : Fragment() {
             message
         }
     }
-
 
 
     private fun showToast(message: String, context: Context) {

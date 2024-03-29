@@ -282,7 +282,7 @@ class RoomChat : Fragment() {
                         SwipeRefresh(
                             state = swipeRefresh,
                             onRefresh = {
-                               // recreate()
+                                recreate(requireActivity())
                             }
                         ) {
 

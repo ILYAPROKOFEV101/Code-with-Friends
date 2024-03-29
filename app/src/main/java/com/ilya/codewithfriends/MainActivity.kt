@@ -347,7 +347,10 @@ class  MainActivity: ComponentActivity() {
 
 
                         val navController = rememberNavController()
-                        NavHost(navController = navController, startDestination = "sign_in") {
+                        NavHost(
+                            navController = navController,
+                            startDestination = "sign_in") {
+
                             composable("sign_in") {
                                 val viewModel = viewModel<SignInViewModel>()
                                 val state by viewModel.state.collectAsStateWithLifecycle()

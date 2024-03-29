@@ -1,4 +1,4 @@
-package com.ilya.codewithfriends.roomsetting
+package com.ilya.codewithfriends.roomsetting.Room_Fragments
 
 import android.content.Context
 import android.content.Intent
@@ -7,16 +7,20 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
-import androidx.activity.ComponentActivity
+import android.view.ViewGroup
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,57 +36,99 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.AlertDialog
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
+import co.yml.charts.common.model.PlotType
+import co.yml.charts.ui.piechart.charts.DonutPieChart
+import co.yml.charts.ui.piechart.models.PieChartConfig
+import co.yml.charts.ui.piechart.models.PieChartData
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
+import coil.size.Precision
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.ilya.codewithfriends.Aboutusers.Aboutuser
-import com.ilya.codewithfriends.R
-import com.ilya.codewithfriends.Startmenu.Main_menu
-import com.ilya.codewithfriends.createamspeck.TeamSpeak
-import com.ilya.codewithfriends.findroom.Room
-import com.ilya.codewithfriends.firebase.Addtask
-import com.ilya.codewithfriends.presentation.profile.ID
-import com.ilya.codewithfriends.presentation.profile.IMG
-import com.ilya.codewithfriends.presentation.profile.UID
-import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
-import com.ilya.codewithfriends.roomsetting.ui.theme.Participant
-import com.ilya.reaction.logik.PreferenceHelper.getRoomId
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.common.reflect.TypeToken
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
+import com.ilya.codewithfriends.Aboutusers.Aboutuser
+import com.ilya.codewithfriends.MainViewModel
+import com.ilya.codewithfriends.R
+import com.ilya.codewithfriends.Startmenu.Main_menu
+import com.ilya.codewithfriends.Vois.ViceActivity
+import com.ilya.codewithfriends.chattest.fragments.newUserData
+import com.ilya.codewithfriends.findroom.Room
+import com.ilya.codewithfriends.firebase.Addtask
+import com.ilya.codewithfriends.presentation.profile.ID
+import com.ilya.codewithfriends.presentation.profile.UID
+import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
+import com.ilya.codewithfriends.roomsetting.API_DELET
+import com.ilya.codewithfriends.roomsetting.Addids
+import com.ilya.codewithfriends.roomsetting.Api
+import com.ilya.codewithfriends.roomsetting.ApiService_ilya
+import com.ilya.codewithfriends.roomsetting.Apidelte
+import com.ilya.codewithfriends.roomsetting.GetmyAPI
+import com.ilya.codewithfriends.roomsetting.Git_ivite
+import com.ilya.codewithfriends.roomsetting.Kick
+import com.ilya.codewithfriends.roomsetting.Over_DeletetItem
+import com.ilya.codewithfriends.roomsetting.Room2
+import com.ilya.codewithfriends.roomsetting.TaskData
+import com.ilya.codewithfriends.roomsetting.TaskResponse
+import com.ilya.codewithfriends.roomsetting.Usrs_ivite
+import com.ilya.codewithfriends.roomsetting.ids
+import com.ilya.codewithfriends.roomsetting.ui.theme.Participant
+import com.ilya.codewithfriends.test.TestActivity
+import com.ilya.reaction.logik.PreferenceHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -90,73 +137,28 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import androidx.compose.runtime.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.rememberModalBottomSheetState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.fragment.app.FragmentActivity
-import androidx.fragment.app.FragmentContainerView
-import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import co.yml.charts.common.model.PlotType
-import co.yml.charts.ui.piechart.charts.DonutPieChart
-import co.yml.charts.ui.piechart.models.PieChartConfig
-import co.yml.charts.ui.piechart.models.PieChartData
-import com.ilya.codewithfriends.MainViewModel
-import com.ilya.codewithfriends.Viewphote.ViewPhoto
-import com.ilya.codewithfriends.test.TestActivity
-import com.ilya.reaction.logik.PreferenceHelper
-import com.ilya.reaction.logik.PreferenceHelper.clearAllMessages
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import com.ilya.codewithfriends.Viewphote.ViewPhoto_fragment
-import com.ilya.codewithfriends.Vois.ViceActivity
-import com.ilya.codewithfriends.chattest.ChatRoomm
-import com.ilya.codewithfriends.chattest.ChatScreen
-import com.ilya.codewithfriends.chattest.ChatmenuContent
-import com.ilya.codewithfriends.chattest.Freands
-import com.ilya.codewithfriends.chattest.ViewPhoto
-import com.ilya.codewithfriends.chattest.fragments.FreandsFragments
-import com.ilya.codewithfriends.chattest.fragments.RoomChat
-import com.ilya.codewithfriends.findroom.Getmyroom
 
 
-class Roomsetting : ComponentActivity() {
+class Room_fragment : Fragment() {
+
 
 
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
-            context = applicationContext,
-            oneTapClient = Identity.getSignInClient(applicationContext)
+            context = requireContext().applicationContext,
+            oneTapClient = Identity.getSignInClient(requireContext().applicationContext)
         )
     }
     private var storedRoomId: String? = null // Объявляем на уровне класса
-     var task = mutableStateOf(listOf<TaskData>())
+    var task = mutableStateOf(listOf<TaskData>())
     var tokens by mutableStateOf("")
     // Состояния для отслеживания значений
     var over by   mutableStateOf(0f)
     var delete by   mutableStateOf(0f)
 
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
 
 
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
@@ -173,7 +175,7 @@ class Roomsetting : ComponentActivity() {
 
 
 
-        storedRoomId = getRoomId(this)
+        storedRoomId = PreferenceHelper.getRoomId(requireContext())
 
 
         storedRoomId?.let { nonNullValue ->
@@ -185,157 +187,164 @@ class Roomsetting : ComponentActivity() {
         }
 
 
-        setContent {
-            val viewModel = viewModel<MainViewModel>()
-            val isLoading by viewModel.isLoading.collectAsState()
-            val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
-
-            val data_from_myroom = remember { mutableStateOf(emptyList<Room2>()) }
-
-            val rooms = remember { mutableStateOf(emptyList<Room>()) }
-
-            val ivite_list = remember { mutableStateOf(emptyList<Usrs_ivite>()) }
-
-            val participants = remember { mutableStateOf(emptyList<Participant>()) }
-
-            GET_MYROOM(storedRoomId!!, data_from_myroom)
-            Get_invite_list(storedRoomId!!, ivite_list)
-            // Проверяем, есть ли данные комнаты
-
-
-            val firstRoom = rooms.value.firstOrNull()
-
-
-            val id = ID(
-                userData = googleAuthUiClient.getSignedInUser()
-            )
-
-            if (id != null && tokens != null) {
-                sendPostRequest(storedRoomId!!, "$id")
-            }
-
-
-            storedRoomId = getRoomId(this)
 
 
 
 
-            // Сохранение значения для ключа KEY_STRING_1
-            PreferenceHelper.saveid(this, "$id")
+
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        // Создаем ComposeView и устанавливаем контент
+        return ComposeView(requireContext()).apply {
+            setContent {
+                val viewModel = viewModel<MainViewModel>()
+                val isLoading by viewModel.isLoading.collectAsState()
+                val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
+
+                val data_from_myroom = remember { mutableStateOf(emptyList<Room2>()) }
+
+                val rooms = remember { mutableStateOf(emptyList<Room>()) }
+
+                val ivite_list = remember { mutableStateOf(emptyList<Usrs_ivite>()) }
+
+                val participants = remember { mutableStateOf(emptyList<Participant>()) }
+
+                GET_MYROOM(storedRoomId!!, data_from_myroom)
+                Get_invite_list(storedRoomId!!, ivite_list)
+                // Проверяем, есть ли данные комнаты
+
+
+                val firstRoom = rooms.value.firstOrNull()
+
+
+                val id = ID(
+                    userData = googleAuthUiClient.getSignedInUser()
+                )
+
+                if (id != null && tokens != null) {
+                    sendPostRequest(storedRoomId!!, "$id")
+                }
+
+
+                storedRoomId = PreferenceHelper.getRoomId(requireContext())
 
 
 
-            // Сохранение значения для ключа KEY_STRING_4
-            PreferenceHelper.saveSoket(this, "$storedRoomId")
+
+                // Сохранение значения для ключа KEY_STRING_1
+                PreferenceHelper.saveid(requireContext(), "$id")
 
 
-            Handler(Looper.getMainLooper()).postDelayed({
-                getData(storedRoomId!!, rooms)
 
-                whoinroom(storedRoomId!!, participants)
+                // Сохранение значения для ключа KEY_STRING_4
+                PreferenceHelper.saveSoket(requireContext(), "$storedRoomId")
 
 
-            }, 500) // 3000 миллисекунд (3 секунды)
+                Handler(Looper.getMainLooper()).postDelayed({
+                    getData(storedRoomId!!, rooms)
 
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                val context = LocalContext.current
-                SwipeRefresh(
-                    state = swipeRefresh,
-                    onRefresh =
-                    {
-                        recreate()
-                    }
+                    whoinroom(storedRoomId!!, participants)
+
+
+                }, 500) // 3000 миллисекунд (3 секунды)
+
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                    ) {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f) // Отдает оставшееся пространство RoomList
-                                .background(Color(0x2F3083FF))
-                        ) {
-                            item {
-                                icon(data_from_myroom)
-                                Spacer(modifier = Modifier.height(30.dp))
-                            }
-
-                            // Вызываем roomname() только если есть данные комнаты
-
-                            item {
-                                firstRoom?.let {
-                                    roomname(
-                                        roomName = it.roomName,
-                                        "$id",
-                                        storedRoomId!!,
-                                        "$id",
-                                                data_from_myroom
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(30.dp))
-                            }
-                            item {
-                                User_ivite(ivite_list.value)
-                                Spacer(modifier = Modifier.height(30.dp))
-                            }
-
-
-                            item {
-                                userinroom(
-                                    participants.value,
-                                    "$id",
-                                    data_from_myroom
-                                ) // Передаем participants.value
-                                Spacer(modifier = Modifier.height(30.dp))
-                            }
-
-
-                            item {
-                                TaskList(task.value, storedRoomId!!)
-                                // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
-                                Spacer(modifier = Modifier.height(30.dp))
-
-                            }
-                            item {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(450.dp)
-                                ) {
-                                    SimpleDonutChart(context, over, delete)
-                                    // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
-                                }
-                                Spacer(modifier = Modifier.height(30.dp))
-
-                            }
-                            item {
-                                addtask()
-                                Spacer(modifier = Modifier.height(30.dp))
-                            }
-                            item {
-                                Teamspeack()
-                                Spacer(modifier = Modifier.height(30.dp))
-                            }
-
+                    val context = LocalContext.current
+                    SwipeRefresh(
+                        state = swipeRefresh,
+                        onRefresh =
+                        {
+                            ActivityCompat.recreate(requireActivity())
                         }
-                        Box(
+                    ) {
+                        Column(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(80.dp)
+                                .fillMaxSize()
                         ) {
-                            val testActivity = TestActivity()
-                            testActivity.ButtonBar(context)
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f) // Отдает оставшееся пространство RoomList
+                                    .background(Color(0x2F3083FF))
+                            ) {
+                                item {
+                                    icon(data_from_myroom)
+                                    Spacer(modifier = Modifier.height(30.dp))
+                                }
+
+                                // Вызываем roomname() только если есть данные комнаты
+
+                                item {
+                                    firstRoom?.let {
+                                        roomname(
+                                            roomName = it.roomName,
+                                            "$id",
+                                            storedRoomId!!,
+                                            "$id",
+                                            data_from_myroom
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(30.dp))
+                                }
+                                item {
+                                    User_ivite(ivite_list.value)
+                                    Spacer(modifier = Modifier.height(30.dp))
+                                }
+
+
+                                item {
+                                    userinroom(
+                                        participants.value,
+                                        "$id",
+                                        data_from_myroom
+                                    ) // Передаем participants.value
+                                    Spacer(modifier = Modifier.height(30.dp))
+                                }
+
+
+                                item {
+                                    TaskList(task.value, storedRoomId!!)
+                                    // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
+                                    Spacer(modifier = Modifier.height(30.dp))
+
+                                }
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(450.dp)
+                                    ) {
+                                        SimpleDonutChart(context, over, delete)
+                                        // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
+                                    }
+                                    Spacer(modifier = Modifier.height(30.dp))
+
+                                }
+                                item {
+                                    addtask()
+                                    Spacer(modifier = Modifier.height(30.dp))
+                                }
+                                item {
+                                    Teamspeack()
+                                    Spacer(modifier = Modifier.height(30.dp))
+                                }
+
+                            }
+
                         }
                     }
                 }
             }
+            }
         }
-
-    }
     @Composable
     fun icon( rooms: MutableState<List<Room2>>) {
         Card(
@@ -351,26 +360,26 @@ class Roomsetting : ComponentActivity() {
             val roomsList: List<Room2> = rooms.value
 
             for (room in roomsList) {
-            Image(
-                painter = if (room.url.isNotEmpty()) {
-                    // Load image from URL
-                    rememberImagePainter(data = room.url)
-                } else {
-                    // Load a default image when URL is empty
-                    painterResource(id = R.drawable.android) // Replace with your default image resource
-                },
-                contentDescription = null,
-                modifier = Modifier
-                    .size(270.dp)
-                    .clip(RoundedCornerShape(180.dp))
-                    .align(Alignment.CenterHorizontally)
-                ,
-                contentScale = ContentScale.Crop,
-            )
+                Image(
+                    painter = if (room.url.isNotEmpty()) {
+                        // Load image from URL
+                        rememberImagePainter(data = room.url)
+                    } else {
+                        // Load a default image when URL is empty
+                        painterResource(id = R.drawable.android) // Replace with your default image resource
+                    },
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(270.dp)
+                        .clip(RoundedCornerShape(180.dp))
+                        .align(Alignment.CenterHorizontally)
+                    ,
+                    contentScale = ContentScale.Crop,
+                )
 
 
+            }
         }
-    }
     }
 
 
@@ -404,7 +413,7 @@ class Roomsetting : ComponentActivity() {
             }
         )
 
-        val requestQueue = Volley.newRequestQueue(this)
+        val requestQueue = Volley.newRequestQueue(requireContext())
         requestQueue.add(request)
     }
 
@@ -487,7 +496,7 @@ class Roomsetting : ComponentActivity() {
             }
         )
 
-        val requestQueue = Volley.newRequestQueue(this)
+        val requestQueue = Volley.newRequestQueue(requireContext())
         requestQueue.add(request)
     }
 
@@ -545,7 +554,7 @@ class Roomsetting : ComponentActivity() {
             .build()
 
         // Создайте экземпляр службы API
-        val apiService = retrofit.create(OVER_DELETE::class.java)
+        val apiService = retrofit.create(com.ilya.codewithfriends.roomsetting.OVER_DELETE::class.java)
 
         // Вызовите GET-запрос
         val call = apiService.OVER_AND_DELETE(roomId)
@@ -591,10 +600,10 @@ class Roomsetting : ComponentActivity() {
             mutableStateOf(false)
         }
         if (shows == true) {
-            ComposeAlertDialog(roomName, uid, roomId, this)
+            ComposeAlertDialog(roomName, uid, roomId, requireContext())
         }
         if (delete == true) {
-            DeleteRoom(uid, roomId, this)
+            DeleteRoom(uid, roomId, requireContext())
         }
 
         Card(
@@ -804,10 +813,10 @@ class Roomsetting : ComponentActivity() {
 
                                 deleteRequest(uid, roomId)// вызываю функцию для удоления пользователя из комнаты
 
-                                val intent = Intent(this@Roomsetting, Main_menu::class.java)
-                                 startActivity(intent)
-                                clearAllMessages(context)
-                                      },
+                                val intent = Intent(requireContext(), Main_menu::class.java)
+                                startActivity(intent)
+                                PreferenceHelper.clearAllMessages(context)
+                            },
                             colors = ButtonDefaults.buttonColors(Color.Red),
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -858,10 +867,10 @@ class Roomsetting : ComponentActivity() {
 
                                 //deleteRequest(uid, roomId)// вызываю функцию для удоления пользователя из комнаты
                                 DeleteeRoom(uid, roomId)
-                                val intent = Intent(this@Roomsetting, Main_menu::class.java)
-                                 startActivity(intent)
+                                val intent = Intent(requireContext(), Main_menu::class.java)
+                                startActivity(intent)
                                 // Вызов функции для очистки всех сообщений
-                                clearAllMessages(context)
+                                PreferenceHelper.clearAllMessages(context)
 
                             },
                             colors = ButtonDefaults.buttonColors(Color.Red),
@@ -908,7 +917,7 @@ class Roomsetting : ComponentActivity() {
                         Button(
                             onClick = {
                                 kickuser(soket, uid)
-                                recreate()
+
                             },
                             colors = ButtonDefaults.buttonColors(Color.Red),
                             modifier = Modifier
@@ -941,7 +950,7 @@ class Roomsetting : ComponentActivity() {
             .build()
 
         // Создаем API интерфейс
-        val api = retrofit.create(DeleteRoom::class.java)
+        val api = retrofit.create(com.ilya.codewithfriends.roomsetting.DeleteRoom::class.java)
 
         // Создаем запрос
         val request = api.deleteRooms( roomId, uid)
@@ -1058,7 +1067,7 @@ class Roomsetting : ComponentActivity() {
 
 
     @Composable
-    fun userinroom(participantsState: List<Participant>, uids: String,rooms: MutableState<List<Room2>>,) {  // this fun mean how match users in room
+    fun userinroom(participantsState: List<Participant>, uids: String, rooms: MutableState<List<Room2>>,) {  // this fun mean how match users in room
         val cornerShape: Shape = RoundedCornerShape(20.dp) // устанавливаем радиус закругления углов
 
         var shows by remember {
@@ -1122,7 +1131,7 @@ class Roomsetting : ComponentActivity() {
                                         .height(50.dp),
                                     shape = RoundedCornerShape(10.dp),
                                     onClick = {
-                                        val intent = Intent(this@Roomsetting, Aboutuser::class.java)
+                                        val intent = Intent(requireContext(), Aboutuser::class.java)
                                         intent.putExtra(
                                             "userId",
                                             participant.userId
@@ -1195,7 +1204,7 @@ class Roomsetting : ComponentActivity() {
 
 
     @Composable
-    fun TaskCard(task: TaskData,roomId: String) {
+    fun TaskCard(task: TaskData, roomId: String) {
 
 
 
@@ -1233,7 +1242,7 @@ class Roomsetting : ComponentActivity() {
                             .padding(20.dp)
                             .height(600.dp)
                             .clickable {
-                                
+
                             }
                     )
                 }
@@ -1267,8 +1276,7 @@ class Roomsetting : ComponentActivity() {
                         onClick = {
                             deleteDataComplit("$roomId", "${task.id}")
 
-                            //  deleteUserFromRoomAsync
-                            recreate()
+
                         },
                     ) {
 
@@ -1295,7 +1303,7 @@ class Roomsetting : ComponentActivity() {
                         colors = ButtonDefaults.buttonColors(Color.Green),
                         onClick = {
                             deleteData("$roomId", "${task.id}")
-                            recreate()
+
                         },
                     ) {
                         Text(text = "finished", fontSize = 15.sp, modifier = Modifier)
@@ -1391,33 +1399,33 @@ class Roomsetting : ComponentActivity() {
 
 
     fun deleteData(id: String, roomId: String) {
-            // Запускаем корутину
-            CoroutineScope(Dispatchers.IO).launch {
-                // Создаем Retrofit клиент
-                val retrofit = Retrofit.Builder()
-                    .baseUrl("https://getpost-ilya1.up.railway.app/")
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build()
+        // Запускаем корутину
+        CoroutineScope(Dispatchers.IO).launch {
+            // Создаем Retrofit клиент
+            val retrofit = Retrofit.Builder()
+                .baseUrl("https://getpost-ilya1.up.railway.app/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
 
-                // Создаем API интерфейс
-                val api = retrofit.create(Apidelte::class.java)
+            // Создаем API интерфейс
+            val api = retrofit.create(Apidelte::class.java)
 
-                // Вызываем suspend функцию внутри корутины
-                try {
-                    val response = api.delete(id, roomId)
-                    if (response.isSuccessful) {
-                        // Комната удалена
-                        Log.d("deleteRequest", "Комната удалена")
-                    } else {
-                        // Ошибка
-                        Log.e("deleteRequest", "Ошибка удаления комнаты: ${response.message()}")
-                    }
-                } catch (e: Exception) {
+            // Вызываем suspend функцию внутри корутины
+            try {
+                val response = api.delete(id, roomId)
+                if (response.isSuccessful) {
+                    // Комната удалена
+                    Log.d("deleteRequest", "Комната удалена")
+                } else {
                     // Ошибка
-                    Log.e("deleteRequest", "Ошибка удаления комнаты: ${e.message}")
+                    Log.e("deleteRequest", "Ошибка удаления комнаты: ${response.message()}")
                 }
+            } catch (e: Exception) {
+                // Ошибка
+                Log.e("deleteRequest", "Ошибка удаления комнаты: ${e.message}")
             }
         }
+    }
     fun deleteDataComplit(id: String, roomId: String) {
         // Запускаем корутину
         CoroutineScope(Dispatchers.IO).launch {
@@ -1485,29 +1493,29 @@ class Roomsetting : ComponentActivity() {
     @Preview(showBackground = true)
     @Composable
     fun addtask(){
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(80.dp)
-    ) {
-
-
-        Button(
-            colors = ButtonDefaults.buttonColors(Color.Blue),
-            onClick = {
-                val intent = Intent(this@Roomsetting, Addtask::class.java)
-                startActivity(intent)
-                finish()
-            },
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(start = 2.dp, end = 2.dp)
-                .clip(RoundedCornerShape(100.dp))
+                .fillMaxWidth()
+                .height(80.dp)
         ) {
-            Text(text = stringResource(id = R.string.Addtask),fontSize = 24.sp)
+
+
+            Button(
+                colors = ButtonDefaults.buttonColors(Color.Blue),
+                onClick = {
+                    val intent = Intent(requireContext(), Addtask::class.java)
+                    startActivity(intent)
+
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = 2.dp, end = 2.dp)
+                    .clip(RoundedCornerShape(100.dp))
+            ) {
+                Text(text = stringResource(id = R.string.Addtask),fontSize = 24.sp)
+            }
         }
     }
-}
 
 
     @Preview(showBackground = true)
@@ -1522,7 +1530,7 @@ class Roomsetting : ComponentActivity() {
             Button(
                 colors = ButtonDefaults.buttonColors(Color.Green),
                 onClick = {
-                    val intent = Intent(this@Roomsetting, ViceActivity::class.java)
+                    val intent = Intent(requireContext(), ViceActivity::class.java)
                     startActivity(intent)
                 },
                 modifier = Modifier
@@ -1580,3 +1588,4 @@ class Roomsetting : ComponentActivity() {
 
 
 }
+

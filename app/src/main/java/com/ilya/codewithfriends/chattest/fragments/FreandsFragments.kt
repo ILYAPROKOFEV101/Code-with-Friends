@@ -278,7 +278,7 @@ class FreandsFragments : Fragment() {
                         SwipeRefresh(
                             state = swipeRefresh,
                             onRefresh = {
-
+                                recreate(requireActivity())
                             }
                         ) {
                             Column(
