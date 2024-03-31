@@ -13,9 +13,9 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 
-interface Api {
+interface Get_All_rooms {
     @GET("/data/{uid}")
-    fun getRooms(@Path("uid") uid: String): Call<List<Room>>
+    fun Get_ALL_ROOMS(@Path("uid") uid: String): Call<List<Room>>
 }
 interface Getmyroom {
     @GET("/getmyroom/{userId}")
@@ -27,3 +27,11 @@ interface Join{
     fun Join_in_room(@Body request: join_room): Call<Void>
 }
 
+
+
+data class join_room(
+    val roomId: String,
+    val user_id: String,
+    val username: String,
+    val password: String
+)

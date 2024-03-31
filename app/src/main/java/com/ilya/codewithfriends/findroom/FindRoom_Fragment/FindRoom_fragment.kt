@@ -11,7 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.BorderStroke
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,99 +19,125 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+
+import okhttp3.OkHttpClient
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+
+
+import androidx.compose.foundation.layout.Column
+
+
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat.recreate
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberImagePainter
-import coil.size.Precision
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import com.google.android.gms.auth.api.identity.Identity
-import com.google.firebase.messaging.FirebaseMessaging
-import com.ilya.codewithfriends.APIclass.JoinDataManager
-import com.ilya.codewithfriends.MainViewModel
 import com.ilya.codewithfriends.R
 import com.ilya.codewithfriends.chats.Chat
-import com.ilya.codewithfriends.chattest.fragments.newUserData
-import com.ilya.codewithfriends.findroom.Api
-import com.ilya.codewithfriends.findroom.Getmyroom
-import com.ilya.codewithfriends.findroom.Room
-import com.ilya.codewithfriends.findroom.ui.theme.CodeWithFriendsTheme
+
+
+
+
 import com.ilya.codewithfriends.presentation.profile.ID
-import com.ilya.codewithfriends.presentation.profile.UID
 import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
-import com.ilya.codewithfriends.test.TestActivity
-import com.ilya.reaction.logik.PreferenceHelper
-import kotlinx.coroutines.delay
-import okhttp3.OkHttpClient
+import com.ilya.reaction.logik.PreferenceHelper.saveRoomId
+import com.google.android.gms.auth.api.identity.Identity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class FindRoom_fragment : Fragment() {
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import kotlinx.coroutines.delay
 
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme.colorScheme
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.platform.ComposeView
+
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.core.app.ActivityCompat.recreate
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ilya.codewithfriends.APIclass.JoinDataManager
+
+import com.ilya.codewithfriends.MainViewModel
+import com.ilya.codewithfriends.Startmenu.Main_menu
+import com.ilya.codewithfriends.findroom.GET_MYROOM
+import com.ilya.codewithfriends.findroom.Room
+import com.ilya.codewithfriends.findroom.getData
+
+import com.ilya.codewithfriends.findroom.ui.theme.CodeWithFriendsTheme
+import com.ilya.codewithfriends.presentation.profile.UID
+import com.ilya.codewithfriends.test.TestActivity
+import com.ilya.reaction.logik.PreferenceHelper
+import com.ilya.reaction.logik.PreferenceHelper.getRoomId
+
+
+class FindRoom_fragment : Fragment() {
 
 
     private val googleAuthUiClient by lazy {
@@ -127,12 +153,8 @@ class FindRoom_fragment : Fragment() {
     private val handler = Handler()
 
 
-
-
-
     var myroom by  mutableStateOf(false)
     var select by  mutableStateOf(false)
-    var showAlertDialog by  mutableStateOf(false)
 
     val languages = listOf(
         "android development",
@@ -148,20 +170,15 @@ class FindRoom_fragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val id = ID(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
 
-        val loadingComponent = LoadingComponent()
-        loadingComponent.userexsist("$id", requireContext())
+
 
         storedRoomId = PreferenceHelper.getRoomId(requireContext())
 
-
-
-        val joinDataManager = JoinDataManager()
-
     }
+
+
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -170,7 +187,21 @@ class FindRoom_fragment : Fragment() {
     ): View? {
         // Создаем ComposeView и устанавливаем контент
         return ComposeView(requireContext()).apply {
+
             setContent {
+                val id = ID(
+                    userData = googleAuthUiClient.getSignedInUser()
+                )
+                val rooms = remember { mutableStateOf(emptyList<Room>()) }
+                val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
+
+                // Задержка перехода на новую страницу через 3 секунды
+                Handler(Looper.getMainLooper()).postDelayed({
+                    getData("$id", rooms)
+                }, 500) // 3000 миллисекунд (3 секунды)
+
+                // Вызывайте getData только после установки ContentView
+                GET_MYROOM("$id", data_from_myroom)
                 val viewModel = viewModel<MainViewModel>()
                 val isLoading by viewModel.isLoading.collectAsState()
                 val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
@@ -183,23 +214,7 @@ class FindRoom_fragment : Fragment() {
 
                         }
                     ) {
-                        val rooms = remember { mutableStateOf(emptyList<Room>()) }
-                        val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
 
-                        // Задержка перехода на новую страницу через 3 секунды
-                        Handler(Looper.getMainLooper()).postDelayed({
-                            getData("$id", rooms)
-                        }, 500) // 3000 миллисекунд (3 секунды)
-
-                        // Вызывайте getData только после установки ContentView
-                        GET_MYROOM("$id", data_from_myroom)
-
-                        SwipeRefresh(
-                            state = swipeRefresh,
-                            onRefresh = {
-                                recreate(requireActivity())
-                            }
-                        ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -214,101 +229,17 @@ class FindRoom_fragment : Fragment() {
                                 }
 
                             }
-                        }
+
 
                     }
                 }
             }
         }
     }
+
     val joinDataManager = JoinDataManager()
 
-    private fun getData(uid: String,rooms: MutableState<List<Room>>) {
-        // Создаем Retrofit клиент
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://getpost-ilya1.up.railway.app/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
 
-        // Создаем API интерфейс
-        val api = retrofit.create(Api::class.java)
-
-        // Создаем запрос
-        val request = api.getRooms(uid)
-
-        // Выполняем запрос
-        request.enqueue(object : Callback<List<Room>> {
-            override fun onFailure(call: Call<List<Room>>, t: Throwable) {
-                // Ошибка
-                Log.e("getData", t.message ?: "Неизвестная ошибка")
-
-                // Курятина
-                if (t.message?.contains("404") ?: false) {
-                    Log.d("getData", "Данные не найдены")
-                } else {
-                    Log.d("getData", "Неизвестная ошибка")
-                }
-            }
-
-            override fun onResponse(call: Call<List<Room>>, response: Response<List<Room>>) {
-                // Успех
-                if (response.isSuccessful) {
-                    // Получаем данные
-                    val newRooms = response.body() ?: emptyList()
-
-                    // Обновляем состояние
-                    rooms.value = newRooms
-                    Log.d("Hello","$newRooms" )
-                } else {
-                    // Ошибка
-                    Log.e("getData", "Ошибка получения данных: ")
-                }
-            }
-        })
-    }
-
-    private fun GET_MYROOM(uid:String, rooms: MutableState<List<Room>>) {
-        // Создаем Retrofit клиент
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://getpost-ilya1.up.railway.app/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        // Создаем API интерфейс
-        val api = retrofit.create(Getmyroom::class.java)
-
-        // Создаем запрос
-        val request = api.getRooms(uid)
-
-        // Выполняем запрос
-        request.enqueue(object : Callback<List<Room>> {
-            override fun onFailure(call: Call<List<Room>>, t: Throwable) {
-                // Ошибка
-                Log.e("getData", t.message ?: "Неизвестная ошибка")
-
-                // Курятина
-                if (t.message?.contains("404") ?: false) {
-                    Log.d("getData", "Данные не найдены")
-                } else {
-                    Log.d("getData", "Неизвестная ошибка")
-                }
-            }
-
-            override fun onResponse(call: Call<List<Room>>, response: Response<List<Room>>) {
-                // Успех
-                if (response.isSuccessful) {
-                    // Получаем данные
-                    val newRooms = response.body() ?: emptyList()
-
-                    // Обновляем состояние
-                    rooms.value = newRooms
-                } else {
-                    // Ошибка
-                    Log.e("getData", "Ошибка получения данных: ")
-                }
-            }
-        })
-    }
 
 
     @Preview(showBackground = true)
@@ -346,7 +277,7 @@ class FindRoom_fragment : Fragment() {
 
         LaunchedEffect(true) {
             // Задержка на 4 секунды
-            delay(4000)
+            delay(20000)
             notFoundVisible = true
         }
 
@@ -800,7 +731,6 @@ class FindRoom_fragment : Fragment() {
     fun goToChatActivity(roomId: String) {
         PreferenceHelper.saveRoomId(requireContext(), roomId)
     }
-
 
 
 

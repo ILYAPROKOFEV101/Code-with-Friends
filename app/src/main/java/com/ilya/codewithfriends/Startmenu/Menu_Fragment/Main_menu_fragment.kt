@@ -84,6 +84,9 @@ import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberImagePainter
 import coil.size.Precision
@@ -99,6 +102,8 @@ import com.ilya.codewithfriends.MainViewModel
 import com.ilya.codewithfriends.R
 import com.ilya.codewithfriends.Startmenu.Adduser
 import com.ilya.codewithfriends.Startmenu.Apiuser
+import com.ilya.codewithfriends.Startmenu.FindRoom
+import com.ilya.codewithfriends.Startmenu.Main_menu_fragment
 import com.ilya.codewithfriends.Startmenu.User
 import com.ilya.codewithfriends.Startmenu.changeUserName
 import com.ilya.codewithfriends.Startmenu.changeUserURL
@@ -208,51 +213,68 @@ class Mainmenufragment : Fragment() {
                 }
             )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                SwipeRefresh(
-                    state = swipeRefresh,
-                    onRefresh = {
-                        requireActivity()
-                    }
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                    ) {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                        ) {
-                            val name = UID(
-                                userData = googleAuthUiClient.getSignedInUser()
-                            )
-                            val img = IMG(
-                                userData = googleAuthUiClient.getSignedInUser()
-                            )
-                            val id = ID(
-                                userData = googleAuthUiClient.getSignedInUser()
-                            )
-                                if(imgValue == ""){
-                                    saveimg( requireContext(), "$img")
-                                }
-                            item {
-                                Create_Acount(if(imgValue == ""){"$img"} else {"$imgValue"}, LocalContext.current)
-                            }
-                            item {
-                                Edit("$id", "$img", "$name")
-                            }
-                            item {
-                                Button("$id")
-                            }
-                        }
+                 val navController = rememberNavController()
+                 NavHost(
+                     navController = navController,
+                     startDestination = "Main_Menu",
+                     modifier = Modifier.fillMaxSize()
+                 ) {
+                     composable("Main_Menu") {
+                         Column(
+                             modifier = Modifier
+                                 .fillMaxSize()
+                         ) {
+                             SwipeRefresh(
+                                 state = swipeRefresh,
+                                 onRefresh = {
+                                     requireActivity()
+                                 }
+                             ) {
 
-                    }
-                }
-            }
+
+                                 Column(
+                                     modifier = Modifier
+                                         .fillMaxSize()
+                                 ) {
+                                     LazyColumn(
+                                         modifier = Modifier
+                                             .fillMaxWidth()
+                                             .weight(1f)
+                                     ) {
+                                         val name = UID(
+                                             userData = googleAuthUiClient.getSignedInUser()
+                                         )
+                                         val img = IMG(
+                                             userData = googleAuthUiClient.getSignedInUser()
+                                         )
+                                         val id = ID(
+                                             userData = googleAuthUiClient.getSignedInUser()
+                                         )
+                                         if(imgValue == ""){
+                                             saveimg( requireContext(), "$img")
+                                         }
+                                         item {
+                                             Create_Acount(if(imgValue == ""){"$img"} else {"$imgValue"}, LocalContext.current)
+                                         }
+                                         item {
+                                             Edit("$id", "$img", "$name")
+                                         }
+                                         item {
+                                             Button("$id", navController)
+                                         }
+                                     }
+
+                                 }
+                             }
+                         }
+                     }
+
+                     composable("FindRoom") {
+                         FindRoom(navController)
+                     }
+                 }
+
+
         }
         }
     }
@@ -686,7 +708,7 @@ class Mainmenufragment : Fragment() {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Button(uid: String){
+    fun Button(uid: String, navController: NavController){
 
 
         getNumberFromServer(uid)
@@ -707,8 +729,10 @@ class Mainmenufragment : Fragment() {
             androidx.compose.material3.Button(
                 colors = ButtonDefaults.buttonColors(creatroom),
                 onClick = {
-                    val intent = Intent(requireContext(), FindRoom::class.java)
-                    startActivity(intent)
+
+                    navController.navigate("FindRoom")
+                    /*val intent = Intent(requireContext(), FindRoom::class.java)
+                    startActivity(intent)*/
                     //finish()
                 },
                 modifier = Modifier

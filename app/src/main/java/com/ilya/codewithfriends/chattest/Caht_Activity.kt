@@ -2,9 +2,16 @@ package com.ilya.codewithfriends.chattest
 
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -13,8 +20,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentManager
@@ -23,13 +34,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.auth.api.identity.Identity
+import com.ilya.codewithfriends.Startmenu.ButtonBar
+import com.ilya.codewithfriends.Startmenu.FindRoom
+import com.ilya.codewithfriends.Startmenu.Main_menu_fragment
+import com.ilya.codewithfriends.Startmenu.Room
 import com.ilya.codewithfriends.Viewphote.ViewPhoto_fragment
 import com.ilya.codewithfriends.chattest.fragments.ChatFragment
 import com.ilya.codewithfriends.chattest.fragments.Chatmenu
 import com.ilya.codewithfriends.chattest.fragments.FreandsFragments
 import com.ilya.codewithfriends.chattest.fragments.RoomChat
 import com.ilya.codewithfriends.chattest.ui.theme.CodeWithFriendsTheme
-import com.ilya.codewithfriends.findroom.Getmyroom
 import com.ilya.codewithfriends.findroom.Room
 import com.ilya.codewithfriends.presentation.profile.ID
 import com.ilya.codewithfriends.presentation.profile.IMG
@@ -43,24 +57,18 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 
-interface FragmentManagerProvider {
-    fun provideFragmentManager(): FragmentManager
-}
 
 
-class Caht_Activity : FragmentActivity(), FragmentManagerProvider {
+
+class Caht_Activity : Fragment(){
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
-            context = applicationContext,
-            oneTapClient = Identity.getSignInClient(applicationContext)
+            context = requireContext(),
+            oneTapClient = Identity.getSignInClient(requireContext())
         )
     }
     private var storedRoomId: String? = null // Объявляем на уровне класса
 
-
-    override fun provideFragmentManager(): FragmentManager {
-        return supportFragmentManager
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,73 +76,73 @@ class Caht_Activity : FragmentActivity(), FragmentManagerProvider {
         val name = UID(
             userData = googleAuthUiClient.getSignedInUser()
         )
-        val img =  PreferenceHelper.getimg(this)
+        val img = PreferenceHelper.getimg(requireContext())
         val id = ID(
             userData = googleAuthUiClient.getSignedInUser()
         )
 
 
+        var context = this
 
-        /*setContent {
-
-            val navController = rememberNavController()
-            val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
-            // Вызывайте getData только после установки ContentView
-         //   GET_MYROOM("$id", data_from_myroom)
-            NavHost(
-                navController = navController,
-                startDestination = "friends"
-            ) {
-                composable("friends") {
-                    Freands(navController)
-                }
-                composable("chatmenu") {
-                    ChatmenuContent(navController)
-                }
-                composable("chat") {
-                    ChatScreen(navController, "roomId")
-                }
-                composable("RoomChat") {
-                    ChatRoomm(navController, "roomId")
-                }
-
-            }
-
-        }*/
-
-        setContent {
-
-            val navController = rememberNavController()
-            val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
-            // Вызывайте getData только после установки ContentView
-            //   GET_MYROOM("$id", data_from_myroom)
-            NavHost(
-                navController = navController,
-                startDestination = "friends"
-            ) {
-                composable("friends") {
-                    Freands(navController)
-                }
-                composable("chatmenu") {
-                    ChatmenuContent(navController)
-                }
-                composable("chat") {
-                    ChatScreen(navController, "roomId")
-                }
-                composable("RoomChat") {
-                    ChatRoomm(navController, "roomId")
-                }
-
-            }
-
-        }
     }
 
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        // Создаем ComposeView и устанавливаем контент
+        return ComposeView(requireContext()).apply {
+            setContent {
+                val navController = rememberNavController()
+                val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
+                // Вызывайте getData только после установки ContentView
+                //   GET_MYROOM("$id", data_from_myroom)
+                Column(Modifier.fillMaxSize()) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f) // Это позволяет Box с NavHost занять все доступное пространство, кроме выделенного для кнопок.
+                            .fillMaxWidth()
+                    ) {
+                        NavHost(
+                            navController = navController,
+                            startDestination = "friends",
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            composable("friends") {
+                                Freands(navController)
+                            }
+                            composable("chatmenu") {
+                                ChatmenuContent(navController)
+                            }
+                            composable("chat") {
+                                ChatScreen(navController, "roomId")
+                            }
+                            composable("RoomChat") {
+                                ChatRoomm(navController, "roomId")
+                            }
+                            composable("Main_Menu") {
+                                Main_menu_fragment(navController)
+                            }
+                            composable("FindRoom") {
+                                FindRoom(navController)
+                            }
+                            composable("Room") {
+                                Room(navController)
+                            }
+                        }
+                    }
 
 
+                }
+            }
+        }
 
-
+    }
 }
+
+
+
 
 @Composable
 fun ChatScreen(navController: NavController, storedRoomId: String?) {

@@ -122,7 +122,8 @@ import com.ilya.codewithfriends.chattest.ChatRoomm
 import com.ilya.codewithfriends.chattest.ChatScreen
 import com.ilya.codewithfriends.chattest.ChatmenuContent
 import com.ilya.codewithfriends.chattest.Freands
-import com.ilya.codewithfriends.findroom.Getmyroom
+import com.ilya.codewithfriends.findroom.Get_MY_Room
+
 import com.ilya.codewithfriends.findroom.Room
 import com.ilya.codewithfriends.presentation.profile.ID
 import com.ilya.codewithfriends.presentation.profile.IMG
@@ -211,7 +212,7 @@ class FreandsFragments : Fragment() {
             .build()
 
         // Создаем API интерфейс
-        val api = retrofit.create(Getmyroom::class.java)
+        val api = retrofit.create(Get_MY_Room::class.java)
 
         // Создаем запрос
         val request = api.getRooms(uid)

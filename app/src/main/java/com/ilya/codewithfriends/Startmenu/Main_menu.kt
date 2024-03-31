@@ -135,7 +135,7 @@ import com.ilya.codewithfriends.Startmenu.Menu_Fragment.Mainmenufragment
 import com.ilya.codewithfriends.chattest.ChatRoomm
 import com.ilya.codewithfriends.chattest.ChatScreen
 import com.ilya.codewithfriends.chattest.ChatmenuContent
-import com.ilya.codewithfriends.chattest.FragmentManagerProvider
+
 import com.ilya.codewithfriends.chattest.Freands
 import com.ilya.codewithfriends.chattest.fragments.Chatmenu
 import com.ilya.codewithfriends.chattest.fragments.FreandsFragments
@@ -170,6 +170,9 @@ class Main_menu : FragmentActivity(), FragmentManagerProvider_manu {
         setContent {
             val navController = rememberNavController()
 
+            var Show_bar by remember {
+                mutableStateOf(true)
+            }
             Column(Modifier.fillMaxSize()) {
                 Box(
                     modifier = Modifier
@@ -182,24 +185,30 @@ class Main_menu : FragmentActivity(), FragmentManagerProvider_manu {
                         modifier = Modifier.fillMaxSize()
                     ) {
                         composable("Main_Menu") {
-                            Main_menu_fragment(navController, context)
+                            Main_menu_fragment(navController)
                         }
                         composable("FindRoom") {
                             FindRoom(navController)
                         }
+                        composable("Chat") {
+                            Chat(navController)
+
+                        }
                         composable("Room") {
                             Room(navController)
+
                         }
                     }
                 }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(80.dp)
-                        .align(Alignment.CenterHorizontally) // Центрируем по горизонтали, если вдруг Box не будет на всю ширину
-                ) {
-                    ButtonBar(navController, context)
+                if(Show_bar) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp)
+                            .align(Alignment.CenterHorizontally) // Центрируем по горизонтали, если вдруг Box не будет на всю ширину
+                    ) {
+                        ButtonBar(navController, context)
+                    }
                 }
             }
         }
@@ -218,118 +227,13 @@ class Main_menu : FragmentActivity(), FragmentManagerProvider_manu {
     )
 
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun ButtonBar(navController: NavController, context: Context) {
-
-        Box(
-
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
-                .background(Color.White.copy(alpha = 0.5f)),
-        ) {
-            val items = listOf(
-
-                BottomNavigationItem(
-                    title = "Home",
-                    selectedIcon = Icons.Filled.Home,
-                    unselectedIcon = Icons.Outlined.Home,
-                    hasNews = false,
-                ),
-                BottomNavigationItem(
-                    title = "Rooms",
-                    selectedIcon = Icons.Filled.MeetingRoom,
-                    unselectedIcon = Icons.Outlined.MeetingRoom,
-                    hasNews = false,
-                ),
-                BottomNavigationItem(
-                    title = "Chat",
-                    selectedIcon = Icons.Filled.Chat,
-                    unselectedIcon = Icons.Outlined.Chat,
-                    hasNews = false,
-                    // badgeCount = 0
-                ),
-                BottomNavigationItem(
-                    title = "Task",
-                    selectedIcon = Icons.Filled.Task,
-                    unselectedIcon = Icons.Outlined.Task,
-                    hasNews = true,
-                ),
-            )
-            var selectedItemIndex by rememberSaveable {
-                mutableStateOf(0)
-            }
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .align(Alignment.BottomCenter)
-                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f)) // Установите прозрачность для Surface
-            ) {
-                NavigationBar(modifier = Modifier.align(Alignment.BottomCenter)) {
-                    items.forEachIndexed { index, item ->
-                        NavigationBarItem(
-                            selected = selectedItemIndex == index,
-                            onClick = {
-                                selectedItemIndex = index
-                                when (index) {
-                                    0 -> {
-                                         navController.navigate("Main_Menu")
-                                    }
-                                    1 -> {
-                                        navController.navigate("FindRoom")
-                                    }
-
-                                    2 -> {
-                                        val intent = Intent(context, Caht_Activity::class.java)
-                                            context.startActivity(intent)
-                                    }
-
-                                    3 -> {
-                                        navController.navigate("Room")
-                                    }
-
-                                }
-                            },
-                            label = {
-                                Text(text = item.title)
-                            },
-                            alwaysShowLabel = false,
-                            icon = {
-                                BadgedBox(
-                                    modifier = Modifier.align(Alignment.Bottom),
-                                    badge = {
-                                        if (item.badgeCount != null) {
-                                            Badge {
-                                                Text(text = item.badgeCount.toString())
-                                            }
-                                        } else if (item.hasNews) {
-                                            Badge()
-                                        }
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = if (index == selectedItemIndex) {
-                                            item.selectedIcon
-                                        } else item.unselectedIcon,
-                                        contentDescription = item.title
-                                    )
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
 
 
 
 }
 
 @Composable
-fun Main_menu_fragment(navController: NavController, context: Context) {
+fun Main_menu_fragment(navController: NavController) {
     AndroidView(
         factory = { context ->
             // Создаем FragmentContainerView
@@ -343,6 +247,26 @@ fun Main_menu_fragment(navController: NavController, context: Context) {
             // Создаем и добавляем Chatmenu фрагмент
             val fragmentTransaction = fragmentManager.beginTransaction()
             val FindRoom_fragment = Mainmenufragment()
+            fragmentTransaction.replace(view.id, FindRoom_fragment)
+            fragmentTransaction.commit()
+        }
+    )
+}
+@Composable
+fun Chat(navController: NavController) {
+    AndroidView(
+        factory = { context ->
+            // Создаем FragmentContainerView
+            FragmentContainerView(context).apply {
+                id = View.generateViewId()
+            }
+        },
+        update = { view ->
+            // Получаем FragmentManager
+            val fragmentManager = (view.context as FragmentActivity).supportFragmentManager
+            // Создаем и добавляем Chatmenu фрагмент
+            val fragmentTransaction = fragmentManager.beginTransaction()
+            val FindRoom_fragment = Caht_Activity()
             fragmentTransaction.replace(view.id, FindRoom_fragment)
             fragmentTransaction.commit()
         }
@@ -401,3 +325,107 @@ fun FindRoom(navController: NavController) {
 
 
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ButtonBar(navController: NavController, context: Context) {
+
+    Box(
+
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(80.dp)
+            .background(Color.White.copy(alpha = 0.5f)),
+    ) {
+        val items = listOf(
+
+            Main_menu.BottomNavigationItem(
+                title = "Home",
+                selectedIcon = Icons.Filled.Home,
+                unselectedIcon = Icons.Outlined.Home,
+                hasNews = false,
+            ),
+            Main_menu.BottomNavigationItem(
+                title = "Rooms",
+                selectedIcon = Icons.Filled.MeetingRoom,
+                unselectedIcon = Icons.Outlined.MeetingRoom,
+                hasNews = false,
+            ),
+            Main_menu.BottomNavigationItem(
+                title = "Chat",
+                selectedIcon = Icons.Filled.Chat,
+                unselectedIcon = Icons.Outlined.Chat,
+                hasNews = false,
+                // badgeCount = 0
+            ),
+            Main_menu.BottomNavigationItem(
+                title = "Task",
+                selectedIcon = Icons.Filled.Task,
+                unselectedIcon = Icons.Outlined.Task,
+                hasNews = true,
+            ),
+        )
+        var selectedItemIndex by rememberSaveable {
+            mutableStateOf(0)
+        }
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp)
+                .align(Alignment.BottomCenter)
+                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f)) // Установите прозрачность для Surface
+        ) {
+            NavigationBar(modifier = Modifier.align(Alignment.BottomCenter)) {
+                items.forEachIndexed { index, item ->
+                    NavigationBarItem(
+                        selected = selectedItemIndex == index,
+                        onClick = {
+                            selectedItemIndex = index
+                            when (index) {
+                                0 -> {
+                                    navController.navigate("Main_Menu")
+                                }
+                                1 -> {
+                                    navController.navigate("FindRoom")
+                                }
+
+                                2 -> {
+                                    navController.navigate("Chat")
+                                }
+
+                                3 -> {
+                                    navController.navigate("Room")
+                                }
+
+                            }
+                        },
+                        label = {
+                            Text(text = item.title)
+                        },
+                        alwaysShowLabel = false,
+                        icon = {
+                            BadgedBox(
+                                modifier = Modifier.align(Alignment.Bottom),
+                                badge = {
+                                    if (item.badgeCount != null) {
+                                        Badge {
+                                            Text(text = item.badgeCount.toString())
+                                        }
+                                    } else if (item.hasNews) {
+                                        Badge()
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (index == selectedItemIndex) {
+                                        item.selectedIcon
+                                    } else item.unselectedIcon,
+                                    contentDescription = item.title
+                                )
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}

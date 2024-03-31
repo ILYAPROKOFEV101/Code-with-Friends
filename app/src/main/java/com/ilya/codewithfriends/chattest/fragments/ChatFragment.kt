@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -61,8 +63,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -92,9 +96,11 @@ import org.java_websocket.client.WebSocketClient
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.Month
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -179,6 +185,9 @@ class ChatFragment : Fragment() {
         // Создаем ComposeView и устанавливаем контент
         return ComposeView(requireContext()).apply {
             setContent {
+                val name = UID(
+                    userData = googleAuthUiClient.getSignedInUser()
+                )
                 val img = IMG(
                     userData = googleAuthUiClient.getSignedInUser()
                 )
@@ -499,7 +508,7 @@ class ChatFragment : Fragment() {
 
 
     @Composable
-    fun MessageList(messages: List<Message>?,url: String, id: String) {
+    fun MessageList(messages: List<Message>? ,url: String, id: String) {
         Log.d("MessageList", "Number of messages: ${messages?.size}")
 
         if (messages != null && messages.isNotEmpty()) {
@@ -528,13 +537,15 @@ class ChatFragment : Fragment() {
                     listState.animateScrollToItem(messages.size - 1)
                 }
 
+                var lastShownDate: LocalDate? by remember { mutableStateOf(null) }
+
 
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 60.dp, top = 50.dp)
-                        .background(Color(0x2F3083FF))
-                        .wrapContentHeight(),
+                        //.background(Color(0x2FFFFFFF))
+                        .fillMaxHeight(),
                     reverseLayout = false,
                     state = listState
                 ) {
@@ -543,6 +554,17 @@ class ChatFragment : Fragment() {
                         val paint = extractImageFromMessage(message.message)
 
 
+                        val maxTextWidth = 0.8f // Максимальная ширина текста
+                        val messageText = removeImageLinkFromMessage(message.message) // Текст сообщения
+
+// Если ширина текста превышает максимальную ширину, обрезаем текст и добавляем многоточие
+                        val displayedText = if (messageText.length > maxTextWidth * 1000) {
+                            // Умножаем на 1000, чтобы преобразовать ширину в пиксели
+                            val maxWidthIndex = (maxTextWidth * 1000).toInt()
+                            messageText.substring(0, maxWidthIndex) + "..."
+                        } else {
+                            messageText
+                        }
 
 
                         val messageDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(message.time), ZoneId.systemDefault())
@@ -557,8 +579,36 @@ class ChatFragment : Fragment() {
                         // Обновление текущего месяца и дня
                         lastShownMonth = messageDateTime.monthValue
                         lastShownDayOfMonth = messageDateTime.dayOfMonth
+                        val currentDate = LocalDate.now()
+                        val isToday = messageDateTime.toLocalDate() == currentDate
 
+                        val dayOfWeekText = when (messageDateTime.dayOfWeek) {
+                            DayOfWeek.MONDAY -> getString(R.string.monday)
+                            DayOfWeek.TUESDAY -> getString(R.string.tuesday)
+                            DayOfWeek.WEDNESDAY -> getString(R.string.wednesday)
+                            DayOfWeek.THURSDAY -> getString(R.string.thursday)
+                            DayOfWeek.FRIDAY -> getString(R.string.friday)
+                            DayOfWeek.SATURDAY -> getString(R.string.saturday)
+                            DayOfWeek.SUNDAY -> getString(R.string.sunday)
+                        }
 
+                        val monthText = when (messageDateTime.month) {
+                            Month.JANUARY -> getString(R.string.january)
+                            Month.FEBRUARY -> getString(R.string.february)
+                            Month.MARCH -> getString(R.string.march)
+                            Month.APRIL -> getString(R.string.april)
+                            Month.MAY -> getString(R.string.may)
+                            Month.JUNE -> getString(R.string.june)
+                            Month.JULY -> getString(R.string.july)
+                            Month.AUGUST -> getString(R.string.august)
+                            Month.SEPTEMBER -> getString(R.string.september)
+                            Month.OCTOBER -> getString(R.string.october)
+                            Month.NOVEMBER -> getString(R.string.november)
+                            Month.DECEMBER -> getString(R.string.december)
+                        }
+
+                        val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+                        val formattedText = "${messageDateTime.dayOfMonth} ${monthText} ${dayOfWeekText} "
 
                         if (showDayMarker) {
                             // Отображение маркера дня
@@ -568,11 +618,21 @@ class ChatFragment : Fragment() {
                                     .padding(8.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = messageDateTime.format(DateTimeFormatter.ofPattern("MM-dd")),
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
+                                if (isToday) {
+                                    // Вывод "сегодня" вместо даты
+                                    Text(
+                                        text = stringResource(id = R.string.today),
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF595D67),
+                                    )
+                                } else {
+                                    // Вывод даты в обычном формате
+                                    Text(
+                                        text = formattedText,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF595D67),
+                                    )
+                                }
                             }
                         }
 
@@ -611,11 +671,14 @@ class ChatFragment : Fragment() {
 
                                 Card(
                                     modifier = Modifier
-                                        .fillMaxWidth(0.8f)
-                                        .padding(2.dp),
-                                    backgroundColor = if (isMyMessage) Color(
-                                        0xE650B973
-                                    ) else Color(0xFFFFFFFF),
+                                        .wrapContentWidth()
+                                        .padding(
+                                            end = if (isMyMessage) 0.dp else screenWidth * 0.2f,
+                                            top = 2.dp,
+                                            start = if (isMyMessage) screenWidth * 0.2f else 0.dp,
+                                            bottom = 2.dp
+                                        ),
+                                    backgroundColor = if (isMyMessage) Color(0xFF315FF3) else Color(0xFFFFFFFF),
                                     elevation = 10.dp,
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
@@ -630,16 +693,15 @@ class ChatFragment : Fragment() {
                                             textAlign = TextAlign.Start,
                                             fontSize = 18.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = Color.Black,
+                                            color = if (isMyMessage) Color(0xFFFFFFFF) else Color(
+                                                0xFF1B1B1B
+                                            ),
                                             overflow = TextOverflow.Ellipsis
                                         )
 
-
-
-
                                         Box(
                                             modifier = Modifier
-                                                .fillMaxWidth()
+                                                // .fillMaxWidth()
                                                 .wrapContentHeight(),
                                             contentAlignment = Alignment.CenterEnd
                                         )
@@ -648,8 +710,10 @@ class ChatFragment : Fragment() {
 
                                             Text(
                                                 text = localDateTime.format(DateTimeFormatter.ofPattern("HH:mm")), // Извлекаем только время
-                                                fontSize = 10.sp,
-                                                color = Color.Black,
+                                                fontSize = 12.sp,
+                                                color = if (isMyMessage) Color(0xFFFFFFFF) else Color(
+                                                    0xFF1B1B1B
+                                                ),
                                             )
                                         }
 
@@ -684,13 +748,14 @@ class ChatFragment : Fragment() {
                                             .fillMaxSize()
                                             .clip(RoundedCornerShape(20.dp))
                                             .clickable {
-
+                                                //openLargeImage("$paint")
                                             },
                                     )
                                 }
                             }
                         }
                     }
+
                 }
             }
         }

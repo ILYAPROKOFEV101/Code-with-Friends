@@ -226,92 +226,7 @@ class FindRoom : ComponentActivity() {
 
     val joinDataManager = JoinDataManager()
 
-    private fun getData(uid: String,rooms: MutableState<List<Room>>) {
-        // Создаем Retrofit клиент
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://getpost-ilya1.up.railway.app/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
 
-        // Создаем API интерфейс
-        val api = retrofit.create(Api::class.java)
-
-        // Создаем запрос
-        val request = api.getRooms(uid)
-
-        // Выполняем запрос
-        request.enqueue(object : Callback<List<Room>> {
-            override fun onFailure(call: Call<List<Room>>, t: Throwable) {
-                // Ошибка
-                Log.e("getData", t.message ?: "Неизвестная ошибка")
-
-                // Курятина
-                if (t.message?.contains("404") ?: false) {
-                    Log.d("getData", "Данные не найдены")
-                } else {
-                    Log.d("getData", "Неизвестная ошибка")
-                }
-            }
-
-            override fun onResponse(call: Call<List<Room>>, response: Response<List<Room>>) {
-                // Успех
-                if (response.isSuccessful) {
-                    // Получаем данные
-                    val newRooms = response.body() ?: emptyList()
-
-                    // Обновляем состояние
-                    rooms.value = newRooms
-                    Log.d("Hello","$newRooms" )
-                } else {
-                    // Ошибка
-                    Log.e("getData", "Ошибка получения данных: ")
-                }
-            }
-        })
-    }
-
-    private fun GET_MYROOM(uid:String, rooms: MutableState<List<Room>>) {
-        // Создаем Retrofit клиент
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://getpost-ilya1.up.railway.app/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        // Создаем API интерфейс
-        val api = retrofit.create(Getmyroom::class.java)
-
-        // Создаем запрос
-        val request = api.getRooms(uid)
-
-        // Выполняем запрос
-        request.enqueue(object : Callback<List<Room>> {
-            override fun onFailure(call: Call<List<Room>>, t: Throwable) {
-                // Ошибка
-                Log.e("getData", t.message ?: "Неизвестная ошибка")
-
-                // Курятина
-                if (t.message?.contains("404") ?: false) {
-                    Log.d("getData", "Данные не найдены")
-                } else {
-                    Log.d("getData", "Неизвестная ошибка")
-                }
-            }
-
-            override fun onResponse(call: Call<List<Room>>, response: Response<List<Room>>) {
-                // Успех
-                if (response.isSuccessful) {
-                    // Получаем данные
-                    val newRooms = response.body() ?: emptyList()
-
-                    // Обновляем состояние
-                    rooms.value = newRooms
-                } else {
-                    // Ошибка
-                    Log.e("getData", "Ошибка получения данных: ")
-                }
-            }
-        })
-    }
 
 
     @Preview(showBackground = true)
@@ -810,3 +725,89 @@ class FindRoom : ComponentActivity() {
 
 }
 
+ fun getData(uid: String,rooms: MutableState<List<Room>>) {
+    // Создаем Retrofit клиент
+    val retrofit = Retrofit.Builder()
+        .baseUrl("https://getpost-ilya1.up.railway.app/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    // Создаем API интерфейс
+    val api = retrofit.create(Api::class.java)
+
+    // Создаем запрос
+    val request = api.getRooms(uid)
+
+    // Выполняем запрос
+    request.enqueue(object : Callback<List<Room>> {
+        override fun onFailure(call: Call<List<Room>>, t: Throwable) {
+            // Ошибка
+            Log.e("getData", t.message ?: "Неизвестная ошибка")
+
+            // Курятина
+            if (t.message?.contains("404") ?: false) {
+                Log.d("getData", "Данные не найдены")
+            } else {
+                Log.d("getData", "Неизвестная ошибка")
+            }
+        }
+
+        override fun onResponse(call: Call<List<Room>>, response: Response<List<Room>>) {
+            // Успех
+            if (response.isSuccessful) {
+                // Получаем данные
+                val newRooms = response.body() ?: emptyList()
+
+                // Обновляем состояние
+                rooms.value = newRooms
+                Log.d("Hello","$newRooms" )
+            } else {
+                // Ошибка
+                Log.e("getData", "Ошибка получения данных: ")
+            }
+        }
+    })
+}
+
+ fun GET_MYROOM(uid:String, rooms: MutableState<List<Room>>) {
+    // Создаем Retrofit клиент
+    val retrofit = Retrofit.Builder()
+        .baseUrl("https://getpost-ilya1.up.railway.app/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    // Создаем API интерфейс
+    val api = retrofit.create(Get_MY_Room::class.java)
+
+    // Создаем запрос
+    val request = api.getRooms(uid)
+
+    // Выполняем запрос
+    request.enqueue(object : Callback<List<Room>> {
+        override fun onFailure(call: Call<List<Room>>, t: Throwable) {
+            // Ошибка
+            Log.e("getData", t.message ?: "Неизвестная ошибка")
+
+            // Курятина
+            if (t.message?.contains("404") ?: false) {
+                Log.d("getData", "Данные не найдены")
+            } else {
+                Log.d("getData", "Неизвестная ошибка")
+            }
+        }
+
+        override fun onResponse(call: Call<List<Room>>, response: Response<List<Room>>) {
+            // Успех
+            if (response.isSuccessful) {
+                // Получаем данные
+                val newRooms = response.body() ?: emptyList()
+
+                // Обновляем состояние
+                rooms.value = newRooms
+            } else {
+                // Ошибка
+                Log.e("getData", "Ошибка получения данных: ")
+            }
+        }
+    })
+}
