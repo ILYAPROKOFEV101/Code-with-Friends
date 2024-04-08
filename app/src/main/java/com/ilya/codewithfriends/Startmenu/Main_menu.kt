@@ -1,26 +1,14 @@
 package com.ilya.codewithfriends.Startmenu
 
-import LoadingComponent
-import android.Manifest
-import android.app.Activity
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,77 +16,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
-import androidx.compose.runtime.collectAsState
 
 
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ilya.codewithfriends.R
-import com.ilya.codewithfriends.Activity.CreatyActivity.ApiService
-import com.ilya.codewithfriends.Activity.CreatyActivity.CreativyRoom
-import com.ilya.codewithfriends.MainViewModel
-
-import com.ilya.codewithfriends.findroom.FindRoom
-import com.ilya.codewithfriends.presentation.profile.ID
-import com.ilya.codewithfriends.presentation.profile.IMG
-
-import com.ilya.codewithfriends.presentation.profile.ProfileIcon
-import com.ilya.codewithfriends.presentation.profile.ProfileName
-import com.ilya.codewithfriends.presentation.profile.UID
-import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
-import com.ilya.codewithfriends.test.TestActivity
-import com.ilya.reaction.logik.PreferenceHelper
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import com.google.android.gms.auth.api.identity.Identity
-import com.ilya.codewithfriends.chattest.Caht_Activity
-import com.ilya.reaction.logik.PreferenceHelper.getDataFromSharedPreferences
-import getKeyFromServer
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-
-import android.app.NotificationManager
-
-import android.content.Context.NOTIFICATION_SERVICE
-import android.content.pm.PackageManager
-import android.icu.number.Scale
-import android.media.AudioManager
-import android.media.audiofx.BassBoost
-import android.net.Uri
-import android.os.Build
 import android.view.View
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.Task
@@ -106,116 +33,105 @@ import androidx.compose.material.icons.outlined.Chat
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.Task
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.zIndex
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.FragmentManager
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import coil.annotation.ExperimentalCoilApi
-import coil.compose.AsyncImage
-import coil.compose.rememberImagePainter
-import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageMetadata
-import com.ilya.codewithfriends.MainActivity
+
 import com.ilya.codewithfriends.Startmenu.Menu_Fragment.Mainmenufragment
 
 import com.ilya.codewithfriends.chattest.ChatRoomm
 import com.ilya.codewithfriends.chattest.ChatScreen
 import com.ilya.codewithfriends.chattest.ChatmenuContent
 
-import com.ilya.codewithfriends.chattest.Freands
-import com.ilya.codewithfriends.chattest.fragments.Chatmenu
+
 import com.ilya.codewithfriends.chattest.fragments.FreandsFragments
-import com.ilya.codewithfriends.chattest.fragments.RoomChat
 import com.ilya.codewithfriends.findroom.FindRoom_Fragment.FindRoom_fragment
-import com.ilya.codewithfriends.findroom.Room
-import com.ilya.codewithfriends.presentation.sign_in.UserData
 import com.ilya.codewithfriends.roomsetting.Room_Fragments.Room_fragment
-import com.ilya.codewithfriends.roomsetting.Roomsetting
-import com.ilya.reaction.logik.PreferenceHelper.saveimg
-import com.ilya.reaction.logik.PreferenceHelper.savename
-import java.util.UUID
 
 interface FragmentManagerProvider_manu {
     fun provideFragmentManager(): FragmentManager
 }
 
 
+
 class Main_menu : FragmentActivity(), FragmentManagerProvider_manu {
 
 
+    private var showit by mutableStateOf(true)
     override fun provideFragmentManager(): FragmentManager {
         return supportFragmentManager
     }
 
+//
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         var context = this
 
+    val room = intent.getStringExtra("Room")
+
+
 
         setContent {
             val navController = rememberNavController()
 
-            var Show_bar by remember {
-                mutableStateOf(true)
-            }
+
+
             Column(Modifier.fillMaxSize()) {
                 Box(
                     modifier = Modifier
-                        .weight(1f) // Это позволяет Box с NavHost занять все доступное пространство, кроме выделенного для кнопок.
+                        .weight(1f)
                         .fillMaxWidth()
                 ) {
                     NavHost(
                         navController = navController,
-                        startDestination = "Main_Menu",
-                        modifier = Modifier.fillMaxSize()
+                        startDestination = if (room != null) {
+                            "Room"
+                        } else {
+                            "Main_Menu"
+                        }
+
                     ) {
                         composable("Main_Menu") {
-                            Main_menu_fragment(navController)
+                            Main_menu_fragment()
                         }
                         composable("FindRoom") {
-                            FindRoom(navController)
+                            FindRoom()
                         }
-                        composable("Chat") {
-                            Chat(navController)
-
+                        composable("friends") {
+                            Friends()
                         }
                         composable("Room") {
-                            Room(navController)
-
+                            Room()
                         }
                     }
                 }
-                if(Show_bar) {
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(80.dp)
-                            .align(Alignment.CenterHorizontally) // Центрируем по горизонтали, если вдруг Box не будет на всю ширину
+                            .align(Alignment.CenterHorizontally)
                     ) {
-                        ButtonBar(navController, context)
+                        ButtonAppBar(navController)
                     }
-                }
+                
             }
+
         }
 
 
-
     }
+
 
 
     data class BottomNavigationItem(
@@ -226,14 +142,13 @@ class Main_menu : FragmentActivity(), FragmentManagerProvider_manu {
         val badgeCount: Int? = null
     )
 
-
-
-
-
+    fun clousAppbar(show: Boolean){
+        showit = show
+    }
 }
 
 @Composable
-fun Main_menu_fragment(navController: NavController) {
+fun Main_menu_fragment() {
     AndroidView(
         factory = { context ->
             // Создаем FragmentContainerView
@@ -251,9 +166,14 @@ fun Main_menu_fragment(navController: NavController) {
             fragmentTransaction.commit()
         }
     )
+
 }
+
+
+
 @Composable
-fun Chat(navController: NavController) {
+fun Friends() {
+
     AndroidView(
         factory = { context ->
             // Создаем FragmentContainerView
@@ -266,8 +186,8 @@ fun Chat(navController: NavController) {
             val fragmentManager = (view.context as FragmentActivity).supportFragmentManager
             // Создаем и добавляем Chatmenu фрагмент
             val fragmentTransaction = fragmentManager.beginTransaction()
-            val FindRoom_fragment = Caht_Activity()
-            fragmentTransaction.replace(view.id, FindRoom_fragment)
+            val friendsFragment = FreandsFragments()
+            fragmentTransaction.replace(view.id, friendsFragment)
             fragmentTransaction.commit()
         }
     )
@@ -275,10 +195,8 @@ fun Chat(navController: NavController) {
 
 
 
-
-
 @Composable
-fun Room(navController: NavController) {
+fun Room() {
     AndroidView(
         factory = { context ->
             // Создаем FragmentContainerView
@@ -300,8 +218,9 @@ fun Room(navController: NavController) {
 
 }
 
+
 @Composable
-fun FindRoom(navController: NavController) {
+fun FindRoom() {
     AndroidView(
         factory = { context ->
             // Создаем FragmentContainerView
@@ -327,13 +246,12 @@ fun FindRoom(navController: NavController) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ButtonBar(navController: NavController, context: Context) {
+fun ButtonAppBar(navController: NavController) {
 
     Box(
 
         modifier = Modifier
-            .fillMaxWidth()
-            .height(80.dp)
+            .fillMaxSize()
             .background(Color.White.copy(alpha = 0.5f)),
     ) {
         val items = listOf(
@@ -389,7 +307,7 @@ fun ButtonBar(navController: NavController, context: Context) {
                                 }
 
                                 2 -> {
-                                    navController.navigate("Chat")
+                                    navController.navigate("friends")
                                 }
 
                                 3 -> {
@@ -427,5 +345,59 @@ fun ButtonBar(navController: NavController, context: Context) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MyNavHost(showFragment: String) {
+    var navController = rememberNavController()
+    Column(Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+
+
+    NavHost(
+        navController = navController,
+        startDestination = "$showFragment"
+    ) {
+
+
+        composable("Main_Menu") {
+            Main_menu_fragment()
+        }
+        composable("FindRoom") {
+            FindRoom()
+        }
+        composable("friends") {
+            Friends()
+        }
+        composable("Room") {
+            Room()
+        }
+        composable("chatmenu") {
+            // Ваш фрагмент Chatmenu
+
+        }
+
+
+    /*
+        composable("chat/{roomId}") { backStackEntry ->
+            // Получаем roomId из аргументов, если он не передан, используем значение по умолчанию
+            val roomId = backStackEntry.arguments?.getString("roomId") ?: roomId
+            // Ваш фрагмент ChatScreen с передачей roomId
+            ChatScreen(navController, roomId ?: "")
+        }
+        composable("RoomChat/{socketId}") { backStackEntry ->
+            // Получаем socketId из аргументов, если он не передан, используем значение по умолчанию
+            val socketId = backStackEntry.arguments?.getString("socketId") ?: socketId
+            // Ваш фрагмент ChatRoomm с передачей socketId
+            ChatRoomm(navController, socketId ?: "")
+        }*/
+    }
+        }
+
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,10 +35,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.auth.api.identity.Identity
-import com.ilya.codewithfriends.Startmenu.ButtonBar
-import com.ilya.codewithfriends.Startmenu.FindRoom
-import com.ilya.codewithfriends.Startmenu.Main_menu_fragment
-import com.ilya.codewithfriends.Startmenu.Room
+
 import com.ilya.codewithfriends.Viewphote.ViewPhoto_fragment
 import com.ilya.codewithfriends.chattest.fragments.ChatFragment
 import com.ilya.codewithfriends.chattest.fragments.Chatmenu
@@ -59,7 +57,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 
 
-
+/*
 class Caht_Activity : Fragment(){
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -67,7 +65,8 @@ class Caht_Activity : Fragment(){
             oneTapClient = Identity.getSignInClient(requireContext())
         )
     }
-    private var storedRoomId: String? = null // Объявляем на уровне класса
+
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,6 +83,7 @@ class Caht_Activity : Fragment(){
 
         var context = this
 
+
     }
 
     override fun onCreateView(
@@ -95,9 +95,12 @@ class Caht_Activity : Fragment(){
         return ComposeView(requireContext()).apply {
             setContent {
                 val navController = rememberNavController()
-                val data_from_myroom = remember { mutableStateOf(emptyList<Room>()) }
-                // Вызывайте getData только после установки ContentView
-                //   GET_MYROOM("$id", data_from_myroom)
+
+                val showBar = remember { mutableStateOf(true) }
+
+
+
+
                 Column(Modifier.fillMaxSize()) {
                     Box(
                         modifier = Modifier
@@ -109,43 +112,45 @@ class Caht_Activity : Fragment(){
                             startDestination = "friends",
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            composable("friends") {
-                                Freands(navController)
-                            }
-                            composable("chatmenu") {
-                                ChatmenuContent(navController)
-                            }
-                            composable("chat") {
-                                ChatScreen(navController, "roomId")
-                            }
-                            composable("RoomChat") {
-                                ChatRoomm(navController, "roomId")
-                            }
+
                             composable("Main_Menu") {
                                 Main_menu_fragment(navController)
                             }
                             composable("FindRoom") {
                                 FindRoom(navController)
                             }
+                            composable("Chat") {
+                                Chat(navController)
+                            }
                             composable("Room") {
                                 Room(navController)
                             }
+                            composable("friends") {
+                                Freands(navController)
+                            }
+
                         }
                     }
-
 
                 }
             }
         }
 
     }
+
+
+
+
 }
+*/
 
 
 
 
 @Composable
 fun ChatScreen(navController: NavController, storedRoomId: String?) {
+
+
     AndroidView(
         factory = { context ->
             FragmentContainerView(context).apply {
@@ -220,28 +225,7 @@ fun ChatmenuContent(navController: NavController) {
 
 
 }
-@Composable
-fun Freands(navController: NavController) {
-    AndroidView(
-        factory = { context ->
-            // Создаем FragmentContainerView
-            FragmentContainerView(context).apply {
-                id = View.generateViewId()
-            }
-        },
-        update = { view ->
-            // Получаем FragmentManager
-            val fragmentManager = (view.context as FragmentActivity).supportFragmentManager
-            // Создаем и добавляем Chatmenu фрагмент
-            val fragmentTransaction = fragmentManager.beginTransaction()
-            val chatmenuFragment = FreandsFragments()
-            fragmentTransaction.replace(view.id, chatmenuFragment)
-            fragmentTransaction.commit()
-        }
-    )
 
-
-}
 
 @Composable
 fun ChatRoomm(navController: NavController, soket: String?) {

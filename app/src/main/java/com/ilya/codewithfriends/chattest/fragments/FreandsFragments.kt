@@ -83,6 +83,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -102,6 +103,7 @@ import androidx.fragment.app.FragmentManager
 
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.Navigation.findNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -116,12 +118,15 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import com.ilya.codewithfriends.MainViewModel
 import com.ilya.codewithfriends.R
+import com.ilya.codewithfriends.Startmenu.ButtonAppBar
+import com.ilya.codewithfriends.Startmenu.MyNavHost
 import com.ilya.codewithfriends.chats.Chat
+import com.ilya.codewithfriends.chats.FrendsChat.FriendsChatActivity
 import com.ilya.codewithfriends.chats.Message
 import com.ilya.codewithfriends.chattest.ChatRoomm
 import com.ilya.codewithfriends.chattest.ChatScreen
 import com.ilya.codewithfriends.chattest.ChatmenuContent
-import com.ilya.codewithfriends.chattest.Freands
+
 import com.ilya.codewithfriends.findroom.Get_MY_Room
 
 import com.ilya.codewithfriends.findroom.Room
@@ -156,7 +161,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 
-class FreandsFragments : Fragment() {
+class FreandsFragments() : Fragment() {
 
 
     var text by mutableStateOf("")
@@ -171,6 +176,7 @@ class FreandsFragments : Fragment() {
             oneTapClient = Identity.getSignInClient(requireContext().applicationContext)
         )
     }
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -204,48 +210,7 @@ class FreandsFragments : Fragment() {
 
     }
 
-    private fun GET_MYROOM(uid:String, rooms: MutableState<List<Room>>) {
-        // Создаем Retrofit клиент
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://getpost-ilya1.up.railway.app/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
 
-        // Создаем API интерфейс
-        val api = retrofit.create(Get_MY_Room::class.java)
-
-        // Создаем запрос
-        val request = api.getRooms(uid)
-
-        // Выполняем запрос
-        request.enqueue(object : Callback<List<Room>> {
-            override fun onFailure(call: Call<List<Room>>, t: Throwable) {
-                // Ошибка
-                Log.e("getData", t.message ?: "Неизвестная ошибка")
-
-                // Курятина
-                if (t.message?.contains("404") ?: false) {
-                    Log.d("getData", "Данные не найдены")
-                } else {
-                    Log.d("getData", "Неизвестная ошибка")
-                }
-            }
-
-            override fun onResponse(call: Call<List<Room>>, response: Response<List<Room>>) {
-                // Успех
-                if (response.isSuccessful) {
-                    // Получаем данные
-                    val newRooms = response.body() ?: emptyList()
-
-                    // Обновляем состояние
-                    rooms.value = newRooms
-                } else {
-                    // Ошибка
-                    Log.e("getData", "Ошибка получения данных: ")
-                }
-            }
-        })
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -258,6 +223,9 @@ class FreandsFragments : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
 
+
+
+
                 val navController = rememberNavController()
                 val viewModel = viewModel<MainViewModel>()
                 val isLoading by viewModel.isLoading.collectAsState()
@@ -269,6 +237,18 @@ class FreandsFragments : Fragment() {
                 // Вызывайте getData только после установки ContentView
                 GET_MYROOM("$id", data_from_myroom)
 
+
+
+
+                MyNavHost( "chatmenu")
+                val showBar = remember { mutableStateOf(true) }
+                LaunchedEffect(navController) {
+                    navController.addOnDestinationChangedListener { _, destination, _ ->
+                        // Список экранов, где не показываем нижнюю панель
+                        val hideBottomBarRoutes = listOf("friends")
+                        showBar.value = destination.route !in hideBottomBarRoutes
+                    }
+                }
 
                 NavHost(
                     navController = navController,
@@ -285,7 +265,8 @@ class FreandsFragments : Fragment() {
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(Color(0x3920A6FF))
+                                    .testTag("column_with_navhost")
+
                             ) {
                                 if(trans == false) {
                                     Spacer(modifier = Modifier.height(20.dp))
@@ -293,8 +274,18 @@ class FreandsFragments : Fragment() {
                                         ShowUser(user.value,  data_from_myroom.value, context,navController)
                                     }
                                 }
-                              //  val testActivity = TestActivity()
-                               // testActivity.ButtonBar(context)
+
+                                if (showBar.value) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(80.dp)
+                                            .align(Alignment.CenterHorizontally)
+                                    ) {
+                                        ButtonAppBar(navController)
+                                    }
+                                }
+
                             }
                         }
                     }
@@ -316,6 +307,7 @@ class FreandsFragments : Fragment() {
                     }
 
                 }
+
 
 
 
@@ -448,9 +440,12 @@ class FreandsFragments : Fragment() {
                                         .align(Alignment.CenterEnd)
                                         .background(Color.White),
                                     onClick = {
+                                        val intent = Intent(requireContext(), FriendsChatActivity::class.java)
+                                        intent.putExtra("CHAT_ID", user.sokets) // Передача URL изображения в активность
+                                        startActivity(intent)
 
-                                        //trans = true
-                                        navController.navigate("chat/${user.sokets}")
+
+                                        //navController.navigate("chat/${user.sokets}")
                                     }
                                 ) {
                                     Icon(
@@ -581,7 +576,13 @@ class FreandsFragments : Fragment() {
                     Button(
                         onClick = {
 
-                            navController.navigate("RoomChat/${room.id}")
+
+                            val intent = Intent(context, Chat::class.java)
+                            startActivity(intent)
+                            goToChatActivity(room.id, context)
+
+
+
                         },
                         colors = ButtonDefaults.buttonColors(creatroom),
                         modifier = Modifier.fillMaxSize(),
@@ -622,13 +623,53 @@ class FreandsFragments : Fragment() {
 
 
 
-
     fun goToChatActivity(roomId: String, context: Context) {
 
         PreferenceHelper.saveRoomId(context, roomId)
 
     }
+    private fun GET_MYROOM(uid:String, rooms: MutableState<List<Room>>) {
+        // Создаем Retrofit клиент
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://getpost-ilya1.up.railway.app/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
 
+        // Создаем API интерфейс
+        val api = retrofit.create(Get_MY_Room::class.java)
+
+        // Создаем запрос
+        val request = api.getRooms(uid)
+
+        // Выполняем запрос
+        request.enqueue(object : Callback<List<Room>> {
+            override fun onFailure(call: Call<List<Room>>, t: Throwable) {
+                // Ошибка
+                Log.e("getData", t.message ?: "Неизвестная ошибка")
+
+                // Курятина
+                if (t.message?.contains("404") ?: false) {
+                    Log.d("getData", "Данные не найдены")
+                } else {
+                    Log.d("getData", "Неизвестная ошибка")
+                }
+            }
+
+            override fun onResponse(call: Call<List<Room>>, response: Response<List<Room>>) {
+                // Успех
+                if (response.isSuccessful) {
+                    // Получаем данные
+                    val newRooms = response.body() ?: emptyList()
+
+                    // Обновляем состояние
+                    rooms.value = newRooms
+                } else {
+                    // Ошибка
+                    Log.e("getData", "Ошибка получения данных: ")
+                }
+            }
+        })
+    }
 
 }
 

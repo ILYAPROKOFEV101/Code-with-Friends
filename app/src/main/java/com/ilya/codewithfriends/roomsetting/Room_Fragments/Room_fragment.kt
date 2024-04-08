@@ -82,6 +82,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import co.yml.charts.common.model.PlotType
 import co.yml.charts.ui.piechart.charts.DonutPieChart
@@ -106,6 +109,7 @@ import com.ilya.codewithfriends.MainViewModel
 import com.ilya.codewithfriends.R
 import com.ilya.codewithfriends.Startmenu.Main_menu
 import com.ilya.codewithfriends.Vois.ViceActivity
+import com.ilya.codewithfriends.chattest.ViewPhoto
 import com.ilya.codewithfriends.chattest.fragments.newUserData
 import com.ilya.codewithfriends.findroom.Room
 import com.ilya.codewithfriends.firebase.Addtask
@@ -122,6 +126,7 @@ import com.ilya.codewithfriends.roomsetting.Git_ivite
 import com.ilya.codewithfriends.roomsetting.Kick
 import com.ilya.codewithfriends.roomsetting.Over_DeletetItem
 import com.ilya.codewithfriends.roomsetting.Room2
+import com.ilya.codewithfriends.roomsetting.Room_Fragments.REST.Get_Recuast
 import com.ilya.codewithfriends.roomsetting.TaskData
 import com.ilya.codewithfriends.roomsetting.TaskResponse
 import com.ilya.codewithfriends.roomsetting.Usrs_ivite
@@ -140,6 +145,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 
 class Room_fragment : Fragment() {
+
 
 
 
@@ -246,102 +252,117 @@ class Room_fragment : Fragment() {
 
 
                 Handler(Looper.getMainLooper()).postDelayed({
-                    getData(storedRoomId!!, rooms)
+                    val get = Get_Recuast()
+                    get.getData(storedRoomId!!, rooms, requireContext())
 
-                    whoinroom(storedRoomId!!, participants)
+
+
+                    get.whoinroom(storedRoomId!!, participants, requireContext() )
 
 
                 }, 500) // 3000 миллисекунд (3 секунды)
-
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                val navController = rememberNavController()
+                NavHost(
+                    navController = navController,
+                    startDestination = "Main_Menu",
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    val context = LocalContext.current
-                    SwipeRefresh(
-                        state = swipeRefresh,
-                        onRefresh =
-                        {
-                            ActivityCompat.recreate(requireActivity())
-                        }
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
+                    composable("Main_Menu") {
+
+
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background
                         ) {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f) // Отдает оставшееся пространство RoomList
-                                    .background(Color(0x2F3083FF))
+                            val context = LocalContext.current
+                            SwipeRefresh(
+                                state = swipeRefresh,
+                                onRefresh =
+                                {
+                                    ActivityCompat.recreate(requireActivity())
+                                }
                             ) {
-                                item {
-                                    icon(data_from_myroom)
-                                    Spacer(modifier = Modifier.height(30.dp))
-                                }
-
-                                // Вызываем roomname() только если есть данные комнаты
-
-                                item {
-                                    firstRoom?.let {
-                                        roomname(
-                                            roomName = it.roomName,
-                                            "$id",
-                                            storedRoomId!!,
-                                            "$id",
-                                            data_from_myroom
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.height(30.dp))
-                                }
-                                item {
-                                    User_ivite(ivite_list.value)
-                                    Spacer(modifier = Modifier.height(30.dp))
-                                }
-
-
-                                item {
-                                    userinroom(
-                                        participants.value,
-                                        "$id",
-                                        data_from_myroom
-                                    ) // Передаем participants.value
-                                    Spacer(modifier = Modifier.height(30.dp))
-                                }
-
-
-                                item {
-                                    TaskList(task.value, storedRoomId!!)
-                                    // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
-                                    Spacer(modifier = Modifier.height(30.dp))
-
-                                }
-                                item {
-                                    Box(
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                ) {
+                                    LazyColumn(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(450.dp)
+                                            .weight(1f) // Отдает оставшееся пространство RoomList
+                                            .background(Color(0x2F3083FF))
                                     ) {
-                                        SimpleDonutChart(context, over, delete)
-                                        // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
+                                        item {
+                                            icon(data_from_myroom)
+                                            Spacer(modifier = Modifier.height(30.dp))
+                                        }
+
+                                        // Вызываем roomname() только если есть данные комнаты
+
+                                        item {
+                                            firstRoom?.let {
+                                                roomname(
+                                                    roomName = it.roomName,
+                                                    "$id",
+                                                    storedRoomId!!,
+                                                    "$id",
+                                                    data_from_myroom
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(30.dp))
+                                        }
+                                        item {
+                                            User_ivite(ivite_list.value)
+                                            Spacer(modifier = Modifier.height(30.dp))
+                                        }
+
+
+                                        item {
+                                            userinroom(
+                                                participants.value,
+                                                "$id",
+                                                data_from_myroom
+                                            ) // Передаем participants.value
+                                            Spacer(modifier = Modifier.height(30.dp))
+                                        }
+
+
+                                        item {
+                                            TaskList(task.value, storedRoomId!!, navController)
+                                            // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
+                                            Spacer(modifier = Modifier.height(30.dp))
+
+                                        }
+                                        item {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(450.dp)
+                                            ) {
+                                                SimpleDonutChart(context, over, delete)
+                                                // Передаем Task.value в Composable функцию, или пустой список, если Task.value == null
+                                            }
+                                            Spacer(modifier = Modifier.height(30.dp))
+
+                                        }
+                                        item {
+                                            addtask()
+                                            Spacer(modifier = Modifier.height(30.dp))
+                                        }
+                                        item {
+                                            Teamspeack()
+                                            Spacer(modifier = Modifier.height(30.dp))
+                                        }
+
                                     }
-                                    Spacer(modifier = Modifier.height(30.dp))
 
                                 }
-                                item {
-                                    addtask()
-                                    Spacer(modifier = Modifier.height(30.dp))
-                                }
-                                item {
-                                    Teamspeack()
-                                    Spacer(modifier = Modifier.height(30.dp))
-                                }
-
                             }
-
                         }
                     }
+
                 }
+
             }
             }
         }
@@ -385,37 +406,6 @@ class Room_fragment : Fragment() {
 
 
 
-
-    private fun getData(roomId: String, rooms: MutableState<List<Room>>) {
-        val url = "https://getpost-ilya1.up.railway.app/aboutroom/$roomId"
-
-        val request = StringRequest(
-            Request.Method.GET,
-            url,
-            { response ->
-                Log.d("Mylog", "Result: $response")
-                val gson = Gson()
-                val roomListType = object : TypeToken<List<Room>>() {}.type
-                val utf8Response = String(response.toByteArray(Charsets.ISO_8859_1), Charsets.UTF_8)
-                val newRooms: List<Room> = gson.fromJson(utf8Response, roomListType)
-
-                rooms.value = newRooms
-
-                // Получение первой комнаты из списка (если она есть)
-                val firstRoom = newRooms.firstOrNull()
-                if (firstRoom != null) {
-                    // Вызов Composable roomname() и передача имени комнаты
-
-                }
-            },
-            { error ->
-                Log.d("Mylog", "Error: $error")
-            }
-        )
-
-        val requestQueue = Volley.newRequestQueue(requireContext())
-        requestQueue.add(request)
-    }
 
 
 
@@ -472,33 +462,6 @@ class Room_fragment : Fragment() {
 
 
 
-    private fun whoinroom(roomId: String, participantsState: MutableState<List<Participant>>) {
-        val url = "https://getpost-ilya1.up.railway.app/participants/$roomId"
-
-        val request = JsonArrayRequest(
-            Request.Method.GET,
-            url,
-            null,
-            { response ->
-                Log.d("Mylog", "Result: $response")
-                val gson = Gson()
-                val participantListType = object : TypeToken<List<Participant>>() {}.type
-
-                try {
-                    val newParticipants: List<Participant> = gson.fromJson(response.toString(), participantListType)
-                    participantsState.value = newParticipants
-                } catch (e: JsonSyntaxException) {
-                    Log.e("Mylog", "Error parsing JSON: $e")
-                }
-            },
-            { error ->
-                Log.d("Mylog", "Error: $error")
-            }
-        )
-
-        val requestQueue = Volley.newRequestQueue(requireContext())
-        requestQueue.add(request)
-    }
 
 
     fun getTasks(roomId: String) {
@@ -1178,7 +1141,7 @@ class Room_fragment : Fragment() {
 
 
     @Composable
-    fun TaskList(tasks: List<TaskData>, roomId: String) {
+    fun TaskList(tasks: List<TaskData>, roomId: String, navController: NavController) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1194,7 +1157,7 @@ class Room_fragment : Fragment() {
                 state = lazyListState
             ) {
                 itemsIndexed(tasks) { index, task ->
-                    TaskCard(task, roomId)
+                    TaskCard(task, roomId, navController)
                     Spacer(modifier = Modifier.width(30.dp))
                 }
             }
@@ -1204,7 +1167,7 @@ class Room_fragment : Fragment() {
 
 
     @Composable
-    fun TaskCard(task: TaskData, roomId: String) {
+    fun TaskCard(task: TaskData, roomId: String, navController: NavController) {
 
 
 
@@ -1276,7 +1239,6 @@ class Room_fragment : Fragment() {
                         onClick = {
                             deleteDataComplit("$roomId", "${task.id}")
 
-
                         },
                     ) {
 
@@ -1293,7 +1255,6 @@ class Room_fragment : Fragment() {
                     }
 
                     Spacer(modifier = Modifier.width(50.dp))
-
 
                     Button(
                         modifier = Modifier

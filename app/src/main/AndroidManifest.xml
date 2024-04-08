@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <uses-feature
@@ -10,8 +10,7 @@
         android:required="true" />
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.NOTIFICATION" />
     <uses-permission
@@ -31,6 +30,11 @@
         android:theme="@style/Theme.CodeWithFriends"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <activity
+            android:name=".chats.FrendsChat.FriendsChatActivity"
+            android:exported="false"
+            android:label="@string/title_activity_friends_chat"
+            android:theme="@style/Theme.CodeWithFriends" />
         <activity
             android:name=".Vois.ViceActivity"
             android:exported="false"
@@ -110,8 +114,6 @@
             </intent-filter>
         </activity>
 
-
-
         <service
             android:name=".push.PushService"
             android:exported="false">
@@ -119,7 +121,6 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-
 
         <receiver
             android:name=".push.YourBroadcastReceiver"

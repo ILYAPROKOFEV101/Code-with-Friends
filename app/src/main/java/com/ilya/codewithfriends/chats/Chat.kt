@@ -88,6 +88,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
@@ -113,6 +118,11 @@ import com.google.firebase.storage.StorageMetadata
 import com.ilya.codewithfriends.APIclass.JoinDataManager
 import com.ilya.codewithfriends.Complaint.Complaint
 import com.ilya.codewithfriends.Complaint.Complainttouser
+import com.ilya.codewithfriends.Startmenu.FindRoom
+import com.ilya.codewithfriends.Startmenu.Friends
+import com.ilya.codewithfriends.Startmenu.Main_menu
+import com.ilya.codewithfriends.Startmenu.Main_menu_fragment
+import com.ilya.codewithfriends.Startmenu.Room
 import com.ilya.codewithfriends.findroom.Join
 
 import com.ilya.codewithfriends.findroom.join_room
@@ -233,12 +243,19 @@ class Chat : ComponentActivity() {
 
         setContent {
 
+            val navController = rememberNavController()
 
             val viewModel = viewModel<MainViewModel>()
             val isLoading by viewModel.isLoading.collectAsState()
             val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
 
 
+
+            NavHost(
+                navController = navController,
+                startDestination = "Main_Menu"
+            ) {
+                composable("Main_Menu") {
 
             CodeWithFriendsTheme {
                 // A surface container using the 'background' color from the theme
@@ -261,7 +278,7 @@ class Chat : ComponentActivity() {
                                 .height(100.dp)
 
                         ) {
-                            upbar(storedRoomId!!, "$id", "$name", "$img",)
+                            upbar(storedRoomId!!, "$id", "$name", "$img",navController)
 
                         }
 
@@ -291,6 +308,12 @@ class Chat : ComponentActivity() {
                     }
                 }
             }
+
+                }
+                composable("Room") {
+                    Room()
+                }
+            }
         }
 
 
@@ -299,23 +322,15 @@ class Chat : ComponentActivity() {
     // Функция для загрузки сообщений из памяти и обновления переменной messages
 
 
-    private fun restartActivity() {
-        recreate()
-    }
+
 
     private fun sendMessage(message: String) {
         // Проверяем, что WebSocket подключен
-        if (webSocket != null) {
-
+        if (webSocket != null && !isConnected) {
             val messageId = messageIdCounter++
             val messageWithId = "$message" // Добавляем ID к сообщению
             webSocket?.send(message)
             Log.d("WebSocketStatus", "WebSocket: $webSocket")
-        } else {
-            // WebSocket не подключен, возможно, нужно выполнить повторное подключение
-            // setupWebSocket(...)
-
-
         }
     }
 
@@ -331,11 +346,14 @@ class Chat : ComponentActivity() {
             userData = googleAuthUiClient.getSignedInUser()
         )
 
+        // Проверяем, активно ли уже WebSocket соединение
+        if (!isConnected) {
+            // Если не активно, то открываем новое соединение
+            setupWebSocket(storedRoomId!!, "$name", "$img", "$ids", this)
 
-        // Автоматическое подключение при входе в активность
-        setupWebSocket(storedRoomId!!, "$name", "$img", "$ids", this)
-        println("подключение ")
+        }
     }
+
 
 
     private fun setupWebSocket(
@@ -656,9 +674,9 @@ class Chat : ComponentActivity() {
                                        modifier = Modifier
                                            .wrapContentWidth()
                                            .padding(
-                                                end = if (isMyMessage) 0.dp else screenWidth * 0.2f,
+                                               end = if (isMyMessage) 0.dp else screenWidth * 0.2f,
                                                top = 2.dp,
-                                                start = if (isMyMessage) screenWidth * 0.2f else 0.dp,
+                                               start = if (isMyMessage) screenWidth * 0.2f else 0.dp,
                                                bottom = 2.dp
                                            ),
                                        backgroundColor = if (isMyMessage) Color(0xFF315FF3) else Color(0xFFFFFFFF),
@@ -1032,8 +1050,9 @@ class Chat : ComponentActivity() {
 
 
     @Composable
-    fun upbar(roomId: String, id: String, name: String, img: String){
-                if (show.value) {
+    fun upbar(roomId: String, id: String, name: String, img: String,navController: NavController){
+        val room = "Room"
+            if (show.value) {
                     Button(
                         colors = ButtonDefaults.buttonColors(Color(0xB900CE0A)),
                         modifier = Modifier
@@ -1041,8 +1060,18 @@ class Chat : ComponentActivity() {
                             .fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
                         onClick = {
-                            val intent = Intent(this@Chat, Roomsetting::class.java)
+
+
+
+                            ///navController.navigate("Room")
+
+                            val intent = Intent(this@Chat, Main_menu::class.java)
+                            intent.putExtra(
+                                "Room",
+                                room
+                            ) // Здесь вы добавляете данные в Intent
                             startActivity(intent)
+
                         }
                         ) {
                         Text(text = stringResource(id = R.string.outroom), fontSize = 24.sp)
@@ -1056,7 +1085,7 @@ class Chat : ComponentActivity() {
                             shape = RoundedCornerShape(20.dp),
                             onClick = {
                                 joinDataManager.pushData_join(roomId,id, name,"",)
-                                restartActivity()
+                                recreate()
                             }
                         ) {
                             Text(text = stringResource(id = R.string.room), fontSize = 24.sp)

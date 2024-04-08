@@ -80,9 +80,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -103,12 +106,14 @@ import com.ilya.codewithfriends.R
 import com.ilya.codewithfriends.Startmenu.Adduser
 import com.ilya.codewithfriends.Startmenu.Apiuser
 import com.ilya.codewithfriends.Startmenu.FindRoom
+import com.ilya.codewithfriends.Startmenu.Friends
 import com.ilya.codewithfriends.Startmenu.Main_menu_fragment
 import com.ilya.codewithfriends.Startmenu.User
 import com.ilya.codewithfriends.Startmenu.changeUserName
 import com.ilya.codewithfriends.Startmenu.changeUserURL
 import com.ilya.codewithfriends.chattest.fragments.newUserData
 import com.ilya.codewithfriends.findroom.FindRoom
+import com.ilya.codewithfriends.findroom.FindRoom_Fragment.FindRoom_fragment
 import com.ilya.codewithfriends.presentation.profile.ID
 import com.ilya.codewithfriends.presentation.profile.IMG
 import com.ilya.codewithfriends.presentation.profile.UID
@@ -268,16 +273,42 @@ class Mainmenufragment : Fragment() {
                              }
                          }
                      }
-
                      composable("FindRoom") {
-                         FindRoom(navController)
+                         FindRoom()
                      }
+
+
                  }
 
 
         }
         }
     }
+
+
+    @Composable
+    fun FindRoom() {
+        AndroidView(
+            factory = { context ->
+                // Создаем FragmentContainerView
+                FragmentContainerView(context).apply {
+                    id = View.generateViewId()
+                }
+            },
+            update = { view ->
+                // Получаем FragmentManager
+                val fragmentManager = (view.context as FragmentActivity).supportFragmentManager
+                // Создаем и добавляем Chatmenu фрагмент
+                val fragmentTransaction = fragmentManager.beginTransaction()
+                val FindRoom_fragment = FindRoom_fragment()
+                fragmentTransaction.replace(view.id, FindRoom_fragment())
+                fragmentTransaction.commit()
+            }
+        )
+
+
+    }
+
 
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
     @Composable

@@ -98,7 +98,7 @@ import com.ilya.codewithfriends.presentation.profile.UID
 
 
 
-@Suppress("DEPRECATION", "UNREACHABLE_CODE")
+
 class  MainActivity: ComponentActivity() {
     var leftop by mutableStateOf(true)
 
@@ -117,14 +117,15 @@ class  MainActivity: ComponentActivity() {
 
 
 
-// Инициализируйте PreferenceHelper в вашей активности
-        PreferenceHelper.initialize(applicationContext)
-        val myValue = PreferenceHelper.getValue("myKey")
 
 
 
 
         super.onCreate(savedInstanceState)
+
+        // Инициализируйте PreferenceHelper в вашей активности
+        PreferenceHelper.initialize(applicationContext)
+        val myValue = PreferenceHelper.getValue("myKey")
         setContent {
 
 
@@ -186,26 +187,20 @@ class  MainActivity: ComponentActivity() {
                     val token = stringResource(id = R.string.web_client_id)
                     val context = LocalContext.current
 
-
                     val configuration = LocalConfiguration.current
+                    val screenWidthDp = configuration.screenWidthDp
+                    val isTablet = screenWidthDp >= 600 // Примерно, для планшета
 
-
-
-                    val smallestScreenWidthDp = configuration.smallestScreenWidthDp
-
-                    val isTablet = smallestScreenWidthDp >= 600
-
-                    val pading = if (isTablet) 800.dp else 700.dp
-
-
-                    //val configuration = LocalConfiguration.current
-                    val screenHeightDp = configuration.screenHeightDp
-
-                    val rowHeight = if (screenHeightDp <= 900) {
-                        140.dp // Высота для телефона
+                    val buttonModifier = if (isTablet) {
+                        Modifier
+                            .fillMaxWidth(0.5f) // На планшетах занимает половину ширины
+                            .height(60.dp) // Большая высота для планшетов
                     } else {
-                        300.dp // Высота для планшета
+                        Modifier
+                            .fillMaxWidth() // На телефонах занимает всю ширину
+                            .height(48.dp) // Стандартная высота для телефонов
                     }
+
 
 
 
