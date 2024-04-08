@@ -282,7 +282,7 @@ class FreandsFragments() : Fragment() {
                                             .height(80.dp)
                                             .align(Alignment.CenterHorizontally)
                                     ) {
-                                        ButtonAppBar(navController)
+                                        ButtonAppBar(navController, context)
                                     }
                                 }
 
@@ -576,13 +576,11 @@ class FreandsFragments() : Fragment() {
                     Button(
                         onClick = {
 
-
-                            val intent = Intent(context, Chat::class.java)
+                            val intent = Intent(requireContext(), Chat::class.java)
+                            intent.putExtra("roomid", room.id)
                             startActivity(intent)
-                            goToChatActivity(room.id, context)
 
-
-
+                            // goToChatActivity(room.id, context)
                         },
                         colors = ButtonDefaults.buttonColors(creatroom),
                         modifier = Modifier.fillMaxSize(),

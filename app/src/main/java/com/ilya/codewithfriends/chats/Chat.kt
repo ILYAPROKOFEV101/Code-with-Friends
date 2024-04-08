@@ -189,6 +189,9 @@ class Chat : ComponentActivity() {
 
     private var storedRoomId: String? = null // Объявляем на уровне класса
 
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -222,7 +225,10 @@ class Chat : ComponentActivity() {
             userData = googleAuthUiClient.getSignedInUser()
         )
 
-        storedRoomId = getRoomId(this)
+          storedRoomId  = intent.getStringExtra("roomid")
+
+        Log.d("roomids" , "$storedRoomId")
+
 
 
         val loadingComponent = LoadingComponent()
@@ -1072,6 +1078,8 @@ class Chat : ComponentActivity() {
                             ) // Здесь вы добавляете данные в Intent
                             startActivity(intent)
 
+                            PreferenceHelper.saveRoomId(this, roomId)
+
                         }
                         ) {
                         Text(text = stringResource(id = R.string.outroom), fontSize = 24.sp)
@@ -1085,6 +1093,7 @@ class Chat : ComponentActivity() {
                             shape = RoundedCornerShape(20.dp),
                             onClick = {
                                 joinDataManager.pushData_join(roomId,id, name,"",)
+
                                 recreate()
                             }
                         ) {

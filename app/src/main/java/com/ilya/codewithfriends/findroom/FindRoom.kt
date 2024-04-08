@@ -452,7 +452,9 @@ class FindRoom : ComponentActivity() {
                                     if(room.hasPassword){
                                         show = !show
                                     } else {
+
                                         val intent = Intent(this@FindRoom, Chat::class.java)
+                                        intent.putExtra("roomid", room.id)
                                         startActivity(intent)
                                     }
                                 } else {
@@ -568,6 +570,7 @@ class FindRoom : ComponentActivity() {
                                 onClick = {
                                     joinDataManager.pushData_join(room.id,"$uid", "$username",password)
                                     val intent = Intent(this@FindRoom, Chat::class.java)
+                                    intent.putExtra("roomid", room.id)
                                     startActivity(intent)
                                     show = !show
 

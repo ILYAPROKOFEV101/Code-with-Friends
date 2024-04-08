@@ -466,6 +466,7 @@ class FindRoom_fragment : Fragment() {
                                     show = !show
                                 } else {
                                     val intent = Intent(requireContext(), Chat::class.java)
+                                    intent.putExtra("roomid", room.id)
                                     startActivity(intent)
                                 }
                             } else {
@@ -581,6 +582,7 @@ class FindRoom_fragment : Fragment() {
                             onClick = {
                                 joinDataManager.pushData_join(room.id,"$uid", "$username",password)
                                 val intent = Intent(requireContext(), Chat::class.java)
+                                intent.putExtra("roomid", room.id)
                                 startActivity(intent)
                                 show = !show
 

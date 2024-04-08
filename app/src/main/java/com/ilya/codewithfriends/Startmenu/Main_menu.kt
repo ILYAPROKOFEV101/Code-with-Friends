@@ -1,5 +1,6 @@
 package com.ilya.codewithfriends.Startmenu
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
@@ -56,6 +57,7 @@ import com.ilya.codewithfriends.chattest.ChatmenuContent
 import com.ilya.codewithfriends.chattest.fragments.FreandsFragments
 import com.ilya.codewithfriends.findroom.FindRoom_Fragment.FindRoom_fragment
 import com.ilya.codewithfriends.roomsetting.Room_Fragments.Room_fragment
+import com.ilya.reaction.logik.PreferenceHelper.getRoomId
 
 interface FragmentManagerProvider_manu {
     fun provideFragmentManager(): FragmentManager
@@ -122,7 +124,7 @@ class Main_menu : FragmentActivity(), FragmentManagerProvider_manu {
                             .height(80.dp)
                             .align(Alignment.CenterHorizontally)
                     ) {
-                        ButtonAppBar(navController)
+                        ButtonAppBar(navController,  context)
                     }
                 
             }
@@ -246,10 +248,9 @@ fun FindRoom() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ButtonAppBar(navController: NavController) {
+fun ButtonAppBar(navController: NavController, context: Context) {
 
     Box(
-
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White.copy(alpha = 0.5f)),
@@ -311,7 +312,13 @@ fun ButtonAppBar(navController: NavController) {
                                 }
 
                                 3 -> {
-                                    navController.navigate("Room")
+                                     if(getRoomId(context) == null){
+                                         navController.navigate("FindRoom")
+                                    } else  {
+                                         navController.navigate("Room")
+                                    }
+
+
                                 }
 
                             }
