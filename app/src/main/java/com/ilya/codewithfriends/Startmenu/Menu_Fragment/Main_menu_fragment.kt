@@ -381,7 +381,6 @@ class Mainmenufragment : Fragment() {
                                 showimg = !showimg
 
                                 pickImage.launch("image/*")
-
                             },
                         contentScale = ContentScale.Crop
                     )

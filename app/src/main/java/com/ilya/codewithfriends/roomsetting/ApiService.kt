@@ -17,7 +17,6 @@ interface OVER_DELETE{
     fun OVER_AND_DELETE(@Path("roomId") roomId: String): Call<List<Over_DeletetItem>>
 }
 
-
 interface Apidelte {
     @DELETE("delete/{roomId}/{id}/plus")
     suspend fun delete(@Path("roomId") roomId: String, @Path("id") postId: String): Response<Unit>
@@ -32,19 +31,16 @@ interface Kick {
     fun user(@Path("roomId") roomId: String, @Path("userId") userId: String): Call<Unit>
 }
 
-
-
-
 interface Addids{
     @POST("/ids")
     fun Sanduser(@Body request: ids): Call<Void>
 }
 
-
 interface GetmyAPI {
     @GET("/getimg/{roomId}")
     fun GETIMG(@Path("roomId") roomId: String): Call<List<Room2>>
 }
+
 interface Git_ivite {
     @GET("/invitesget/{roomId}")
     fun get_ivite(@Path("roomId") roomId: String): Call<List<Usrs_ivite>>

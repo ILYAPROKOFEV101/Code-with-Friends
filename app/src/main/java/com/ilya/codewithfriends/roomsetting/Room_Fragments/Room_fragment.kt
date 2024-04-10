@@ -117,6 +117,8 @@ import com.ilya.codewithfriends.presentation.profile.ID
 import com.ilya.codewithfriends.presentation.profile.UID
 import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.ilya.codewithfriends.roomsetting.API_DELET
+import com.ilya.codewithfriends.roomsetting.Add_user_Invite
+
 import com.ilya.codewithfriends.roomsetting.Addids
 import com.ilya.codewithfriends.roomsetting.Api
 import com.ilya.codewithfriends.roomsetting.ApiService_ilya
@@ -136,6 +138,7 @@ import com.ilya.codewithfriends.test.TestActivity
 import com.ilya.reaction.logik.PreferenceHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
@@ -312,7 +315,7 @@ class Room_fragment : Fragment() {
                                             Spacer(modifier = Modifier.height(30.dp))
                                         }
                                         item {
-                                            User_ivite(ivite_list.value)
+                                            User_ivite(ivite_list.value, )
                                             Spacer(modifier = Modifier.height(30.dp))
                                         }
 
@@ -403,9 +406,18 @@ class Room_fragment : Fragment() {
         }
     }
 
+    private fun addUser(uidAdmin: String, idRequest: String, uidUser: String, roomId: String) {
+        val url = "https://getpost-ilya1.up.railway.app/" // Replace with your actual base URL
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl(url)
+            .addConverterFactory(GsonConverterFactory.create()) // Assuming JSON response format
+            .build()
+
+        val apiService = retrofit.create(Add_user_Invite::class.java)
 
 
-
+    }
 
 
 
@@ -731,7 +743,11 @@ class Room_fragment : Fragment() {
                                                 .weight(0.45f)
                                                 .clip(RoundedCornerShape(10.dp)),
                                             colors = ButtonDefaults.buttonColors(Color(0xFF18AD08)),
-                                            onClick = { /*TODO*/ })
+                                            onClick = {
+                        //storedRoomId
+
+                                                addUser("$id", ivitelist.id , ivitelist.uid , storedRoomId!!)
+                                            })
                                         {
                                             Text(text = stringResource(id = R.string.adduser))
                                         }

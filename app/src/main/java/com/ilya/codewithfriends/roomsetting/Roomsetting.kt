@@ -133,7 +133,8 @@ import com.ilya.codewithfriends.chattest.ChatmenuContent
 import com.ilya.codewithfriends.chattest.ViewPhoto
 import com.ilya.codewithfriends.chattest.fragments.FreandsFragments
 import com.ilya.codewithfriends.chattest.fragments.RoomChat
-
+import kotlinx.coroutines.GlobalScope
+import retrofit2.create
 
 
 class Roomsetting : ComponentActivity() {
@@ -375,7 +376,37 @@ class Roomsetting : ComponentActivity() {
 
 
 
+    fun OVER_DELETE(roomId: String) {
+        // Создайте экземпляр Retrofit
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://getpost-ilya1.up.railway.app/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
 
+        // Создайте экземпляр службы API
+        val apiService = retrofit.create(OVER_DELETE::class.java)
+
+        // Вызовите GET-запрос
+        val call = apiService.OVER_AND_DELETE(roomId)
+        call.enqueue(object : Callback<List<Over_DeletetItem>> {
+            override fun onResponse(call: Call<List<Over_DeletetItem>>, response: Response<List<Over_DeletetItem>>) {
+                if (response.isSuccessful) {
+                    val overDeleteList = response.body()
+                    if (overDeleteList != null && overDeleteList.isNotEmpty()) {
+                        // Пример: присвоение значений переменным over и delete
+                        over = overDeleteList[0].over.toFloat()
+                        delete = overDeleteList[0].deletet.toFloat()
+                    }
+                } else {
+                    // Обработайте ошибку, если есть
+                }
+            }
+
+            override fun onFailure(call: Call<List<Over_DeletetItem>>, t: Throwable) {
+                // Обработайте ошибку при отправке запроса
+            }
+        })
+    }
 
     private fun getData(roomId: String, rooms: MutableState<List<Room>>) {
         val url = "https://getpost-ilya1.up.railway.app/aboutroom/$roomId"
@@ -407,9 +438,6 @@ class Roomsetting : ComponentActivity() {
         val requestQueue = Volley.newRequestQueue(this)
         requestQueue.add(request)
     }
-
-
-
 
     private fun Get_invite_list(roomId: String, ivitelist: MutableState<List<Usrs_ivite>>) {
         // Создаем Retrofit клиент
@@ -459,10 +487,6 @@ class Roomsetting : ComponentActivity() {
         })
     }
 
-
-
-
-
     private fun whoinroom(roomId: String, participantsState: MutableState<List<Participant>>) {
         val url = "https://getpost-ilya1.up.railway.app/participants/$roomId"
 
@@ -490,7 +514,6 @@ class Roomsetting : ComponentActivity() {
         val requestQueue = Volley.newRequestQueue(this)
         requestQueue.add(request)
     }
-
 
     fun getTasks(roomId: String) {
         // Создайте экземпляр Retrofit
@@ -530,40 +553,6 @@ class Roomsetting : ComponentActivity() {
             }
 
             override fun onFailure(call: Call<List<TaskResponse>>, t: Throwable) {
-                // Обработайте ошибку при отправке запроса
-            }
-        })
-    }
-
-
-
-    fun OVER_DELETE(roomId: String) {
-        // Создайте экземпляр Retrofit
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://getpost-ilya1.up.railway.app/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        // Создайте экземпляр службы API
-        val apiService = retrofit.create(OVER_DELETE::class.java)
-
-        // Вызовите GET-запрос
-        val call = apiService.OVER_AND_DELETE(roomId)
-        call.enqueue(object : Callback<List<Over_DeletetItem>> {
-            override fun onResponse(call: Call<List<Over_DeletetItem>>, response: Response<List<Over_DeletetItem>>) {
-                if (response.isSuccessful) {
-                    val overDeleteList = response.body()
-                    if (overDeleteList != null && overDeleteList.isNotEmpty()) {
-                        // Пример: присвоение значений переменным over и delete
-                        over = overDeleteList[0].over.toFloat()
-                        delete = overDeleteList[0].deletet.toFloat()
-                    }
-                } else {
-                    // Обработайте ошибку, если есть
-                }
-            }
-
-            override fun onFailure(call: Call<List<Over_DeletetItem>>, t: Throwable) {
                 // Обработайте ошибку при отправке запроса
             }
         })

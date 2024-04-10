@@ -250,77 +250,77 @@ fun FindRoom() {
 @Composable
 fun ButtonAppBar(navController: NavController, context: Context) {
 
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White.copy(alpha = 0.5f)),
     ) {
-        val items = listOf(
 
-            Main_menu.BottomNavigationItem(
-                title = "Home",
-                selectedIcon = Icons.Filled.Home,
-                unselectedIcon = Icons.Outlined.Home,
-                hasNews = false,
-            ),
-            Main_menu.BottomNavigationItem(
-                title = "Rooms",
-                selectedIcon = Icons.Filled.MeetingRoom,
-                unselectedIcon = Icons.Outlined.MeetingRoom,
-                hasNews = false,
-            ),
-            Main_menu.BottomNavigationItem(
-                title = "Chat",
-                selectedIcon = Icons.Filled.Chat,
-                unselectedIcon = Icons.Outlined.Chat,
-                hasNews = false,
-                // badgeCount = 0
-            ),
-            Main_menu.BottomNavigationItem(
-                title = "Task",
-                selectedIcon = Icons.Filled.Task,
-                unselectedIcon = Icons.Outlined.Task,
-                hasNews = true,
-            ),
-        )
         var selectedItemIndex by rememberSaveable {
             mutableStateOf(0)
         }
+
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp)
                 .align(Alignment.BottomCenter)
-                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f)) // Установите прозрачность для Surface
+                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f))
         ) {
             NavigationBar(modifier = Modifier.align(Alignment.BottomCenter)) {
+                val items = listOf(
+                    Main_menu.BottomNavigationItem(
+                        title = "Home",
+                        selectedIcon = Icons.Filled.Home,
+                        unselectedIcon = Icons.Outlined.Home,
+                        hasNews = false,
+                    ),
+                    Main_menu.BottomNavigationItem(
+                        title = "Rooms",
+                        selectedIcon = Icons.Filled.MeetingRoom,
+                        unselectedIcon = Icons.Outlined.MeetingRoom,
+                        hasNews = false,
+                    ),
+                    Main_menu.BottomNavigationItem(
+                        title = "Chat",
+                        selectedIcon = Icons.Filled.Chat,
+                        unselectedIcon = Icons.Outlined.Chat,
+                        hasNews = false,
+                    ),
+                    Main_menu.BottomNavigationItem(
+                        title = "Task",
+                        selectedIcon = Icons.Filled.Task,
+                        unselectedIcon = Icons.Outlined.Task,
+                        hasNews = true,
+                    ),
+                )
+
+                navController.addOnDestinationChangedListener { _, destination, _ ->
+                    selectedItemIndex = when (destination.route) {
+                        "Main_Menu" -> 0
+                        "FindRoom" -> 1
+                        "friends" -> 2
+                        "Room" -> 3
+                        else -> selectedItemIndex
+                    }
+                }
+
                 items.forEachIndexed { index, item ->
                     NavigationBarItem(
                         selected = selectedItemIndex == index,
                         onClick = {
                             selectedItemIndex = index
                             when (index) {
-                                0 -> {
-                                    navController.navigate("Main_Menu")
-                                }
-                                1 -> {
-                                    navController.navigate("FindRoom")
-                                }
-
-                                2 -> {
-                                    navController.navigate("friends")
-                                }
-
+                                0 -> navController.navigate("Main_Menu")
+                                1 -> navController.navigate("FindRoom")
+                                2 -> navController.navigate("friends")
                                 3 -> {
-                                     if(getRoomId(context) == null){
-                                         navController.navigate("FindRoom")
-                                    } else  {
-                                         navController.navigate("Room")
+                                    when (getRoomId(context)) {
+                                        null, "" -> navController.navigate("FindRoom")
+                                        else -> navController.navigate("Room")
                                     }
-
-
                                 }
-
                             }
                         },
                         label = {
