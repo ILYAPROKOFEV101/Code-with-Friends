@@ -463,7 +463,7 @@ class FindRoom : ComponentActivity() {
                                     Toast.makeText(this@FindRoom, "Идентификатор комнаты пуст", Toast.LENGTH_SHORT).show()
                                 }
 
-                                goToChatActivity(room.id)
+
                                 showCircle = !showCircle
                             },
 
@@ -718,9 +718,7 @@ class FindRoom : ComponentActivity() {
         }
     }
 
-    fun goToChatActivity(roomId: String) {
-        saveRoomId(this, roomId)
-    }
+
 
 
 

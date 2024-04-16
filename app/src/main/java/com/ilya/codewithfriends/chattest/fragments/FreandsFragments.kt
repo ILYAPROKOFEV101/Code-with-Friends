@@ -395,7 +395,7 @@ class FreandsFragments() : Fragment() {
                             .height(80.dp)
                             .padding(end = 5.dp, start = 5.dp)
                             .clip(RoundedCornerShape(30.dp))
-                            .background(Color.White), elevation = 40.dp
+                            .background(Color.White)
                     ) {
 
                         Row(
@@ -621,11 +621,7 @@ class FreandsFragments() : Fragment() {
 
 
 
-    fun goToChatActivity(roomId: String, context: Context) {
 
-        PreferenceHelper.saveRoomId(context, roomId)
-
-    }
     private fun GET_MYROOM(uid:String, rooms: MutableState<List<Room>>) {
         // Создаем Retrofit клиент
         val retrofit = Retrofit.Builder()

@@ -152,8 +152,6 @@ class Chatmenu : Fragment() {
 
 
 
-
-
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful) {
                 return@addOnCompleteListener

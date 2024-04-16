@@ -161,7 +161,7 @@ class Chat : ComponentActivity() {
     var show = mutableStateOf(false)
     var kick = mutableStateOf(false)
     var photo by mutableStateOf("")
-    private  val KEY_MESSAGE_LIST = "messageList"
+
 
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -176,6 +176,7 @@ class Chat : ComponentActivity() {
     // Определите ваше состояние messages и его инициализацию
     private val messages = mutableStateOf(mutableListOf<Message>())
     private var selectedImageUri: Uri? by mutableStateOf(null)
+
     private var pickImage =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let { selectedImageUri = it }
@@ -304,10 +305,9 @@ class Chat : ComponentActivity() {
                                 // Здесь вы можете добавить логику для отправки сообщения через WebSocket
                                 sendMessage(message)
 
-                                // Используйте selectedImageUri и pickImage по вашему усмотрению
                             },
-                            selectedImageUri = selectedImageUri,
-                            pickImage = pickImage
+                           // selectedImageUri,
+                            pickImage
                         )
 
 
@@ -325,21 +325,21 @@ class Chat : ComponentActivity() {
 
     }
 
-    // Функция для загрузки сообщений из памяти и обновления переменной messages
-
-
-
-
     private fun sendMessage(message: String) {
         // Проверяем, что WebSocket подключен
-        if (webSocket != null && !isConnected) {
+        if (webSocket != null) {
+
             val messageId = messageIdCounter++
             val messageWithId = "$message" // Добавляем ID к сообщению
             webSocket?.send(message)
             Log.d("WebSocketStatus", "WebSocket: $webSocket")
+        } else {
+            // WebSocket не подключен, возможно, нужно выполнить повторное подключение
+            // setupWebSocket(...)
+
+
         }
     }
-
 
     override fun onResume() {
         super.onResume()
@@ -359,8 +359,6 @@ class Chat : ComponentActivity() {
 
         }
     }
-
-
 
     private fun setupWebSocket(
         roomId: String,
@@ -484,13 +482,10 @@ class Chat : ComponentActivity() {
         }
     }
 
-
-
     private fun showToast(message: String) {
         // Вывести Toast с заданным сообщением
         Toast.makeText(this@Chat, message, Toast.LENGTH_SHORT).show()
     }
-
 
 
     fun extractImageFromMessage(input: String): String? {
@@ -498,7 +493,6 @@ class Chat : ComponentActivity() {
         val matchResult = pattern.find(input)
         return matchResult?.groups?.get(1)?.value
     }
-
 
 
     fun removeImageLinkFromMessage(message: String): String {
@@ -511,7 +505,6 @@ class Chat : ComponentActivity() {
             message
         }
     }
-
 
 
       @Composable
@@ -675,7 +668,7 @@ class Chat : ComponentActivity() {
                                            Spacer(modifier = Modifier.width(2.dp))
                                        }
                                    }
-
+                                    if(removeImageLinkFromMessage(message.message) != ""){
                                    Card(
                                        modifier = Modifier
                                            .wrapContentWidth()
@@ -689,9 +682,10 @@ class Chat : ComponentActivity() {
                                        elevation = 10.dp,
                                        shape = RoundedCornerShape(12.dp)
                                    ) {
-                                       Column(modifier = Modifier
-                                           .padding(8.dp)
-                                         //  .background ( if (isMyMessage) Color(0xE650B973) else Color(0xFFFFFFFF))
+                                       Column(
+                                           modifier = Modifier
+                                               .padding(8.dp)
+                                           //  .background ( if (isMyMessage) Color(0xE650B973) else Color(0xFFFFFFFF))
                                        )
                                        {
 
@@ -708,24 +702,29 @@ class Chat : ComponentActivity() {
 
                                            Box(
                                                modifier = Modifier
-                                                  // .fillMaxWidth()
+                                                   // .fillMaxWidth()
                                                    .wrapContentHeight(),
                                                contentAlignment = Alignment.CenterEnd
                                            )
                                            {
-                                               val localDateTime = messageDateTime.atZone(ZoneId.systemDefault()).toLocalDateTime()
+                                               val localDateTime =
+                                                   messageDateTime.atZone(ZoneId.systemDefault())
+                                                       .toLocalDateTime()
 
                                                Text(
-                                                   text = localDateTime.format(DateTimeFormatter.ofPattern("HH:mm")), // Извлекаем только время
+                                                   text = localDateTime.format(
+                                                       DateTimeFormatter.ofPattern(
+                                                           "HH:mm"
+                                                       )
+                                                   ), // Извлекаем только время
                                                    fontSize = 12.sp,
                                                    color = if (isMyMessage) Color(0xFFFFFFFF) else Color(
                                                        0xFF1B1B1B
                                                    ),
                                                )
                                            }
-
-
                                        }
+                                   }
                                    }
                                }
                            }
@@ -773,9 +772,7 @@ class Chat : ComponentActivity() {
         val intent = Intent(this, ViewPhoto::class.java)
         intent.putExtra("PHOTO_URL", photo) // Передача URL изображения в активность
         startActivity(intent)
-
     }
-
 
 
 
@@ -853,18 +850,10 @@ class Chat : ComponentActivity() {
 
 
 
-
-
-
-
-
-
-
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
     @Composable
     fun Creator(
-        onSendMessage: (String) -> Unit ,
-        selectedImageUri: Uri?,
+        onSendMessage: (String) -> Unit,
         pickImage: ActivityResultLauncher<String>
     ) {
         val keyboardController = LocalSoftwareKeyboardController.current
@@ -872,7 +861,8 @@ class Chat : ComponentActivity() {
         var text by remember { mutableStateOf("") }
         var submittedText by remember { mutableStateOf("") }
         var showimg by remember { mutableStateOf(false) }
-        var main by remember { mutableStateOf(true) }
+        var main by remember { mutableStateOf(true)}
+       // var selectedImageUri by remember { mutableStateOf<Uri?>(null) } // Локальное управляемое состояние
 
 
         Column(
@@ -1014,26 +1004,23 @@ class Chat : ComponentActivity() {
                                 if (submittedText != "" || photo != "") {
                                     onSendMessage(
                                         if (photo != "") {
-                                            "$submittedText photo: <image>$photo</image>" // Вызываем функцию для отправки сообщения
+                                            "$submittedText<image>$photo</image>" // Вызываем функцию для отправки сообщения
+
                                         } else {
                                             "$submittedText" // Вызываем функцию для отправки сообщения
                                         }
                                     )
-                                    // Обнулить selectedImageUri после успешной загрузки
+                                    photo = ""
+                                    selectedImageUri = null // Обнулить selectedImageUri после успешной загрузки
+                                    showimg = false
 
                                 }
-                                 showimg = false
+
                             } else {
                                 showToast("идёт загрузка фота.")
                             }
 
                         }
-
-
-
-
-
-
 
                     }
                 ) {
@@ -1066,10 +1053,6 @@ class Chat : ComponentActivity() {
                             .fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
                         onClick = {
-
-
-
-                            ///navController.navigate("Room")
 
                             val intent = Intent(this@Chat, Main_menu::class.java)
                             intent.putExtra(

@@ -58,7 +58,7 @@ object PreferenceHelper {
     }
 
     fun getRoomId(context: Context): String? {
-        return getSharedPreferences(context).getString(KEY_ROOM_ID, null)
+        return getSharedPreferences(context).getString(KEY_ROOM_ID, "")
     }
 
 

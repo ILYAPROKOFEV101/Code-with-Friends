@@ -1,6 +1,7 @@
 package com.ilya.codewithfriends.createamspeck
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
@@ -152,7 +153,7 @@ class TeamSpeak : ComponentActivity() {
                 selectedDate = date.toString()
             }
         )
-
+        Log.d("TAG", "pikdata: $selectedDate")
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -193,6 +194,7 @@ class TeamSpeak : ComponentActivity() {
                 selectedTime = Pair(hours, minutes)
             }
         )
+        Log.d("TAG", "pikdata: $selectedTime")
 
         Column(
             modifier = Modifier

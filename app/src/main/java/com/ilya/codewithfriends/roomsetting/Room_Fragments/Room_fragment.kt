@@ -111,6 +111,7 @@ import com.ilya.codewithfriends.Startmenu.Main_menu
 import com.ilya.codewithfriends.Vois.ViceActivity
 import com.ilya.codewithfriends.chattest.ViewPhoto
 import com.ilya.codewithfriends.chattest.fragments.newUserData
+import com.ilya.codewithfriends.createamspeck.TeamSpeak
 import com.ilya.codewithfriends.findroom.Room
 import com.ilya.codewithfriends.firebase.Addtask
 import com.ilya.codewithfriends.presentation.profile.ID
@@ -675,91 +676,109 @@ class Room_fragment : Fragment() {
                     modifier = Modifier.padding(16.dp)
                 )
 
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .height(550.dp)
-                        .clip(RoundedCornerShape(30.dp)),
-                    reverseLayout = false,
-                ) {
+                if (expanded) {
 
-                    items(inviteList) { ivitelist ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(80.dp)
-                                .padding(start = 5.dp, end = 5.dp)
-                                .clip(RoundedCornerShape(30.dp))
-                                .border(2.dp, Color.Blue, shape = RoundedCornerShape(30.dp)),
-                            colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
-                        ) {
-                            Row(modifier = Modifier.fillMaxSize()) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .weight(0.3f)
-                                ) {
-                                    Image(
-                                        painter = rememberImagePainter(ivitelist.url),
-                                        contentDescription = null, // Устанавливаем null для contentDescription
-                                        modifier = Modifier
-                                            .size(80.dp)
-                                            .padding(2.dp)
-                                            .clip(RoundedCornerShape(30.dp))
-                                    )
-                                }
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .height(550.dp)
+                            .clip(RoundedCornerShape(30.dp)),
+                        reverseLayout = false,
+                    ) {
 
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .weight(0.7f)
-
-                                ) {
+                        items(inviteList) { ivitelist ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(80.dp)
+                                    .padding(start = 5.dp, end = 5.dp)
+                                    .clip(RoundedCornerShape(30.dp))
+                                    .border(2.dp, Color.Blue, shape = RoundedCornerShape(30.dp)),
+                                colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface)
+                            ) {
+                                Row(modifier = Modifier.fillMaxSize()) {
                                     Box(
                                         modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(30.dp)
+                                            .fillMaxHeight()
+                                            .weight(0.3f)
                                     ) {
-                                        Text(ivitelist.name)
-
-                                    }
-                                    Spacer(modifier = Modifier.height(5.dp))
-                                    Row(modifier = Modifier
-                                        .fillMaxSize())
-                                    {
-                                        Button(
+                                        Image(
+                                            painter = rememberImagePainter(ivitelist.url),
+                                            contentDescription = null, // Устанавливаем null для contentDescription
                                             modifier = Modifier
-                                                .weight(0.45f)
-                                                .clip(RoundedCornerShape(10.dp)),
-                                            colors = ButtonDefaults.buttonColors(Color(0xFF315FF3)),
-                                            onClick = { /*TODO*/ })
-                                        {
-                                            Text(text = stringResource(id = R.string.aboutuser))
-                                        }
-
-                                        Spacer(modifier = Modifier.weight(0.1f))
-                                        Button(
-                                            modifier = Modifier
-                                                .weight(0.45f)
-                                                .clip(RoundedCornerShape(10.dp)),
-                                            colors = ButtonDefaults.buttonColors(Color(0xFF18AD08)),
-                                            onClick = {
-                        //storedRoomId
-
-                                                addUser("$id", ivitelist.id , ivitelist.uid , storedRoomId!!)
-                                            })
-                                        {
-                                            Text(text = stringResource(id = R.string.adduser))
-                                        }
-
+                                                .size(80.dp)
+                                                .padding(2.dp)
+                                                .clip(RoundedCornerShape(30.dp))
+                                        )
                                     }
 
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .weight(0.7f)
 
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(30.dp)
+                                        ) {
+                                            Text(ivitelist.name)
+
+                                        }
+                                        Spacer(modifier = Modifier.height(5.dp))
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                        )
+                                        {
+                                            Button(
+                                                modifier = Modifier
+                                                    .weight(0.45f)
+                                                    .clip(RoundedCornerShape(10.dp)),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    Color(
+                                                        0xFF315FF3
+                                                    )
+                                                ),
+                                                onClick = { /*TODO*/ })
+                                            {
+                                                Text(text = stringResource(id = R.string.aboutuser))
+                                            }
+
+                                            Spacer(modifier = Modifier.weight(0.1f))
+                                            Button(
+                                                modifier = Modifier
+                                                    .weight(0.45f)
+                                                    .clip(RoundedCornerShape(10.dp)),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    Color(
+                                                        0xFF18AD08
+                                                    )
+                                                ),
+                                                onClick = {
+                                                    //storedRoomId
+
+                                                    addUser(
+                                                        "$id",
+                                                        ivitelist.id,
+                                                        ivitelist.uid,
+                                                        storedRoomId!!
+                                                    )
+                                                })
+                                            {
+                                                Text(text = stringResource(id = R.string.adduser))
+                                            }
+
+                                        }
+
+
+                                    }
                                 }
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
+                        }
                     }
                 }
             }
@@ -791,7 +810,7 @@ class Room_fragment : Fragment() {
                             onClick = { show = !show
 
                                 deleteRequest(uid, roomId)// вызываю функцию для удоления пользователя из комнаты
-
+                                storedRoomId = null
                                 val intent = Intent(requireContext(), Main_menu::class.java)
                                 startActivity(intent)
                                 PreferenceHelper.clearAllMessages(context)
@@ -1302,10 +1321,6 @@ class Room_fragment : Fragment() {
         }
     }
 
-
-
-
-
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
     private fun SimpleDonutChart(context: Context, over: Float, delet: Float) {
@@ -1507,7 +1522,7 @@ class Room_fragment : Fragment() {
             Button(
                 colors = ButtonDefaults.buttonColors(Color.Green),
                 onClick = {
-                    val intent = Intent(requireContext(), ViceActivity::class.java)
+                    val intent = Intent(requireContext(), TeamSpeak::class.java)
                     startActivity(intent)
                 },
                 modifier = Modifier

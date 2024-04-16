@@ -475,7 +475,7 @@ class FindRoom_fragment : Fragment() {
                                 Toast.makeText(requireContext(), "Идентификатор комнаты пуст", Toast.LENGTH_SHORT).show()
                             }
 
-                            goToChatActivity(room.id)
+
                             showCircle = !showCircle
                         },
 
@@ -728,10 +728,6 @@ class FindRoom_fragment : Fragment() {
                 }
             }
         }
-    }
-
-    fun goToChatActivity(roomId: String) {
-        PreferenceHelper.saveRoomId(requireContext(), roomId)
     }
 
 
