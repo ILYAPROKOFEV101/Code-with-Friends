@@ -158,6 +158,8 @@ class Chat : ComponentActivity() {
     private var messageIdCounter = 0
 
 
+
+
     var show = mutableStateOf(false)
     var kick = mutableStateOf(false)
     var photo by mutableStateOf("")
@@ -179,8 +181,21 @@ class Chat : ComponentActivity() {
 
     private var pickImage =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            uri?.let { selectedImageUri = it }
+            uri?.let {
+                selectedImageUri = it
+                val mimeType = contentResolver.getType(it)
+                showToast("Выбран файл типа: $mimeType")
+            }
         }
+
+    private var pickMedia = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it
+            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            // Дальнейшая обработка URI...
+        }
+    }
+
 
 
     private val client = OkHttpClient()
@@ -195,6 +210,8 @@ class Chat : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
 
         // Получить контекст
         val context = this
@@ -918,12 +935,22 @@ class Chat : ComponentActivity() {
                         modifier = Modifier
                             .size(100.dp), // Выравнивание по центру вертикально
                         onClick = {
-                            //showimg = false
-                            proces = true
-                            selectedImageUri?.let {
-                                uploadImageToFirebaseStorage(storedRoomId!!)
+                            //showimg = false  // Если необходимо управлять видимостью элемента, раскомментируйте
+                            proces = true  // Показываем индикатор загрузки
+
+                            selectedImageUri?.let { uri ->
+                                if (storedRoomId != null) {
+                                    uploadFileToFirebaseStorage()
+                                } else {
+                                    showToast("Room ID is not set")
+                                    proces = false  // Останавливаем индикатор загрузки, если нет room ID
+                                }
+                            } ?: run {
+                                showToast("No file selected")
+                                proces = false  // Останавливаем индикатор загрузки, если файл не выбран
                             }
                         }
+
                     ){
                         Icon(
                         imageVector = Icons.Default.Check,
@@ -955,8 +982,7 @@ class Chat : ComponentActivity() {
                             showimg = !showimg
 
 
-                        pickImage.launch("image/*")
-
+                        pickMedia.launch(arrayOf("image/*", "video/*"))
                     }
                 ) {
                     if (showimg == false) {
@@ -1085,95 +1111,45 @@ class Chat : ComponentActivity() {
                 }
             }
 
-    private fun uploadImageToFirebaseStorage(roomid: String) {
-
-
+    private fun uploadFileToFirebaseStorage() {
         if (selectedImageUri == null) {
-            // Обработка случая, когда изображение не выбрано
-            showToast("Выберите изображение перед загрузкой.")
+            showToast("Выберите файл перед загрузкой.")
             return
         }
 
         proces = true
-
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
 
-        // Create a unique name for the image to avoid overwriting
-        val imageName = UUID.randomUUID().toString()
-
-        // Path to store the image: "images/{roomid}/{imageName}"
-        val imageRef = storageRef.child("images/$roomid/$imageName")
+        val fileName = UUID.randomUUID().toString()
+        val mimeType = contentResolver.getType(selectedImageUri!!) ?: "application/octet-stream"
+        val fileRef = storageRef.child("$mimeType/$storedRoomId/$fileName")
 
         val metadata = StorageMetadata.Builder()
-            .setContentType("image/png") // Указываем тип контента как PNG
+            .setContentType(mimeType)
             .build()
 
-        val uploadTask = imageRef.putFile(selectedImageUri!!, metadata)
+        val uploadTask = fileRef.putFile(selectedImageUri!!, metadata)
 
-        // Add a listener to handle successful or unsuccessful upload
         uploadTask.addOnCompleteListener { task ->
-
             if (task.isSuccessful) {
-                // Get the download URL from the task result
-                imageRef.downloadUrl.addOnSuccessListener { uri ->
-                    photo = uri.toString()
-                    // Do something with the URL, such as save it to Firestore
+                fileRef.downloadUrl.addOnSuccessListener { uri ->
+                    // Получаем ссылку на загруженное видео
+                     photo = uri.toString()
                     proces = false
-                    // Покажите Toast об успешной загрузке
-                    showToast(getString(R.string.addPhoto))
-
-                    // Обнулить selectedImageUri после успешной загрузки
-                    selectedImageUri = null
+                    showToast("Видео успешно загружено: $photo")
+                    Log.d("Uploudphoto", photo)
+                    selectedImageUri = null // Сбрасываем выбранный Uri после загрузки
                 }
             } else {
-                // Handle unsuccessful upload
                 proces = false
-                // Покажите Toast об ошибке загрузки
-                showToast(getString(R.string.upload_error_message))
+                showToast("Ошибка загрузки файла")
             }
         }
     }
 
 
 
+
 }
 
-/*
-fun pushData_join(
-    roomId: String, user_id: String, username: String, password: String
-) {
-    Log.d("PushDataJoin", "Starting pushData_join method with roomId: $roomId, user_id: $user_id, username: $username, password :$password")
-
-    // Создайте экземпляр Retrofit
-    val retrofit = Retrofit.Builder()
-        .baseUrl("https://getpost-ilya1.up.railway.app/")
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-
-    // Создайте экземпляр службы API
-    val apiService = retrofit.create(Join::class.java)
-
-    // Создайте объект TaskRequest
-    val request = join_room(roomId, user_id, username, password)
-
-    // Отправьте POST-запрос с передачей roomId в качестве параметра пути
-    val call = apiService.Join_in_room(request)
-    call.enqueue(object : retrofit2.Callback<Void> {
-        override fun onResponse(call: Call<Void>, response: retrofit2.Response<Void>) {
-            if (response.isSuccessful) {
-                // Запрос успешно отправлен
-                Log.d("PushDataJoin", "Data successfully pushed to server")
-                // Можете выполнить какие-либо дополнительные действия здесь
-            } else {
-                // Обработайте ошибку, если есть
-                Log.e("PushDataJoin", "Failed to push data to server. Error code: ${response.code()}")
-            }
-        }
-
-        override fun onFailure(call: Call<Void>, t: Throwable) {
-            // Обработайте ошибку при отправке запроса
-            Log.e("PushDataJoin", "Failed to push data to server. Error message: ${t.message}")
-        }
-    })
-}*/

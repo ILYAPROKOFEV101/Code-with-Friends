@@ -157,16 +157,6 @@ class  MainActivity: ComponentActivity() {
                     ) {
 
 
-                    val name = UID(
-                        userData = googleAuthUiClient.getSignedInUser()
-                    )
-                    val img = IMG(
-                        userData = googleAuthUiClient.getSignedInUser()
-                    )
-                    val ids = ID(
-                        userData = googleAuthUiClient.getSignedInUser()
-                    )
-
 
                     var unvisible by remember {
                         mutableStateOf(false)
@@ -191,7 +181,7 @@ class  MainActivity: ComponentActivity() {
                     val screenWidthDp = configuration.screenWidthDp
                     val isTablet = screenWidthDp >= 600 // Примерно, для планшета
 
-                    val buttonModifier = if (isTablet) {
+                    if (isTablet) {
                         Modifier
                             .fillMaxWidth(0.5f) // На планшетах занимает половину ширины
                             .height(60.dp) // Большая высота для планшетов
@@ -228,11 +218,8 @@ class  MainActivity: ComponentActivity() {
 
 
                         if (user == null) {
-                            //Text("Not logged in")
-
 
                             if (!unvisible) {
-
 
                                 Column(
                                     modifier = Modifier
@@ -240,7 +227,6 @@ class  MainActivity: ComponentActivity() {
                                     verticalArrangement = Arrangement.Center,
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-
 
                                     IconButton(
                                         onClick = {
@@ -250,19 +236,13 @@ class  MainActivity: ComponentActivity() {
                                                 .requestIdToken(token)
                                                 .requestEmail()
                                                 .build()
-
-
                                         val googleSignInClient =
                                             GoogleSignIn.getClient(context, gso)
                                         launcher.launch(googleSignInClient.signInIntent)
 
-
                                         leftop = !leftop
 
-
-
                                         unvisible = !unvisible// не ведимый
-
 
                                         PreferenceHelper.setShowElement(
                                             context,
@@ -280,12 +260,10 @@ class  MainActivity: ComponentActivity() {
                                                 .clip(CircleShape)
                                         )
 
-
                                     }
                                     Spacer(modifier = Modifier.height(30.dp))
 
                                     Text(stringResource(id = R.string.login))
-
 
                                     Spacer(modifier = Modifier.height(30.dp))
 
@@ -295,20 +273,8 @@ class  MainActivity: ComponentActivity() {
                                         .padding(start = 20.dp, end = 20.dp),
 
                                         onClick = {
-
-
-                                            val yourName = "tester"
-                                            val yourImageURL = "https://lh3.googleusercontent.com/a/ACg8ocK46D7NZhtOalEonz0ZoAlqNL4tPOmBxWw21UVpp49x=s96-c"
-                                            val yourId = "tester123"
-
-
-
-
                                             val intent = Intent(this@MainActivity, Main_menu::class.java)
                                             startActivity(intent)
-
-
-
                                     }) {
                                         Text(text = "If you are a developer or tester and you don’t have an account, click here")
                                     }
@@ -321,19 +287,11 @@ class  MainActivity: ComponentActivity() {
                                     Firebase.auth.signOut()
                                     user = null
                                 }) {}
-
-
                             }
-                                //backtomenu()
                         }
 
                     }
-
-
-
                 }
-
-
                 ComposeGoogleSignInCleanArchitectureTheme {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
@@ -350,20 +308,16 @@ class  MainActivity: ComponentActivity() {
                                 val viewModel = viewModel<SignInViewModel>()
                                 val state by viewModel.state.collectAsStateWithLifecycle()
 
-
-
                                 LaunchedEffect(key1 = Unit) {
                                     if (googleAuthUiClient.getSignedInUser() != null) {
                                         navController.navigate("profile")
                                     }
                                 }
-
                                 val launcher = rememberLauncherForActivityResult(
                                     contract = ActivityResultContracts.StartIntentSenderForResult(),
-                                    onResult = { result ->
+                                    onResult = {
+                                            result ->
                                         if (result.resultCode == RESULT_OK) {
-
-
                                             lifecycleScope.launch {
                                                 val signInResult =
                                                     googleAuthUiClient.signInWithIntent(
@@ -375,11 +329,7 @@ class  MainActivity: ComponentActivity() {
                                     }
                                 )
 
-
-
-
                                 SignInScreen(
-
                                     state = state,
                                     onSignInClick = {
 
@@ -401,7 +351,6 @@ class  MainActivity: ComponentActivity() {
 
                             composable("profile") {
                                 Column(modifier = Modifier.fillMaxSize()) {
-
 
                                     ProfileScreen(
 
@@ -431,7 +380,6 @@ class  MainActivity: ComponentActivity() {
                 }
 
             }
-         //
         }
     }
 @OptIn(ExperimentalMaterial3Api::class)
@@ -442,7 +390,6 @@ class  MainActivity: ComponentActivity() {
             mutableStateOf(true)
         }
                 if(show == true) {
-
                     AlertDialog(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -453,55 +400,62 @@ class  MainActivity: ComponentActivity() {
                             ),
                         shape = RoundedCornerShape(20.dp),
                         onDismissRequest = { /* ... */ },
-
                         title = { Text(text = stringResource(id = R.string.Privacy_Policy),
                             fontSize = 24.sp,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()) },
 
                         buttons = {
-                            LazyColumn(modifier = Modifier
-                                .fillMaxWidth()
-                                .height(500.dp)
-                                .padding(5.dp)){
+                            Column(modifier = Modifier.height(600.dp)) {
 
-                                item {
-                                            Text(text = stringResource(id = R.string.policy))
-                                }
-                                item {
-                                    Column(
-                                        modifier = Modifier
-                                            .padding(horizontal = 16.dp)
-                                            .padding(bottom = 10.dp),
-                                        verticalArrangement = Arrangement.SpaceBetween,
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Button(
-                                            onClick = {
-                                                cloth = true
-                                                PreferenceHelper.saveValue("myKey", true)
-                                            },
-                                            colors = ButtonDefaults.buttonColors(Color(0xFF29B630)),
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(20.dp))
-                                        ) {
-                                            Text(text = stringResource(id = R.string.I_agree), color = Color.White)
-                                        }
-                                        Button(
-                                            onClick = {
-                                                finish()
-                                            },
-                                            colors = ButtonDefaults.buttonColors(Color(0xFFFA0505)),
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(15.dp))
-                                        ) {
-                                            Text( stringResource(id = R.string.I_dont_agree),color = Color.White)
-                                        }
+                                LazyColumn(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(500.dp)
+                                        .padding(5.dp)
+                                ) {
+
+                                    item {
+                                        Text(text = stringResource(id = R.string.policy))
                                     }
                                 }
-
+                                Column(
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                        .padding(bottom = 10.dp),
+                                    verticalArrangement = Arrangement.SpaceBetween,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Button(
+                                        onClick = {
+                                            cloth = true
+                                            PreferenceHelper.saveValue("myKey", true)
+                                        },
+                                        colors = ButtonDefaults.buttonColors(Color(0xFF29B630)),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(20.dp))
+                                    ) {
+                                        Text(
+                                            text = stringResource(id = R.string.I_agree),
+                                            color = Color.White
+                                        )
+                                    }
+                                    Button(
+                                        onClick = {
+                                            finish()
+                                        },
+                                        colors = ButtonDefaults.buttonColors(Color(0xFFFA0505)),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(15.dp))
+                                    ) {
+                                        Text(
+                                            stringResource(id = R.string.I_dont_agree),
+                                            color = Color.White
+                                        )
+                                    }
+                                }
                             }
 
                         }

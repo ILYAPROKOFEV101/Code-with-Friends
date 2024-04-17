@@ -122,7 +122,6 @@ class Addtask : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-
         storedRoomId = PreferenceHelper.getRoomId(this)
 
         setContent {
@@ -135,7 +134,6 @@ class Addtask : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-
                     SwipeRefresh(
                         state = swipeRefresh,
                         onRefresh =
@@ -165,9 +163,7 @@ class Addtask : ComponentActivity() {
                                 Spacer(modifier = Modifier.height(20.dp))
                                 addtask(storedRoomId!!)
                             }
-
                         }
-
                     }
                 }
             }
@@ -178,11 +174,8 @@ class Addtask : ComponentActivity() {
     @Composable
     fun addgitbreanch(){
         val keyboardControllers = LocalSoftwareKeyboardController.current
-        var showtext by remember {
-            mutableStateOf(false) }
-
+        var showtext by remember { mutableStateOf(false) }
         Spacer(modifier = Modifier.height(50.dp))
-
         Card(modifier = Modifier
             .fillMaxWidth()
             .padding(top = 20.dp, start = 10.dp, end = 10.dp)
@@ -208,7 +201,6 @@ class Addtask : ComponentActivity() {
                         color = Color.Black,
                         textAlign = TextAlign.Center
                     )
-
                 },
 
                 keyboardOptions = KeyboardOptions(
@@ -225,10 +217,8 @@ class Addtask : ComponentActivity() {
 
                     }
                 ),
-
-                )
+          )
         }
-
     }
 
     @Preview(showBackground = true)
@@ -358,7 +348,6 @@ class Addtask : ComponentActivity() {
                         .fillMaxWidth()
                         .wrapContentHeight()
                         .padding(bottom = 15.dp, top = 15.dp, start = 70.dp, end = 70.dp)
-
                         //.alpha(0f) // Устанавливаем полную прозрачность кнопке
                         .border(
                             2.dp, Color.Blue,
