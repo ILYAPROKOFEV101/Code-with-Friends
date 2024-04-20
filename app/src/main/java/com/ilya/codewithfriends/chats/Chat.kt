@@ -542,6 +542,8 @@ class Chat : ComponentActivity() {
     }
 
 
+
+
       @Composable
        fun MessageList(messages: List<Message>?, username: String, url: String, id: String) {
            Log.d("MessageList", "Number of messages: ${messages?.size}")
@@ -766,7 +768,7 @@ class Chat : ComponentActivity() {
                            if (paint != null && paint.isNotEmpty()) {
                                Box(
                                    modifier = Modifier
-                                       .wrapContentWidth()
+                                       .fillMaxWidth()
                                        .height(if (isVideoUrl(paint)) 500.dp else 300.dp),
                                    contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
                                ) {

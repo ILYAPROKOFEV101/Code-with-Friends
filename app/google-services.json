@@ -38,6 +38,13 @@
             {
               "client_id": "723880678401-e36qj2dcmalhhnp8brc81r5kaiqgr6lb.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "723880678401-pi9uo9sitjc9509r1lpfoul554uib9f7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "Ilya-Prokofev.Lifehack"
+              }
             }
           ]
         }
@@ -75,6 +82,13 @@
             {
               "client_id": "723880678401-e36qj2dcmalhhnp8brc81r5kaiqgr6lb.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "723880678401-pi9uo9sitjc9509r1lpfoul554uib9f7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "Ilya-Prokofev.Lifehack"
+              }
             }
           ]
         }

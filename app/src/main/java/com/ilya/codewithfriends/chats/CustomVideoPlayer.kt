@@ -153,7 +153,7 @@ fun CustomVideoPlayer(
             )
 
             if (duration.value > 0L) {
-                Box(modifier = Modifier.fillMaxWidth().height(5.dp)) {
+                Box(modifier = Modifier.height(5.dp)) {
                     Slider(
                         value = currentPosition.value.toFloat(),
                         onValueChange = {
@@ -162,7 +162,7 @@ fun CustomVideoPlayer(
                         },
                         valueRange = 0f..duration.value.toFloat(),
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .wrapContentWidth()
                             .alpha(1f),
                         steps = 100 // Ограничим количество шагов слайдера
                     )
@@ -199,16 +199,24 @@ fun CustomVideoPlayer(
     }
 }
 
-
 private fun getFirstFrameBitmap(videoUrl: String, quality: Int): Bitmap? {
     val retriever = MediaMetadataRetriever()
-    retriever.setDataSource(videoUrl)
-    val data = retriever.frameAtTime
-    retriever.release()
-
-    val outputStream = ByteArrayOutputStream()
-    // Используйте параметр quality для управления качеством изображения
-    data?.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
-    val compressedData = outputStream.toByteArray()
-    return BitmapFactory.decodeByteArray(compressedData, 0, compressedData.size)
+    try {
+        retriever.setDataSource(videoUrl)
+        // Получение первого кадра. Используем 0 для извлечения первого доступного кадра.
+        val data = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+        if (data != null) {
+            val outputStream = ByteArrayOutputStream()
+            // Используйте параметр quality для управления качеством изображения
+            data.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+            val compressedData = outputStream.toByteArray()
+            return BitmapFactory.decodeByteArray(compressedData, 0, compressedData.size)
+        }
+    } catch (ex: Exception) {
+        // Обработка исключения, например, логирование
+        ex.printStackTrace()
+    } finally {
+        retriever.release()
+    }
+    return null
 }
