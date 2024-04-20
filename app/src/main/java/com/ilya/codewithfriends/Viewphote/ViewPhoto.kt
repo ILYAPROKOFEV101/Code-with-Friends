@@ -55,11 +55,19 @@ class ViewPhoto : ComponentActivity() {
             val context = LocalContext.current
             val mediaUrl = intent.getStringExtra(PHOTO_URL_KEY) ?: return@setContent
             Log.d("PHOTO_URL_KEY", "$mediaUrl")
+            val isVideo = isVideoUrl(mediaUrl)
+            val isPhoto = isPhotoUrl(mediaUrl)
 
-
-
+            Log.d("MEDIA_TYPE", "Is video: $isVideo, Is photo: $isPhoto")
+            if(isVideo) {
 
                 PlayVideo(mediaUrl)
+
+            }
+            else if(isPhoto) {
+                DisplayImage(mediaUrl)
+            }
+
 
                     // DisplayImage(mediaUrl)
 
@@ -85,8 +93,6 @@ class ViewPhoto : ComponentActivity() {
             }
         }
 
-        val playWhenReady = remember { mutableStateOf(true) } // Начать воспроизведение автоматически
-
         AndroidView(
             factory = { ctx ->
                 StyledPlayerView(ctx).apply {
@@ -110,30 +116,42 @@ class ViewPhoto : ComponentActivity() {
         })
     }
 
+
+
     @Composable
     fun DisplayImage(imageUrl: String) {
         var scale by remember { mutableStateOf(1f) }
         var offset by remember { mutableStateOf(Offset.Zero) }
 
+
+
         BoxWithConstraints(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+
         ) {
-            val state = rememberTransformableState { zoomChange, panChange, rotationChange ->
-                scale *= zoomChange.coerceIn(1f, 7f)
+            val state = rememberTransformableState{zoomChange, panChang, rotationChange->
+                scale = (scale * zoomChange).coerceIn(1f, 7f)
                 val extraWidth = (scale - 1) * constraints.maxWidth
                 val extraHeight = (scale - 1) * constraints.maxHeight
 
                 val maxX = extraWidth / 2
-                val maxY = extraHeight / 2
+                val maxY= extraHeight / 2
 
                 offset = Offset(
-                    x = (offset.x + panChange.x).coerceIn(-maxX, maxX),
-                    y = (offset.y + panChange.y).coerceIn(-maxY, maxY)
+                    x = (offset.x + scale + panChang.x).coerceIn(-maxX, maxX),
+                    y = (offset.y + scale + panChang.y).coerceIn(-maxY, maxY)
                 )
+                offset += panChang
             }
-
             Image(
-                painter = rememberImagePainter(imageUrl),
+                painter = rememberImagePainter(
+                    data = imageUrl,
+                    builder = {
+                        precision(Precision.EXACT)
+                        // Добавьте другие параметры запроса по мере необходимости
+                    }
+                ),
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize()
@@ -143,10 +161,23 @@ class ViewPhoto : ComponentActivity() {
                         translationX = offset.x,
                         translationY = offset.y
                     )
-                    .transformable(state)
-            )
+                    .transformable(state),
+
+                )
         }
     }
 
 
+
+
+
+
+}
+
+fun isVideoUrl(url: String): Boolean {
+    return url.contains("https://firebasestorage.googleapis.com/v0/b/code-with-friends-73cde.appspot.com/o/video", ignoreCase = true)
+}
+
+fun isPhotoUrl(url: String): Boolean {
+    return url.contains("https://firebasestorage.googleapis.com/v0/b/code-with-friends-73cde.appspot.com/o/image", ignoreCase = true)
 }

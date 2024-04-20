@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -73,6 +74,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
@@ -82,11 +84,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -111,6 +119,15 @@ import com.ilya.reaction.logik.PreferenceHelper.loadMessagesFromMemory
 import com.ilya.reaction.logik.PreferenceHelper.saveMessages
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.ui.PlayerView
+import com.google.android.exoplayer2.ui.StyledPlayerView
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
+import com.google.android.exoplayer2.util.Util
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
@@ -123,6 +140,7 @@ import com.ilya.codewithfriends.Startmenu.Friends
 import com.ilya.codewithfriends.Startmenu.Main_menu
 import com.ilya.codewithfriends.Startmenu.Main_menu_fragment
 import com.ilya.codewithfriends.Startmenu.Room
+import com.ilya.codewithfriends.Viewphote.isVideoUrl
 import com.ilya.codewithfriends.findroom.Join
 
 import com.ilya.codewithfriends.findroom.join_room
@@ -702,7 +720,6 @@ class Chat : ComponentActivity() {
                                        Column(
                                            modifier = Modifier
                                                .padding(8.dp)
-                                           //  .background ( if (isMyMessage) Color(0xE650B973) else Color(0xFFFFFFFF))
                                        )
                                        {
 
@@ -746,43 +763,46 @@ class Chat : ComponentActivity() {
                                }
                            }
 
-                           if (paint != null)
-                           {
-                                       if (paint.isNotEmpty()) {
-                                           Box(
-                                               modifier = Modifier
-                                                   .fillMaxWidth()
-                                                   .padding(start = 40.dp, end = 40.dp)
-                                                   // .padding(start = 50.dp, end = 50.dp)
-                                                   .height(300.dp),
-                                                   //.zIndex(1f), // Устанавливает z-индекс, чтобы поместиться наверху других
-                                               contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
-                                           ) {
-                                               Image(
-                                                   painter = if (paint.isNotEmpty()) {
-                                                       // Load image from URL
-                                                       rememberImagePainter(data = paint)
-                                                   } else {
-                                                       // Load a default image when URL is empty
-                                                       painterResource(id = R.drawable.android) // Replace with your default image resource
-                                                   },
-                                                   contentDescription = null,
-                                                   modifier = Modifier
-                                                       .fillMaxSize()
-                                                       .clip(RoundedCornerShape(20.dp))
-                                                       .clickable {
-                                                           openLargeImage("$paint")
-                                                       },
-                                        )
-                                }
-                              }
+                           if (paint != null && paint.isNotEmpty()) {
+                               Box(
+                                   modifier = Modifier
+                                       .wrapContentWidth()
+                                       .height(if (isVideoUrl(paint)) 500.dp else 300.dp),
+                                   contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
+                               ) {
+                                   if (isVideoUrl(paint)) {
+                                       CustomVideoPlayer(paint)
+                                   } else {
+                                       Image(
+                                           painter = rememberImagePainter(data = paint),
+                                           contentDescription = null,
+                                           modifier = Modifier
+                                               .fillMaxSize()
+                                               .padding(
+                                                   start = 40.dp, end = 40.dp
+                                               )
+                                               .clip(RoundedCornerShape(20.dp))
+                                               .clickable {
+                                                   openLargeImage("$paint")
+                                               }
+                                       )
+                                   }
+                               }
                            }
+
+
                        }
 
                    }
                }
     }
   }
+
+
+
+
+
+
     fun openLargeImage( photo: String) {
         // Здесь реализуйте логику открытия большой версии изображения
         // Например, использование Intent для открытия новой активности с большим изображением
@@ -790,9 +810,6 @@ class Chat : ComponentActivity() {
         intent.putExtra("PHOTO_URL", photo) // Передача URL изображения в активность
         startActivity(intent)
     }
-
-
-
 
     private fun getData(roomId: String, id: String, username: String) {
         // Создаем клиент OkHttp
