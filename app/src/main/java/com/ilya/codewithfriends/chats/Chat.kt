@@ -548,12 +548,9 @@ class Chat : ComponentActivity() {
 
            if (messages != null && messages.isNotEmpty()) {
                if (messages.isNotEmpty()) { // Проверяем, что список не пуст
-                   val currentUserUrl = url.take(60) // Получаем первые 30 символов URL
                    val listState = rememberLazyListState()
-                   val lastVisibleItemIndex = messages.size - 1
                    val coroutineScope = rememberCoroutineScope()
                    val hasScrolled = rememberSaveable { mutableStateOf(false) }
-
 
                    LaunchedEffect(hasScrolled.value, messages) {
                        if (!hasScrolled.value || messages.last().img == url) {
@@ -567,13 +564,9 @@ class Chat : ComponentActivity() {
                            }
                        }
                    }
-
                    LaunchedEffect(messages.size) {
                        listState.animateScrollToItem(messages.size - 1)
                    }
-
-                   var lastShownDate: LocalDate? by remember { mutableStateOf(null) }
-
 
                    LazyColumn(
                        modifier = Modifier
@@ -588,24 +581,8 @@ class Chat : ComponentActivity() {
                            val isMyMessage = message.uid == id
                            val paint = extractImageFromMessage(message.message)
 
-
-                           val maxTextWidth = 0.8f // Максимальная ширина текста
-                           val messageText = removeImageLinkFromMessage(message.message) // Текст сообщения
-
-// Если ширина текста превышает максимальную ширину, обрезаем текст и добавляем многоточие
-                           val displayedText = if (messageText.length > maxTextWidth * 1000) {
-                               // Умножаем на 1000, чтобы преобразовать ширину в пиксели
-                               val maxWidthIndex = (maxTextWidth * 1000).toInt()
-                               messageText.substring(0, maxWidthIndex) + "..."
-                           } else {
-                               messageText
-                           }
-
-
                            val messageDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(message.time), ZoneId.systemDefault())
 
-
-                           // Проверка, совпадает ли месяц и день с момента последнего сообщения
                            val showDayMarker = lastShownMonth == null || lastShownDayOfMonth == null ||
                                    messageDateTime.monthValue != lastShownMonth ||
                                    messageDateTime.dayOfMonth != lastShownDayOfMonth
@@ -672,18 +649,10 @@ class Chat : ComponentActivity() {
                            }
 
 
-
-                           Box(
-                               modifier = Modifier
-                                   .fillMaxWidth()
-                                   .padding(8.dp),
-                              contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
-                               )
-                           {
                                Row(
                                    modifier = Modifier
                                        .fillMaxWidth()
-                                       .padding(0.dp),
+                                       .padding(8.dp),
                                    horizontalArrangement = if (isMyMessage) Arrangement.End else Arrangement.Start
                                ) {
                                    val imageModifier = Modifier
@@ -714,7 +683,7 @@ class Chat : ComponentActivity() {
                                                bottom = 2.dp
                                            ),
                                        backgroundColor = if (isMyMessage) Color(0xFF315FF3) else Color(0xFFFFFFFF),
-                                       elevation = 10.dp,
+                                      // elevation = 10.dp,
                                        shape = RoundedCornerShape(12.dp)
                                    ) {
                                        Column(
@@ -722,7 +691,6 @@ class Chat : ComponentActivity() {
                                                .padding(8.dp)
                                        )
                                        {
-
                                            Text(
                                                text = removeImageLinkFromMessage(message.message),
                                                textAlign = TextAlign.Start,
@@ -760,47 +728,41 @@ class Chat : ComponentActivity() {
                                        }
                                    }
                                    }
-                               }
+
                            }
 
                            if (paint != null && paint.isNotEmpty()) {
                                Box(
                                    modifier = Modifier
-                                       .wrapContentWidth()
+                                       .fillMaxWidth()
                                        .height(if (isVideoUrl(paint)) 500.dp else 300.dp),
-                                   contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
                                ) {
-                                   if (isVideoUrl(paint)) {
-                                       CustomVideoPlayer(paint)
-                                   } else {
-                                       Image(
-                                           painter = rememberImagePainter(data = paint),
-                                           contentDescription = null,
-                                           modifier = Modifier
-                                               .fillMaxSize()
-                                               .padding(
-                                                   start = 40.dp, end = 40.dp
-                                               )
-                                               .clip(RoundedCornerShape(20.dp))
-                                               .clickable {
-                                                   openLargeImage("$paint")
-                                               }
-                                       )
+                                   Box(modifier = Modifier.fillMaxSize().padding(8.dp),
+                                       contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
+                                   ) {
+                                       if (isVideoUrl(paint)) {
+                                           CustomVideoPlayer(paint)
+                                       } else {
+                                           Image(
+                                               painter = rememberImagePainter(data = paint),
+                                               contentDescription = null,
+                                               modifier = Modifier
+                                                   .fillMaxHeight()
+                                                   .fillMaxWidth(0.8f)
+                                                   .clip(RoundedCornerShape(20.dp))
+                                                   .clickable {
+                                                       openLargeImage("$paint")
+                                                   }
+                                           )
+                                       }
                                    }
                                }
                            }
-
-
                        }
-
                    }
                }
-    }
-  }
-
-
-
-
+            }
+          }
 
 
     fun openLargeImage( photo: String) {
@@ -810,7 +772,6 @@ class Chat : ComponentActivity() {
         intent.putExtra("PHOTO_URL", photo) // Передача URL изображения в активность
         startActivity(intent)
     }
-
     private fun getData(roomId: String, id: String, username: String) {
         // Создаем клиент OkHttp
         val client = OkHttpClient()
@@ -1076,14 +1037,6 @@ class Chat : ComponentActivity() {
         }
     }
     val joinDataManager = JoinDataManager()
-
-
-
-
-
-
-
-
 
     @Composable
     fun upbar(roomId: String, id: String, name: String, img: String,navController: NavController){
