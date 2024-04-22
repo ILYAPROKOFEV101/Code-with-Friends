@@ -193,7 +193,7 @@ fun ShowVideo(video: String?) {
             val fragmentTransaction = fragmentManager.beginTransaction()
             val chatFragment = FriendsChatFragment().apply {
                 arguments = Bundle().apply {
-                    putString("video", video)
+                    putString("VIDEO_URL", video)
                 }
             }
 

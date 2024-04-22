@@ -90,7 +90,7 @@ fun CustomVideoPlayer(
         Glide.with(context)
             .asBitmap()
             .load(videoUrl)
-            .frame(1000000) // Захватить кадр на 1-й секунде
+            .frame(1) // Захватить кадр на 1-й секунде
             .into(object : CustomTarget<Bitmap>() {
                 override fun onResourceReady(
                     resource: Bitmap,
@@ -103,7 +103,9 @@ fun CustomVideoPlayer(
             })
 
 
+
     }
+
 
     DisposableEffect(Unit) {
         val exoPlayerInstance = SimpleExoPlayer.Builder(context).build().apply {
@@ -135,12 +137,13 @@ fun CustomVideoPlayer(
         }
     }
 
-    Column(modifier = modifier.fillMaxWidth(0.5f)) {
+    Column(modifier = modifier.fillMaxWidth(0.5f).clip(RoundedCornerShape(20.dp))) {
         if (previewImage != null && !isPlayerReady) {
             Box(modifier = Modifier.fillMaxSize()) {
 
                     val compressedImage = compressBitmap(previewImage!!, 50) // Качество 50 из 100
-                    Image(bitmap = compressedImage.asImageBitmap(), contentDescription = "Video Preview")
+                    Image(bitmap = compressedImage.asImageBitmap(), contentDescription = "Video Preview",
+                        modifier = Modifier.clip(RoundedCornerShape(20.dp)))
 
             }
         } else {

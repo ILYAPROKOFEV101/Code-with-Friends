@@ -12,12 +12,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+
 
 import androidx.compose.foundation.layout.Row
 
@@ -30,6 +33,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -67,13 +71,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
+import androidx.compose.material.ProgressIndicatorDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -189,6 +196,8 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
     var kick = mutableStateOf(false)
     var photo by mutableStateOf("")
 
+    var uploadProgress = mutableStateOf(0f)
+
 
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
@@ -299,7 +308,7 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
             val isLoading by viewModel.isLoading.collectAsState()
             val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
 
-
+            Log.d("uploadProgress", "$uploadProgress")
 
             NavHost(
                 navController = navController,
@@ -561,6 +570,9 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                    val listState = rememberLazyListState()
                    val coroutineScope = rememberCoroutineScope()
                    val hasScrolled = rememberSaveable { mutableStateOf(false) }
+                   // Состояние для отслеживания времени последнего клика
+                   val lastClickTime = remember { mutableStateOf(0L) }
+
 
                    LaunchedEffect(hasScrolled.value, messages) {
                        if (!hasScrolled.value || messages.last().img == url) {
@@ -746,7 +758,7 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                                Box(
                                    modifier = Modifier
                                        .fillMaxWidth()
-                                       .height(if (isVideoUrl(paint)) 550.dp else 300.dp),
+                                       .height(if (isVideoUrl(paint)) 500.dp else 300.dp),
                                ) {
                                    Box(modifier = Modifier
                                        .fillMaxSize()
@@ -754,25 +766,28 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                                        contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
                                    ) {
                                        if (isVideoUrl(paint)) {
-                                           Column(modifier = Modifier.fillMaxSize()){
+                                           Column(modifier = Modifier.fillMaxSize()) {
                                                Box(
                                                    modifier = Modifier
                                                        .fillMaxWidth()
                                                        .height(500.dp)
-                                               ){
+                                                       .clickable(
+                                                           onClick = {
+                                                               val currentTime =
+                                                                   System.currentTimeMillis()
+                                                               if (currentTime - lastClickTime.value < 300) { // 300 мс для двойного клика
+                                                                   playvideo = paint
+                                                                   navController.navigate("Video")
+                                                               }
+                                                               // Обновляем время последнего клика
+                                                               lastClickTime.value = currentTime
+                                                           },
+                                                           // Отключение волнового эффекта при клике
+                                                           indication = null,
+                                                           interactionSource = remember { MutableInteractionSource() }
+                                                       )
+                                               ) {
                                                    CustomVideoPlayer(paint)
-                                               }
-                                               Button(
-                                                   modifier = Modifier
-                                                       .fillMaxWidth()
-                                                       .height(50.dp)
-                                                   ,
-                                                   colors = ButtonDefaults.buttonColors(Color.Red),
-                                                   onClick = {
-                                                   navController.navigate("Video")
-                                                   playvideo = imageUrl
-                                               }) {
-
                                                }
                                            }
 
@@ -906,23 +921,34 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                     .zIndex(1f), // Устанавливает z-индекс, чтобы поместиться наверху других элементов
                     contentAlignment = Alignment.BottomCenter // Выравнивание по нижнему кра
                 ) {
-                    if (selectedImageUri != null) {
-                        Image(
-                            painter = rememberImagePainter(selectedImageUri),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight()
-                                .padding(bottom = 15.dp, top = 15.dp, start = 70.dp, end = 70.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                                .clickable {},
-                            contentScale = ContentScale.Crop
-                        )
+                    Column(modifier = Modifier.fillMaxSize()) {
+
+                        if (selectedImageUri != null) {
+                            Image(
+                                painter = rememberImagePainter(selectedImageUri),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
+                                    .padding(
+                                        bottom = 15.dp,
+                                        top = 15.dp,
+                                        start = 70.dp,
+                                        end = 70.dp
+                                    )
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .clickable {},
+                                contentScale = ContentScale.Crop
+                            )
+
+                        }
+
                     }
                 }
+
                 Row(modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 100.dp, end = 100.dp)
+                    .padding(start = 100.dp, end = 80.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .height(50.dp)
                     .alpha(0.9f) // Пример половинной прозрачности
@@ -936,6 +962,7 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                         onClick = {
                             showimg = false
                             photo = ""
+                            uploadProgress.value = 0f
                         }
                     ){
                         Icon(
@@ -953,6 +980,7 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                             selectedImageUri?.let { uri ->
                                 if (storedRoomId != null) {
                                     uploadFileToFirebaseStorage()
+                                    uploadProgress.value = 0f
                                 } else {
                                     showToast("Room ID is not set")
                                     proces = false  // Останавливаем индикатор загрузки, если нет room ID
@@ -971,7 +999,21 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                     )
 
                     }
+
                 }
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(70.dp)
+                        .align(Alignment.CenterHorizontally)
+                ) {
+
+                    CircularProgressIndicatorSample()
+                }
+
+
+
             }
 
 
@@ -1051,9 +1093,9 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                                     photo = ""
                                     selectedImageUri = null // Обнулить selectedImageUri после успешной загрузки
                                     showimg = false
+                                    uploadProgress.value = 0f
 
                                 }
-
                             } else {
                                 showToast("идёт загрузка фота.")
                             }
@@ -1068,6 +1110,7 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                     )
                 }
             }
+
         }
     }
     val joinDataManager = JoinDataManager()
@@ -1115,45 +1158,75 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                 }
             }
 
-    private fun uploadFileToFirebaseStorage() {
-        if (selectedImageUri == null) {
-            showToast("Выберите файл перед загрузкой.")
-            return
-        }
 
-        proces = true
-        val storage = FirebaseStorage.getInstance()
-        val storageRef = storage.reference
+    @Composable
+    fun CircularProgressIndicatorSample() {
+        val progress = uploadProgress.value // Прямое использование uploadProgress как State
 
-        val fileName = UUID.randomUUID().toString()
-        val mimeType = contentResolver.getType(selectedImageUri!!) ?: "application/octet-stream"
-        val fileRef = storageRef.child("$mimeType/$storedRoomId/$fileName")
+        val animatedProgress by animateFloatAsState(
+            targetValue = progress,
+            animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+        )
 
-        val metadata = StorageMetadata.Builder()
-            .setContentType(mimeType)
-            .build()
-
-        val uploadTask = fileRef.putFile(selectedImageUri!!, metadata)
-
-        uploadTask.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                fileRef.downloadUrl.addOnSuccessListener { uri ->
-                    // Получаем ссылку на загруженное видео
-                     photo = uri.toString()
-                    proces = false
-                    showToast("Видео успешно загружено: $photo")
-                    Log.d("Uploudphoto", photo)
-                    selectedImageUri = null // Сбрасываем выбранный Uri после загрузки
-                }
-            } else {
-                proces = false
-                showToast("Ошибка загрузки файла")
-            }
+        Column(horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            CircularProgressIndicator(progress = animatedProgress, color = Color(0xFF42FC3C), strokeWidth = 5.dp)
+            Spacer(Modifier.requiredHeight(5.dp))
+            Text("Загрузка: ${String.format("%.1f", progress * 100)}%", fontSize = 16.sp)
         }
     }
+        private fun uploadFileToFirebaseStorage() {
+            if (selectedImageUri == null) {
+                showToast("Выберите файл перед загрузкой.")
+                return
+            }
+
+            proces = true
+            val storage = FirebaseStorage.getInstance()
+            val storageRef = storage.reference
+
+            val fileName = UUID.randomUUID().toString()
+            val mimeType = contentResolver.getType(selectedImageUri!!) ?: "application/octet-stream"
+            val fileRef = storageRef.child("$mimeType/$storedRoomId/$fileName")
+
+            val metadata = StorageMetadata.Builder()
+                .setContentType(mimeType)
+                .build()
+
+            val uploadTask = fileRef.putFile(selectedImageUri!!, metadata)
+
+            uploadTask.addOnProgressListener { taskSnapshot ->
+                // Обновляем глобальную переменную прогресса
+                uploadProgress.value = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount).toFloat() / 100
+                Log.d("UploadProgress", "Прогресс загрузки: ${uploadProgress.value}")
+            }
+
+            uploadTask.addOnSuccessListener { taskSnapshot ->
+                // Успешно загружено
+                fileRef.downloadUrl.addOnSuccessListener { uri ->
+                    // Получаем ссылку на загруженное видео
+                    photo = uri.toString()
+                    proces = false
+                    showToast("Файл успешно загружен: $photo")
+
+                    Log.d("Uploudphoto", photo)
+                    selectedImageUri = null // Сбрасываем выбранный Uri после загрузки
+                }.addOnFailureListener { exception ->
+                    // Ошибка при получении ссылки на загруженный файл
+                    proces = false
+                    showToast("Ошибка при получении ссылки на файл: ${exception.message}")
+                }
+            }.addOnFailureListener { exception ->
+                // Ошибка загрузки файла
+                proces = false
+                showToast("Ошибка загрузки файла: ${exception.message}")
+            }
+        }
 
 
 
 
 }
+
 

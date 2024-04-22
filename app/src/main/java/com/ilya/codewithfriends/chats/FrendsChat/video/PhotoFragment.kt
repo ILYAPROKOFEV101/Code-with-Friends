@@ -48,6 +48,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -143,32 +144,30 @@ import java.util.UUID
 
 class FriendsChatFragment : Fragment() {
 
-    var video: String? = null
+
+    private lateinit var video: String
+    /*var video: String? = null
         set(value) {
             field = value
             updateVideo()
-        }
+        }*/
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
+        video = arguments?.getString("VIDEO_URL") ?: ""
         return ComposeView(requireContext()).apply {
             setContent {
                 ShowVideoplayer(video ?: "")
+                Log.d("video_url", "$video")
             }
         }
     }
 
-    fun updateVideo() {
-        view?.let {
-            val composeView = it as ComposeView
-            composeView.setContent {
-                ShowVideoplayer(video ?: "")
-            }
-        }
-    }
+
 
     companion object {
         private const val ARG_VIDEO = "video"
@@ -193,30 +192,9 @@ class FriendsChatFragment : Fragment() {
         onVideoCompleted: () -> Unit = {}
     ) {
         var exoPlayer: ExoPlayer? by remember { mutableStateOf(null) }
-        var isPlayerReady by remember { mutableStateOf(false) }
+        var isPlayerReady by remember { mutableStateOf(true) }
         var previewImage: Bitmap? by remember { mutableStateOf(null) }
         val context = LocalContext.current
-
-        // Загрузка превью
-        LaunchedEffect(videoUrl) {
-            Glide.with(context)
-                .asBitmap()
-                .load(videoUrl)
-                .frame(1000000) // Захватить кадр на 1-й секунде
-                .into(object : CustomTarget<Bitmap>() {
-                    override fun onResourceReady(
-                        resource: Bitmap,
-                        transition: com.bumptech.glide.request.transition.Transition<in Bitmap>?
-                    ) {
-                        previewImage = resource
-                    }
-
-                    override fun onLoadCleared(placeholder: Drawable?) {}
-                })
-
-
-        }
-
 
         val currentPosition = remember { mutableStateOf(0L) }
         val duration = remember { mutableStateOf(0L) }
@@ -241,7 +219,6 @@ class FriendsChatFragment : Fragment() {
                 handler.removeCallbacks(updateRunnable)
             }
         }
-
 
         DisposableEffect(Unit) {
             val exoPlayerInstance = SimpleExoPlayer.Builder(context).build().apply {
@@ -274,17 +251,6 @@ class FriendsChatFragment : Fragment() {
         }
 
         Column(modifier = modifier.fillMaxSize()) {
-            if (previewImage != null && !isPlayerReady) {
-                Box(modifier = Modifier.fillMaxSize()) {
-
-                    val compressedImage = compressBitmap(previewImage!!, 50) // Качество 50 из 100
-                    Image(
-                        bitmap = compressedImage.asImageBitmap(),
-                        contentDescription = "Video Preview"
-                    )
-
-                }
-            } else {
                 exoPlayer?.let {
                     AndroidView(
                         factory = { ctx ->
@@ -302,6 +268,7 @@ class FriendsChatFragment : Fragment() {
                         },
                         modifier = Modifier
                             .fillMaxWidth()
+                            .padding(bottom = 20.dp)
                             .clickable {
                                 if (it.isPlaying) {
                                     it.pause()
@@ -310,9 +277,8 @@ class FriendsChatFragment : Fragment() {
                                 }
                             }
                     )
-                }
                 if (duration.value > 0L) {
-                    Box(modifier = Modifier.fillMaxWidth().height(5.dp)) {
+                    Box(modifier = Modifier.fillMaxWidth().height(20.dp)) {
                         Slider(
                             value = currentPosition.value.toFloat(),
                             onValueChange = {
@@ -322,8 +288,11 @@ class FriendsChatFragment : Fragment() {
                             valueRange = 0f..duration.value.toFloat(),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .alpha(0.1f),
-                            steps = 100
+                                .alpha(0.5f),
+                         //   steps = 1000
+                            colors = SliderDefaults.colors(
+                                Color(0xFF6385FF),
+                            )
                         )
                     }
                 }
