@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -92,6 +93,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
@@ -136,11 +139,13 @@ import com.ilya.codewithfriends.APIclass.JoinDataManager
 import com.ilya.codewithfriends.Complaint.Complaint
 import com.ilya.codewithfriends.Complaint.Complainttouser
 import com.ilya.codewithfriends.Startmenu.FindRoom
+import com.ilya.codewithfriends.Startmenu.FragmentManagerProvider_manu
 import com.ilya.codewithfriends.Startmenu.Friends
 import com.ilya.codewithfriends.Startmenu.Main_menu
 import com.ilya.codewithfriends.Startmenu.Main_menu_fragment
 import com.ilya.codewithfriends.Startmenu.Room
 import com.ilya.codewithfriends.Viewphote.isVideoUrl
+import com.ilya.codewithfriends.chattest.ShowVideo
 import com.ilya.codewithfriends.findroom.Join
 
 import com.ilya.codewithfriends.findroom.join_room
@@ -171,12 +176,14 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 
-class Chat : ComponentActivity() {
+class Chat : FragmentActivity(), FragmentManagerProvider_manu {
 
     private var messageIdCounter = 0
 
 
-
+    override fun provideFragmentManager(): FragmentManager {
+        return supportFragmentManager
+    }
 
     var show = mutableStateOf(false)
     var kick = mutableStateOf(false)
@@ -213,6 +220,7 @@ class Chat : ComponentActivity() {
             // Дальнейшая обработка URI...
         }
     }
+    var playvideo = ""
 
 
 
@@ -328,7 +336,7 @@ class Chat : ComponentActivity() {
 
                     Spacer(modifier = Modifier.height(100.dp))
                     if (storedRoomId != null && show.value) {
-                        MessageList(messages.value, "$name", "$img", "$id")
+                        MessageList(messages.value, "$name", "$img", "$id", navController)
                     }
 
 
@@ -349,10 +357,12 @@ class Chat : ComponentActivity() {
                     }
                 }
             }
-
                 }
                 composable("Room") {
                     Room()
+                }
+                composable("Video") {
+                    ShowVideo(playvideo)
                 }
             }
         }
@@ -543,7 +553,7 @@ class Chat : ComponentActivity() {
 
 
       @Composable
-       fun MessageList(messages: List<Message>?, username: String, url: String, id: String) {
+       fun MessageList(messages: List<Message>?, username: String, url: String, id: String,navController: NavController ) {
            Log.d("MessageList", "Number of messages: ${messages?.size}")
 
            if (messages != null && messages.isNotEmpty()) {
@@ -618,6 +628,7 @@ class Chat : ComponentActivity() {
                                Month.NOVEMBER -> getString(R.string.november)
                                Month.DECEMBER -> getString(R.string.december)
                            }
+                           val imageUrl = message.img
 
                            val screenWidth = LocalConfiguration.current.screenWidthDp.dp
                            val formattedText = "${messageDateTime.dayOfMonth} ${monthText} ${dayOfWeekText} "
@@ -658,7 +669,7 @@ class Chat : ComponentActivity() {
                                    val imageModifier = Modifier
                                        .size(40.dp)
                                        .clip(RoundedCornerShape(40.dp))
-                                   val imageUrl = message.img
+
 
                                    if (!(isMyMessage)) {
                                        if (imageUrl != null) {
@@ -735,13 +746,36 @@ class Chat : ComponentActivity() {
                                Box(
                                    modifier = Modifier
                                        .fillMaxWidth()
-                                       .height(if (isVideoUrl(paint)) 500.dp else 300.dp),
+                                       .height(if (isVideoUrl(paint)) 550.dp else 300.dp),
                                ) {
-                                   Box(modifier = Modifier.fillMaxSize().padding(8.dp),
+                                   Box(modifier = Modifier
+                                       .fillMaxSize()
+                                       .padding(8.dp),
                                        contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
                                    ) {
                                        if (isVideoUrl(paint)) {
-                                           CustomVideoPlayer(paint)
+                                           Column(modifier = Modifier.fillMaxSize()){
+                                               Box(
+                                                   modifier = Modifier
+                                                       .fillMaxWidth()
+                                                       .height(500.dp)
+                                               ){
+                                                   CustomVideoPlayer(paint)
+                                               }
+                                               Button(
+                                                   modifier = Modifier
+                                                       .fillMaxWidth()
+                                                       .height(50.dp)
+                                                   ,
+                                                   colors = ButtonDefaults.buttonColors(Color.Red),
+                                                   onClick = {
+                                                   navController.navigate("Video")
+                                                   playvideo = imageUrl
+                                               }) {
+
+                                               }
+                                           }
+
                                        } else {
                                            Image(
                                                painter = rememberImagePainter(data = paint),

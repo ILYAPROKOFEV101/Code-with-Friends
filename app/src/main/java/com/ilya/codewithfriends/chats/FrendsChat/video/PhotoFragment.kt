@@ -1,8 +1,16 @@
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -39,11 +47,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -58,9 +68,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -70,14 +84,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.ui.StyledPlayerView
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
+import com.google.android.exoplayer2.util.Util
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
@@ -105,6 +131,7 @@ import org.java_websocket.client.WebSocketClient
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -114,23 +141,200 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-class FriendsChatActivity : ComponentActivity() {
+class FriendsChatFragment : Fragment() {
 
-    private var video: String? = null
+    var video: String? = null
+        set(value) {
+            field = value
+            updateVideo()
+        }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return ComposeView(requireContext()).apply {
+            setContent {
+                ShowVideoplayer(video ?: "")
+            }
+        }
+    }
 
-        // Извлекаем данные по ключу "CHAT_ID" и присваиваем их переменной класса
-        video = intent.getStringExtra("CHAT_ID")
-        Log.d("roomid", "$video")
+    fun updateVideo() {
+        view?.let {
+            val composeView = it as ComposeView
+            composeView.setContent {
+                ShowVideoplayer(video ?: "")
+            }
+        }
+    }
+
+    companion object {
+        private const val ARG_VIDEO = "video"
+
+        fun newInstance(video: String): FriendsChatFragment {
+            val fragment = FriendsChatFragment()
+            val args = Bundle().apply {
+                putString(ARG_VIDEO, video)
+            }
+            fragment.arguments = args
+            return fragment
+        }
+    }
+}
 
 
-        setContent {
+
+    @Composable
+    fun ShowVideoplayer(
+        videoUrl: String,
+        modifier: Modifier = Modifier,
+        onVideoCompleted: () -> Unit = {}
+    ) {
+        var exoPlayer: ExoPlayer? by remember { mutableStateOf(null) }
+        var isPlayerReady by remember { mutableStateOf(false) }
+        var previewImage: Bitmap? by remember { mutableStateOf(null) }
+        val context = LocalContext.current
+
+        // Загрузка превью
+        LaunchedEffect(videoUrl) {
+            Glide.with(context)
+                .asBitmap()
+                .load(videoUrl)
+                .frame(1000000) // Захватить кадр на 1-й секунде
+                .into(object : CustomTarget<Bitmap>() {
+                    override fun onResourceReady(
+                        resource: Bitmap,
+                        transition: com.bumptech.glide.request.transition.Transition<in Bitmap>?
+                    ) {
+                        previewImage = resource
+                    }
+
+                    override fun onLoadCleared(placeholder: Drawable?) {}
+                })
 
 
         }
 
 
+        val currentPosition = remember { mutableStateOf(0L) }
+        val duration = remember { mutableStateOf(0L) }
+        val videoStarted = remember { mutableStateOf(false) }
+        val lifecycleOwner = LocalLifecycleOwner.current
+
+        DisposableEffect(key1 = exoPlayer) {
+            val interval = 1000L // Update every second
+            val runnable = Runnable {
+                currentPosition.value = exoPlayer!!.currentPosition
+                duration.value = exoPlayer!!.duration
+            }
+            val handler = Handler(Looper.getMainLooper())
+            val updateRunnable = object : Runnable {
+                override fun run() {
+                    runnable.run()
+                    handler.postDelayed(this, interval)
+                }
+            }
+            handler.post(updateRunnable)
+            onDispose {
+                handler.removeCallbacks(updateRunnable)
+            }
+        }
+
+
+        DisposableEffect(Unit) {
+            val exoPlayerInstance = SimpleExoPlayer.Builder(context).build().apply {
+                val dataSourceFactory = DefaultDataSourceFactory(
+                    context,
+                    Util.getUserAgent(context, context.packageName)
+                )
+                val videoSource = ProgressiveMediaSource.Factory(dataSourceFactory)
+                    .createMediaSource(MediaItem.fromUri(videoUrl))
+                setMediaSource(videoSource)
+                prepare()
+                playWhenReady = false // Начать с паузы
+                addListener(object : Player.Listener {
+                    override fun onPlaybackStateChanged(state: Int) {
+                        if (state == ExoPlayer.STATE_READY && !isPlayerReady) {
+                            isPlayerReady = true
+                            pause() // Удерживаем первый кадр
+                        }
+                        if (state == ExoPlayer.STATE_ENDED) {
+                            onVideoCompleted()
+                        }
+                    }
+                })
+            }
+            exoPlayer = exoPlayerInstance
+
+            onDispose {
+                exoPlayerInstance.release()
+            }
+        }
+
+        Column(modifier = modifier.fillMaxSize()) {
+            if (previewImage != null && !isPlayerReady) {
+                Box(modifier = Modifier.fillMaxSize()) {
+
+                    val compressedImage = compressBitmap(previewImage!!, 50) // Качество 50 из 100
+                    Image(
+                        bitmap = compressedImage.asImageBitmap(),
+                        contentDescription = "Video Preview"
+                    )
+
+                }
+            } else {
+                exoPlayer?.let {
+                    AndroidView(
+                        factory = { ctx ->
+                            StyledPlayerView(ctx).apply {
+                                player = it
+                                controllerAutoShow = true
+                                controllerHideOnTouch = true
+                                useController = false
+                                setShowNextButton(false)
+                                setShowPreviousButton(false)
+                                setShowFastForwardButton(false)
+                                setShowRewindButton(false)
+                                setShowShuffleButton(false)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (it.isPlaying) {
+                                    it.pause()
+                                } else {
+                                    it.play()
+                                }
+                            }
+                    )
+                }
+                if (duration.value > 0L) {
+                    Box(modifier = Modifier.fillMaxWidth().height(5.dp)) {
+                        Slider(
+                            value = currentPosition.value.toFloat(),
+                            onValueChange = {
+                                exoPlayer?.seekTo(it.toLong())
+                                currentPosition.value = it.toLong()
+                            },
+                            valueRange = 0f..duration.value.toFloat(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .alpha(0.1f),
+                            steps = 100
+                        )
+                    }
+                }
+            }
+        }
     }
+
+
+fun compressBitmap(source: Bitmap, quality: Int): Bitmap {
+    val outputStream = ByteArrayOutputStream()
+    source.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+    val byteArray = outputStream.toByteArray()
+    return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
 }
