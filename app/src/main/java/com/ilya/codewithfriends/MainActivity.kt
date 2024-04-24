@@ -115,12 +115,6 @@ class  MainActivity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
 
 
-
-
-
-
-
-
         super.onCreate(savedInstanceState)
 
         // Инициализируйте PreferenceHelper в вашей активности
@@ -267,7 +261,7 @@ class  MainActivity: ComponentActivity() {
 
                                     Spacer(modifier = Modifier.height(30.dp))
 
-                                    Button(modifier = Modifier
+                                    /*Button(modifier = Modifier
                                         .fillMaxWidth()
                                         .height(100.dp)
                                         .padding(start = 20.dp, end = 20.dp),
@@ -277,7 +271,7 @@ class  MainActivity: ComponentActivity() {
                                             startActivity(intent)
                                     }) {
                                         Text(text = "If you are a developer or tester and you don’t have an account, click here")
-                                    }
+                                    }*/
                                 }
                             }
 

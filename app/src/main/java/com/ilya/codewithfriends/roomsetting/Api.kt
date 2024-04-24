@@ -17,5 +17,10 @@ interface DeleteRoom {
 
 interface Add_user_Invite {
     @PUT("/invite/{uid}/{id}/{user}/{roomid}")
-    fun putUSER( @Path("uid") uid: String, @Path("id") id: String, @Path("user") user: String, @Path("roomid") roomId: String)
+    fun putUSER(
+        @Path("uid") uid: String,
+        @Path("id") id: String,
+        @Path("user") user: String,
+        @Path("roomid") roomId: String
+    ): Call<Void> // Define return type as Call<Void> since it's a PUT request
 }

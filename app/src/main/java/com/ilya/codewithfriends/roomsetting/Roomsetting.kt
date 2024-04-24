@@ -737,7 +737,14 @@ class Roomsetting : ComponentActivity() {
                                                 .weight(0.45f)
                                                 .clip(RoundedCornerShape(10.dp)),
                                             colors = ButtonDefaults.buttonColors(Color(0xFF315FF3)),
-                                            onClick = { /*TODO*/ })
+                                            onClick = {
+                                                val intent = Intent(this@Roomsetting, Aboutuser::class.java)
+                                                intent.putExtra(
+                                                    "userId",
+                                                    ivitelist.uid
+                                                ) // Здесь вы добавляете данные в Intent
+                                                startActivity(intent)
+                                            })
                                         {
                                             Text(text = stringResource(id = R.string.aboutuser))
                                         }
@@ -748,7 +755,9 @@ class Roomsetting : ComponentActivity() {
                                                 .weight(0.45f)
                                                 .clip(RoundedCornerShape(10.dp)),
                                             colors = ButtonDefaults.buttonColors(Color(0xFF18AD08)),
-                                            onClick = { /*TODO*/ })
+                                            onClick = {
+
+                                            })
                                         {
                                             Text(text = stringResource(id = R.string.adduser))
                                         }

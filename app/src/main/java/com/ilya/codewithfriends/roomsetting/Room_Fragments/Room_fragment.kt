@@ -130,6 +130,7 @@ import com.ilya.codewithfriends.roomsetting.Kick
 import com.ilya.codewithfriends.roomsetting.Over_DeletetItem
 import com.ilya.codewithfriends.roomsetting.Room2
 import com.ilya.codewithfriends.roomsetting.Room_Fragments.REST.Get_Recuast
+import com.ilya.codewithfriends.roomsetting.Room_Fragments.REST.addUser
 import com.ilya.codewithfriends.roomsetting.TaskData
 import com.ilya.codewithfriends.roomsetting.TaskResponse
 import com.ilya.codewithfriends.roomsetting.Usrs_ivite
@@ -407,18 +408,6 @@ class Room_fragment : Fragment() {
         }
     }
 
-    private fun addUser(uidAdmin: String, idRequest: String, uidUser: String, roomId: String) {
-        val url = "https://getpost-ilya1.up.railway.app/" // Replace with your actual base URL
-
-        val retrofit = Retrofit.Builder()
-            .baseUrl(url)
-            .addConverterFactory(GsonConverterFactory.create()) // Assuming JSON response format
-            .build()
-
-        val apiService = retrofit.create(Add_user_Invite::class.java)
-
-
-    }
 
 
 
@@ -471,12 +460,6 @@ class Room_fragment : Fragment() {
         })
     }
 
-
-
-
-
-
-
     fun getTasks(roomId: String) {
         // Создайте экземпляр Retrofit
         val retrofit = Retrofit.Builder()
@@ -520,8 +503,6 @@ class Room_fragment : Fragment() {
         })
     }
 
-
-
     fun OVER_DELETE(roomId: String) {
         // Создайте экземпляр Retrofit
         val retrofit = Retrofit.Builder()
@@ -553,9 +534,6 @@ class Room_fragment : Fragment() {
             }
         })
     }
-
-
-
 
     @Composable
     fun roomname(
@@ -757,8 +735,6 @@ class Room_fragment : Fragment() {
                                                     )
                                                 ),
                                                 onClick = {
-                                                    //storedRoomId
-
                                                     addUser(
                                                         "$id",
                                                         ivitelist.id,
