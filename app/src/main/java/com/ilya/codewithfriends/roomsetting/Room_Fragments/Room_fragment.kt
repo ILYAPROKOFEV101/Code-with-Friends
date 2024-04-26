@@ -354,10 +354,10 @@ class Room_fragment : Fragment() {
                                             addtask()
                                             Spacer(modifier = Modifier.height(30.dp))
                                         }
-                                        item {
+                                        /*item {
                                             Teamspeack()
                                             Spacer(modifier = Modifier.height(30.dp))
-                                        }
+                                        }*/
 
                                     }
 

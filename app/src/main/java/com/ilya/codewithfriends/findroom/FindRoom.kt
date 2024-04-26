@@ -490,6 +490,8 @@ class FindRoom : ComponentActivity() {
                                     }
                                 ) {
                                     Icon(
+                                        modifier = Modifier
+                                            .size(80.dp),
                                         painter = painterResource(id = R.drawable.post_invite), // Показываем иконку "person_add"
                                         contentDescription = "Cancel",
                                         tint = Color.Blue

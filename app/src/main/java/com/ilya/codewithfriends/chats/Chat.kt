@@ -6,9 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,12 +29,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.KeyboardActions
@@ -61,7 +57,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-import com.ilya.reaction.logik.PreferenceHelper.getRoomId
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
@@ -80,9 +75,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
@@ -92,22 +85,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -118,61 +104,35 @@ import com.ilya.codewithfriends.R
 import com.ilya.codewithfriends.MainViewModel
 import com.ilya.codewithfriends.Viewphote.ViewPhoto
 import com.ilya.codewithfriends.createamspeck.ui.theme.CodeWithFriendsTheme
-import com.ilya.codewithfriends.findroom.FindRoom
 import com.ilya.codewithfriends.presentation.profile.ID
-import com.ilya.codewithfriends.presentation.profile.IMG
 import com.ilya.codewithfriends.presentation.profile.UID
 import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
-import com.ilya.codewithfriends.roomsetting.Roomsetting
 import com.ilya.reaction.logik.PreferenceHelper.loadMessagesFromMemory
 
 import com.ilya.reaction.logik.PreferenceHelper.saveMessages
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.ui.StyledPlayerView
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.google.android.exoplayer2.util.Util
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import com.ilya.codewithfriends.APIclass.JoinDataManager
-import com.ilya.codewithfriends.Complaint.Complaint
-import com.ilya.codewithfriends.Complaint.Complainttouser
-import com.ilya.codewithfriends.Startmenu.FindRoom
 import com.ilya.codewithfriends.Startmenu.FragmentManagerProvider_manu
-import com.ilya.codewithfriends.Startmenu.Friends
 import com.ilya.codewithfriends.Startmenu.Main_menu
-import com.ilya.codewithfriends.Startmenu.Main_menu_fragment
 import com.ilya.codewithfriends.Startmenu.Room
 import com.ilya.codewithfriends.Viewphote.isVideoUrl
 import com.ilya.codewithfriends.chattest.ShowVideo
-import com.ilya.codewithfriends.findroom.Join
 
-import com.ilya.codewithfriends.findroom.join_room
 import com.ilya.reaction.logik.PreferenceHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 
 
 import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import org.java_websocket.client.WebSocketClient
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.io.IOException
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -354,7 +314,7 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                     if (storedRoomId != null) {
                         Creator(
                             onSendMessage = { message ->
-                                // Здесь вы можете добавить логику для отправки сообщения через WebSocket
+
                                 sendMessage(message)
 
                             },
@@ -879,8 +839,9 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                     kick.value = trueOrFalse
 
                     if(kick.value == true){
-                        val intent = Intent(this@Chat, FindRoom::class.java)
+                        val intent = Intent(this@Chat, Main_menu::class.java)
                         startActivity(intent)
+
                         finish() // Завершаем текущую активность
                     }
 

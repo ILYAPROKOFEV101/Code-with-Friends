@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.CodeWithFriends" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="NoAnimation" parent="Theme.CodeWithFriends">
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+
+
+</resources>

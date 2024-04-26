@@ -33,9 +33,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,6 +48,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -56,12 +59,14 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.Card
+import androidx.compose.material.ProgressIndicatorDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -118,6 +123,8 @@ import com.ilya.codewithfriends.R
 import com.ilya.codewithfriends.Startmenu.Main_menu
 import com.ilya.codewithfriends.Startmenu.Room
 import com.ilya.codewithfriends.Viewphote.ViewPhoto
+import com.ilya.codewithfriends.Viewphote.isVideoUrl
+import com.ilya.codewithfriends.chats.CustomVideoPlayer
 import com.ilya.codewithfriends.chats.Message
 import com.ilya.codewithfriends.findroom.FindRoom
 import com.ilya.codewithfriends.presentation.profile.ID
@@ -158,6 +165,8 @@ class FriendsChatActivity : ComponentActivity() {
     var photo by mutableStateOf("")
 
 
+    var uploadProgress = mutableStateOf(0f)
+
     private val googleAuthUiClient by lazy {
         GoogleAuthUiClient(
             context = applicationContext,
@@ -173,11 +182,25 @@ class FriendsChatActivity : ComponentActivity() {
     // Определите ваше состояние messages и его инициализацию
 
     private var selectedImageUri: Uri? by mutableStateOf(null)
+
     private var pickImage =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            uri?.let { selectedImageUri = it }
+            uri?.let {
+                selectedImageUri = it
+                val mimeType = contentResolver.getType(it)
+                showToast("Выбран файл типа: $mimeType")
+            }
         }
 
+    private var pickMedia = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it
+            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            // Дальнейшая обработка URI...
+        }
+    }
+
+    var playvideo = ""
 
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
@@ -219,12 +242,6 @@ class FriendsChatActivity : ComponentActivity() {
             Log.e("Tag", "Token -> $token")
         }
 
-
-
-
-        val name = UID(
-            userData = googleAuthUiClient.getSignedInUser()
-        )
         val img =  PreferenceHelper.getimg(this)
         val id = ID(
             userData = googleAuthUiClient.getSignedInUser()
@@ -268,7 +285,7 @@ class FriendsChatActivity : ComponentActivity() {
 
                             Spacer(modifier = Modifier.height(100.dp))
                             if (storedRoomId != null) {
-                                MessageList(messages.value, "$img", "$id")
+                                MessageList(messages.value,  "$img", "$id", navController)
                             }
 
 
@@ -277,13 +294,12 @@ class FriendsChatActivity : ComponentActivity() {
                             if (storedRoomId != null) {
                                 Creator(
                                     onSendMessage = { message ->
-                                        // Здесь вы можете добавить логику для отправки сообщения через WebSocket
+
                                         sendMessage(message)
 
-                                        // Используйте selectedImageUri и pickImage по вашему усмотрению
                                     },
-                                    selectedImageUri = selectedImageUri,
-                                    pickImage = pickImage
+                                    // selectedImageUri,
+                                    pickImage
                                 )
 
 
@@ -301,12 +317,6 @@ class FriendsChatActivity : ComponentActivity() {
 
     }
 
-
-
-    private fun restartActivity() {
-        recreate()
-    }
-
     private fun sendMessage(message: String) {
         // Проверяем, что WebSocket подключен
         if (webSocket != null) {
@@ -318,7 +328,6 @@ class FriendsChatActivity : ComponentActivity() {
         } else {
             // WebSocket не подключен, возможно, нужно выполнить повторное подключение
             // setupWebSocket(...)
-
 
         }
     }
@@ -466,16 +475,16 @@ class FriendsChatActivity : ComponentActivity() {
 
 
     @Composable
-    fun MessageList(messages: List<Message>? ,url: String, id: String) {
+    fun MessageList(messages: List<Message>?,url: String, id: String,navController: NavController ) {
         Log.d("MessageList", "Number of messages: ${messages?.size}")
 
         if (messages != null && messages.isNotEmpty()) {
             if (messages.isNotEmpty()) { // Проверяем, что список не пуст
-                val currentUserUrl = url.take(60) // Получаем первые 30 символов URL
                 val listState = rememberLazyListState()
-                val lastVisibleItemIndex = messages.size - 1
                 val coroutineScope = rememberCoroutineScope()
                 val hasScrolled = rememberSaveable { mutableStateOf(false) }
+                // Состояние для отслеживания времени последнего клика
+                val lastClickTime = remember { mutableStateOf(0L) }
 
 
                 LaunchedEffect(hasScrolled.value, messages) {
@@ -490,13 +499,9 @@ class FriendsChatActivity : ComponentActivity() {
                         }
                     }
                 }
-
                 LaunchedEffect(messages.size) {
                     listState.animateScrollToItem(messages.size - 1)
                 }
-
-                var lastShownDate: LocalDate? by remember { mutableStateOf(null) }
-
 
                 LazyColumn(
                     modifier = Modifier
@@ -511,24 +516,8 @@ class FriendsChatActivity : ComponentActivity() {
                         val isMyMessage = message.uid == id
                         val paint = extractImageFromMessage(message.message)
 
-
-                        val maxTextWidth = 0.8f // Максимальная ширина текста
-                        val messageText = removeImageLinkFromMessage(message.message) // Текст сообщения
-
-// Если ширина текста превышает максимальную ширину, обрезаем текст и добавляем многоточие
-                        val displayedText = if (messageText.length > maxTextWidth * 1000) {
-                            // Умножаем на 1000, чтобы преобразовать ширину в пиксели
-                            val maxWidthIndex = (maxTextWidth * 1000).toInt()
-                            messageText.substring(0, maxWidthIndex) + "..."
-                        } else {
-                            messageText
-                        }
-
-
                         val messageDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(message.time), ZoneId.systemDefault())
 
-
-                        // Проверка, совпадает ли месяц и день с момента последнего сообщения
                         val showDayMarker = lastShownMonth == null || lastShownDayOfMonth == null ||
                                 messageDateTime.monthValue != lastShownMonth ||
                                 messageDateTime.dayOfMonth != lastShownDayOfMonth
@@ -564,6 +553,7 @@ class FriendsChatActivity : ComponentActivity() {
                             Month.NOVEMBER -> getString(R.string.november)
                             Month.DECEMBER -> getString(R.string.december)
                         }
+                        val imageUrl = message.img
 
                         val screenWidth = LocalConfiguration.current.screenWidthDp.dp
                         val formattedText = "${messageDateTime.dayOfMonth} ${monthText} ${dayOfWeekText} "
@@ -595,38 +585,30 @@ class FriendsChatActivity : ComponentActivity() {
                         }
 
 
-
-                        Box(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(8.dp),
-                            contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
-                        )
-                        {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(0.dp),
-                                horizontalArrangement = if (isMyMessage) Arrangement.End else Arrangement.Start
-                            ) {
-                                val imageModifier = Modifier
-                                    .size(40.dp)
-                                    .clip(RoundedCornerShape(40.dp))
-                                val imageUrl = message.img
+                            horizontalArrangement = if (isMyMessage) Arrangement.End else Arrangement.Start
+                        ) {
+                            val imageModifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(40.dp))
 
-                                if (!(isMyMessage)) {
-                                    if (imageUrl != null) {
-                                        val painter: Painter =
-                                            rememberAsyncImagePainter(model = imageUrl)
-                                        Image(
-                                            painter = painter,
-                                            contentDescription = null,
-                                            modifier = imageModifier
-                                        )
-                                        Spacer(modifier = Modifier.width(2.dp))
-                                    }
+
+                            if (!(isMyMessage)) {
+                                if (imageUrl != null) {
+                                    val painter: Painter =
+                                        rememberAsyncImagePainter(model = imageUrl)
+                                    Image(
+                                        painter = painter,
+                                        contentDescription = null,
+                                        modifier = imageModifier
+                                    )
+                                    Spacer(modifier = Modifier.width(2.dp))
                                 }
-
+                            }
+                            if(removeImageLinkFromMessage(message.message) != ""){
                                 Card(
                                     modifier = Modifier
                                         .wrapContentWidth()
@@ -637,15 +619,14 @@ class FriendsChatActivity : ComponentActivity() {
                                             bottom = 2.dp
                                         ),
                                     backgroundColor = if (isMyMessage) Color(0xFF315FF3) else Color(0xFFFFFFFF),
-                                    elevation = 10.dp,
+                                    // elevation = 10.dp,
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Column(modifier = Modifier
-                                        .padding(8.dp)
-                                        //  .background ( if (isMyMessage) Color(0xE650B973) else Color(0xFFFFFFFF))
+                                    Column(
+                                        modifier = Modifier
+                                            .padding(8.dp)
                                     )
                                     {
-
                                         Text(
                                             text = removeImageLinkFromMessage(message.message),
                                             textAlign = TextAlign.Start,
@@ -664,56 +645,82 @@ class FriendsChatActivity : ComponentActivity() {
                                             contentAlignment = Alignment.CenterEnd
                                         )
                                         {
-                                            val localDateTime = messageDateTime.atZone(ZoneId.systemDefault()).toLocalDateTime()
+                                            val localDateTime =
+                                                messageDateTime.atZone(ZoneId.systemDefault())
+                                                    .toLocalDateTime()
 
                                             Text(
-                                                text = localDateTime.format(DateTimeFormatter.ofPattern("HH:mm")), // Извлекаем только время
+                                                text = localDateTime.format(
+                                                    DateTimeFormatter.ofPattern(
+                                                        "HH:mm"
+                                                    )
+                                                ), // Извлекаем только время
                                                 fontSize = 12.sp,
                                                 color = if (isMyMessage) Color(0xFFFFFFFF) else Color(
                                                     0xFF1B1B1B
                                                 ),
                                             )
                                         }
+                                    }
+                                }
+                            }
 
+                        }
 
+                        if (paint != null && paint.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(if (isVideoUrl(paint)) 500.dp else 300.dp),
+                            ) {
+                                Box(modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(8.dp),
+                                    contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
+                                ) {
+                                    if (isVideoUrl(paint)) {
+                                        Column(modifier = Modifier.fillMaxSize()) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(500.dp)
+                                                    .clickable(
+                                                        onClick = {
+                                                            val currentTime =
+                                                                System.currentTimeMillis()
+                                                            if (currentTime - lastClickTime.value < 300) { // 300 мс для двойного клика
+                                                                playvideo = paint
+                                                                navController.navigate("Video")
+                                                            }
+                                                            // Обновляем время последнего клика
+                                                            lastClickTime.value = currentTime
+                                                        },
+                                                        // Отключение волнового эффекта при клике
+                                                        indication = null,
+                                                        interactionSource = remember { MutableInteractionSource() }
+                                                    )
+                                            ) {
+                                                CustomVideoPlayer(paint)
+                                            }
+                                        }
+
+                                    } else {
+                                        Image(
+                                            painter = rememberImagePainter(data = paint),
+                                            contentDescription = null,
+                                            modifier = Modifier
+                                                .fillMaxHeight()
+                                                .fillMaxWidth(0.8f)
+                                                .clip(RoundedCornerShape(20.dp))
+                                                .clickable {
+                                                    openLargeImage("$paint")
+                                                }
+                                        )
                                     }
                                 }
                             }
                         }
-
-                        if (paint != null)
-                        {
-                            if (paint.isNotEmpty()) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(start = 40.dp, end = 40.dp)
-                                        // .padding(start = 50.dp, end = 50.dp)
-                                        .height(300.dp),
-                                    //.zIndex(1f), // Устанавливает z-индекс, чтобы поместиться наверху других
-                                    contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
-                                ) {
-                                    Image(
-                                        painter = if (paint.isNotEmpty()) {
-                                            // Load image from URL
-                                            rememberImagePainter(data = paint)
-                                        } else {
-                                            // Load a default image when URL is empty
-                                            painterResource(id = R.drawable.android) // Replace with your default image resource
-                                        },
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(RoundedCornerShape(20.dp))
-                                            .clickable {
-                                                //openLargeImage("$paint")
-                                            },
-                                    )
-                                }
-                            }
-                        }
                     }
-
                 }
             }
         }
@@ -732,8 +739,7 @@ class FriendsChatActivity : ComponentActivity() {
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
     @Composable
     fun Creator(
-        onSendMessage: (String) -> Unit ,
-        selectedImageUri: Uri?,
+        onSendMessage: (String) -> Unit,
         pickImage: ActivityResultLauncher<String>
     ) {
         val keyboardController = LocalSoftwareKeyboardController.current
@@ -741,7 +747,8 @@ class FriendsChatActivity : ComponentActivity() {
         var text by remember { mutableStateOf("") }
         var submittedText by remember { mutableStateOf("") }
         var showimg by remember { mutableStateOf(false) }
-        var main by remember { mutableStateOf(true) }
+        var main by remember { mutableStateOf(true)}
+        // var selectedImageUri by remember { mutableStateOf<Uri?>(null) } // Локальное управляемое состояние
 
 
         Column(
@@ -756,23 +763,34 @@ class FriendsChatActivity : ComponentActivity() {
                     .zIndex(1f), // Устанавливает z-индекс, чтобы поместиться наверху других элементов
                     contentAlignment = Alignment.BottomCenter // Выравнивание по нижнему кра
                 ) {
-                    if (selectedImageUri != null) {
-                        Image(
-                            painter = rememberImagePainter(selectedImageUri),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight()
-                                .padding(bottom = 15.dp, top = 15.dp, start = 70.dp, end = 70.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                                .clickable {},
-                            contentScale = ContentScale.Crop
-                        )
+                    Column(modifier = Modifier.fillMaxSize()) {
+
+                        if (selectedImageUri != null) {
+                            Image(
+                                painter = rememberImagePainter(selectedImageUri),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
+                                    .padding(
+                                        bottom = 15.dp,
+                                        top = 15.dp,
+                                        start = 70.dp,
+                                        end = 70.dp
+                                    )
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .clickable {},
+                                contentScale = ContentScale.Crop
+                            )
+
+                        }
+
                     }
                 }
+
                 Row(modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 100.dp , end = 100.dp)
+                    .padding(start = 100.dp, end = 80.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .height(50.dp)
                     .alpha(0.9f) // Пример половинной прозрачности
@@ -786,6 +804,7 @@ class FriendsChatActivity : ComponentActivity() {
                         onClick = {
                             showimg = false
                             photo = ""
+                            uploadProgress.value = 0f
                         }
                     ){
                         Icon(
@@ -797,14 +816,23 @@ class FriendsChatActivity : ComponentActivity() {
                         modifier = Modifier
                             .size(100.dp), // Выравнивание по центру вертикально
                         onClick = {
-                            //showimg = false
-                            proces = true
-                            selectedImageUri?.let {
-                                uploadImageToFirebaseStorage(storedRoomId!!)
+                            //showimg = false  // Если необходимо управлять видимостью элемента, раскомментируйте
+                            proces = true  // Показываем индикатор загрузки
+
+                            selectedImageUri?.let { uri ->
+                                if (storedRoomId != null) {
+                                    uploadFileToFirebaseStorage()
+                                    uploadProgress.value = 0f
+                                } else {
+                                    showToast("Room ID is not set")
+                                    proces = false  // Останавливаем индикатор загрузки, если нет room ID
+                                }
+                            } ?: run {
+                                showToast("No file selected")
+                                proces = false  // Останавливаем индикатор загрузки, если файл не выбран
                             }
-
-
                         }
+
                     ){
                         Icon(
                             imageVector = Icons.Default.Check,
@@ -813,7 +841,21 @@ class FriendsChatActivity : ComponentActivity() {
                         )
 
                     }
+
                 }
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(70.dp)
+                        .align(Alignment.CenterHorizontally)
+                ) {
+
+                    CircularProgressIndicatorSample()
+                }
+
+
+
             }
 
 
@@ -836,8 +878,7 @@ class FriendsChatActivity : ComponentActivity() {
                         showimg = !showimg
 
 
-                        pickImage.launch("image/*")
-
+                        pickMedia.launch(arrayOf("image/*", "video/*"))
                     }
                 ) {
                     if (showimg == false) {
@@ -878,23 +919,30 @@ class FriendsChatActivity : ComponentActivity() {
 
 
 
-                        submittedText = text
+                            submittedText = text
 
-                        if(proces == false) { // глобальная для тогочтобы отслеживать фото щас грузится
-                            text = "" //обнуление текста
-                            if (submittedText != "" || photo != "") {
-                                onSendMessage(
-                                    if (photo != "") {
-                                        "$submittedText photo: <image>$photo</image>" // Вызываем функцию для отправки сообщения
-                                    } else {
-                                        "$submittedText" // Вызываем функцию для отправки сообщения
-                                    }
-                                )
-                                // Обнулить selectedImageUri после успешной загрузки
+                            if(proces == false) { // глобальная для тогочтобы отслеживать фото щас грузится
+                                text = "" //обнуление текста
+                                if (submittedText != "" || photo != "") {
+                                    onSendMessage(
+                                        if (photo != "") {
+                                            "$submittedText<image>$photo</image>" // Вызываем функцию для отправки сообщения
 
+                                        } else {
+                                            "$submittedText" // Вызываем функцию для отправки сообщения
+                                        }
+                                    )
+                                    photo = ""
+                                    selectedImageUri = null // Обнулить selectedImageUri после успешной загрузки
+                                    showimg = false
+                                    uploadProgress.value = 0f
+
+                                }
+                            } else {
+                                showToast("идёт загрузка фота.")
                             }
-                            showimg = false
-                        }
+
+
 
                     }
                 ) {
@@ -904,6 +952,7 @@ class FriendsChatActivity : ComponentActivity() {
                     )
                 }
             }
+
         }
     }
 
@@ -918,53 +967,72 @@ class FriendsChatActivity : ComponentActivity() {
 
 
 
-    private fun uploadImageToFirebaseStorage(roomid: String) {
+    @Composable
+    fun CircularProgressIndicatorSample() {
+        val progress = uploadProgress.value // Прямое использование uploadProgress как State
+
+        val animatedProgress by animateFloatAsState(
+            targetValue = progress,
+            animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+        )
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            CircularProgressIndicator(progress = animatedProgress, color = Color(0xFF42FC3C), strokeWidth = 5.dp)
+            Spacer(Modifier.requiredHeight(5.dp))
+            Text("Загрузка: ${String.format("%.1f", progress * 100)}%", fontSize = 16.sp)
+        }
+    }
+    private fun uploadFileToFirebaseStorage() {
         if (selectedImageUri == null) {
-            // Обработка случая, когда изображение не выбрано
-            showToast("Выберите изображение перед загрузкой.")
+            showToast("Выберите файл перед загрузкой.")
             return
         }
 
         proces = true
-
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
 
-        // Create a unique name for the image to avoid overwriting
-        val imageName = UUID.randomUUID().toString()
-
-        // Path to store the image: "images/{roomid}/{imageName}"
-        val imageRef = storageRef.child("images/$roomid/$imageName")
+        val fileName = UUID.randomUUID().toString()
+        val mimeType = contentResolver.getType(selectedImageUri!!) ?: "application/octet-stream"
+        val fileRef = storageRef.child("$mimeType/$storedRoomId/$fileName")
 
         val metadata = StorageMetadata.Builder()
-            .setContentType("image/png") // Указываем тип контента как PNG
+            .setContentType(mimeType)
             .build()
 
-        val uploadTask = imageRef.putFile(selectedImageUri!!, metadata)
+        val uploadTask = fileRef.putFile(selectedImageUri!!, metadata)
 
-        // Add a listener to handle successful or unsuccessful upload
-        uploadTask.addOnCompleteListener { task ->
+        uploadTask.addOnProgressListener { taskSnapshot ->
+            // Обновляем глобальную переменную прогресса
+            uploadProgress.value = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount).toFloat() / 100
+            Log.d("UploadProgress", "Прогресс загрузки: ${uploadProgress.value}")
+        }
 
-            if (task.isSuccessful) {
-                // Get the download URL from the task result
-                imageRef.downloadUrl.addOnSuccessListener { uri ->
-                    photo = uri.toString()
-                    // Do something with the URL, such as save it to Firestore
-                    proces = false
-                    // Покажите Toast об успешной загрузке
-                    showToast(getString(R.string.addPhoto))
-
-                    // Обнулить selectedImageUri после успешной загрузки
-                    selectedImageUri = null
-                }
-            } else {
-                // Handle unsuccessful upload
+        uploadTask.addOnSuccessListener { taskSnapshot ->
+            // Успешно загружено
+            fileRef.downloadUrl.addOnSuccessListener { uri ->
+                // Получаем ссылку на загруженное видео
+                photo = uri.toString()
                 proces = false
-                // Покажите Toast об ошибке загрузки
-                showToast(getString(R.string.upload_error_message))
+                showToast("Файл успешно загружен: $photo")
+
+                Log.d("Uploudphoto", photo)
+                selectedImageUri = null // Сбрасываем выбранный Uri после загрузки
+            }.addOnFailureListener { exception ->
+                // Ошибка при получении ссылки на загруженный файл
+                proces = false
+                showToast("Ошибка при получении ссылки на файл: ${exception.message}")
             }
+        }.addOnFailureListener { exception ->
+            // Ошибка загрузки файла
+            proces = false
+            showToast("Ошибка загрузки файла: ${exception.message}")
         }
     }
+
+
 
 
 

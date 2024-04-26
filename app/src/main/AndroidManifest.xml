@@ -46,7 +46,7 @@
             android:label="@string/title_activity_vice"
             android:theme="@style/Theme.CodeWithFriends" />
         <activity
-            android:name=".Complaint.Sendban"
+            android:name=".Sendban.Sendban"
             android:exported="false"
             android:label="@string/title_activity_sendban"
             android:theme="@style/Theme.CodeWithFriends" />

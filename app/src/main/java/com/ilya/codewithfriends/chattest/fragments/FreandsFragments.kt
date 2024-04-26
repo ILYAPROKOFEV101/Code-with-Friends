@@ -486,9 +486,8 @@ class FreandsFragments() : Fragment() {
                 ),
             colors = CardDefaults.cardColors(
                 MaterialTheme.colorScheme.background,
-            ),
-
-            ) {
+            ),)
+        {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -566,6 +565,7 @@ class FreandsFragments() : Fragment() {
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
+
                 Row(
                     modifier = Modifier
                         .padding(start = 8.dp, end = 8.dp)

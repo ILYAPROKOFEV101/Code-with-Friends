@@ -317,12 +317,12 @@ class Roomsetting : ComponentActivity() {
                                 addtask()
                                 Spacer(modifier = Modifier.height(30.dp))
                             }
-                            item {
+                            /*item {
                                 Teamspeack()
                                 Spacer(modifier = Modifier.height(30.dp))
-                            }
-
+                            }*/
                         }
+
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -368,13 +368,9 @@ class Roomsetting : ComponentActivity() {
                 ,
                 contentScale = ContentScale.Crop,
             )
-
-
         }
     }
     }
-
-
 
     fun OVER_DELETE(roomId: String) {
         // Создайте экземпляр Retrofit
@@ -828,9 +824,6 @@ class Roomsetting : ComponentActivity() {
         }
     }
 
-
-
-
     @Composable
     fun DeleteRoom(uid: String, roomId: String, context: Context) {
 
@@ -891,43 +884,7 @@ class Roomsetting : ComponentActivity() {
         }
 
         if(show) {
-            AlertDialog(
-                onDismissRequest = { /* ... */ },
-                title = { Text(text = stringResource(id = R.string.Confirmation)) },
-                text = { Text(text = stringResource(id = R.string.Confirmationrealy)) },
-                buttons = {
-                    Column(
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .padding(bottom = 10.dp),
-                        verticalArrangement = Arrangement.SpaceBetween,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Button(
-                            onClick = {
-                                kickuser(soket, uid)
-                                recreate()
-                            },
-                            colors = ButtonDefaults.buttonColors(Color.Red),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(15.dp))
-                        ) {
-                            Text(stringResource(id = R.string.Delete), color = Color.White)
-                        }
-                        Button(
-                            onClick = { show = false},
-                            colors = ButtonDefaults.buttonColors(Color.LightGray),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(15.dp))
-                        ) {
-                            Text(stringResource(id = R.string.Cancel), color = Color.DarkGray)
 
-                        }
-                    }
-                }
-            )
         }
     }
 
@@ -970,8 +927,6 @@ class Roomsetting : ComponentActivity() {
             }
         })
     }
-
-
 
     fun deleteRequest(uid: String, roomId: String) {
         // Создаем Retrofit клиент
@@ -1053,114 +1008,138 @@ class Roomsetting : ComponentActivity() {
     }
 
 
-
-
     @Composable
     fun userinroom(participantsState: List<Participant>, uids: String,rooms: MutableState<List<Room2>>,) {  // this fun mean how match users in room
-        val cornerShape: Shape = RoundedCornerShape(20.dp) // устанавливаем радиус закругления углов
 
-        var shows by remember {
-            mutableStateOf(false)
-        }
-
+        var participantsState by remember { mutableStateOf(participantsState) } // Объявляем изменяемую переменную для списка участников
 
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(500.dp)
         ) {
-            item {
-                Card(
-                    modifier = Modifier
+            items(participantsState) { participant ->
+                var showDialog by remember { mutableStateOf(false) } // Создаем уникальное состояние для каждого участника
 
-                        .padding(
-                            start = 10.dp,
-                            end = 10.dp
-                        )
-                        .border(4.dp, Color.Blue, shape = cornerShape)
-                        .clip(RoundedCornerShape(20.dp)),
-                    colors = CardDefaults.cardColors(Color.White),
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    //
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(participantsState) { participant ->
-                            // Здесь вы можете создать элемент списка для каждого участника
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
+                    // Выводим изображение аватарки с помощью библиотеки Coil
+                    Image(
+                        painter = rememberImagePainter(data = participant.imageUrl),
+                        contentDescription = null, // Устанавливаем null для contentDescription
+                        modifier = Modifier
+                            .size(100.dp)
+                            .padding(10.dp)
+                            .clip(RoundedCornerShape(30.dp))
+                    )
+                    Text(
+                        text = participant.username,
+                        fontSize = 24.sp,
+                        modifier = Modifier
+                            .padding(top = 30.dp)
+                            .width(200.dp)
+                    )
 
-                                // Выводим изображение аватарки с помощью библиотеки Coil
-                                Image(
-                                    painter = rememberImagePainter(data = participant.imageUrl),
-                                    contentDescription = null, // Устанавливаем null для contentDescription
-                                    modifier = Modifier
-                                        .size(100.dp)
-                                        .padding(10.dp)
-                                        .clip(RoundedCornerShape(30.dp))
-                                )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Box(modifier = Modifier)
+                    Button(
+                        colors = ButtonDefaults.buttonColors(Color.Blue),
+                        modifier = Modifier
+                            .padding(top = 20.dp, end = 5.dp)
+                            .wrapContentWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        onClick = {
+                            val intent = Intent(this@Roomsetting, Aboutuser::class.java)
+                            intent.putExtra("userId", participant.userId) // Здесь вы добавляете данные в Intent
+                            startActivity(intent)
+                        }
+                    ) {
+                        Text(text = stringResource(id = R.string.aboutuser))
+                        //{participant.userId} это надо передать
+                    }
+
+                    val roomsList: List
+
+                    <Room2> = rooms.value
+
+                    for (room in roomsList) {
+                        if (room.Admin == uids) {
+                            Spacer(modifier = Modifier.width(20.dp))
+                            Button(
+                                colors = ButtonDefaults.buttonColors(Color.Red),
+                                modifier = Modifier
+                                    .padding(top = 20.dp)
+                                    .wrapContentWidth()
+                                    .height(50.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                onClick = {
+                                    showDialog = true
+                                }) {
                                 Text(
-                                    text = participant.username,
-                                    fontSize = 24.sp,
-                                    modifier = Modifier
-                                        .padding(top = 30.dp)
-                                        .width(200.dp)
+                                    text = "Delete user",
                                 )
-                                if (shows == true) {
-                                    DeleteAlertDialog("${storedRoomId!!}", "${participant.userId}",)
-                                }
-
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Box(modifier = Modifier)
-                                Button(
-                                    colors = ButtonDefaults.buttonColors(Color.Blue),
-                                    modifier = Modifier
-                                        .padding(top = 20.dp, end = 5.dp)
-                                        .wrapContentWidth()
-                                        .height(50.dp),
-                                    shape = RoundedCornerShape(10.dp),
-                                    onClick = {
-                                        val intent = Intent(this@Roomsetting, Aboutuser::class.java)
-                                        intent.putExtra(
-                                            "userId",
-                                            participant.userId
-                                        ) // Здесь вы добавляете данные в Intent
-                                        startActivity(intent)
-                                    }
-                                ) {
-                                    Text(text = stringResource(id = R.string.aboutuser))
-                                    //{participant.userId} это надо передать
-                                }
-                                val roomsList: List<Room2> = rooms.value
-
-                                for (room in roomsList) {
-                                    if (room.Admin == uids) {
-                                        Spacer(modifier = Modifier.width(20.dp))
-                                        Button(
-                                            colors = ButtonDefaults.buttonColors(Color.Red),
-                                            modifier = Modifier
-                                                .padding(top = 20.dp)
-                                                .wrapContentWidth()
-                                                .height(50.dp),
-                                            shape = RoundedCornerShape(10.dp),
-                                            onClick = {
-                                                shows = true
-                                            }) {
-                                            Text(
-                                                text = "Delete user",
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.width(10.dp))
-
-
-                                    }
-                                }
                             }
                         }
                     }
+
+                    // Показываем AlertDialog только если showDialog равен true для данного участника
+                    if (showDialog) {
+                        AlertDialog(
+                            onDismissRequest = {
+                                showDialog = false // Закрываем AlertDialog и сбрасываем состояние showDialog
+                            },
+                            title = { Text(text = stringResource(id = R.string.Confirmation)) },
+                            text = { Text(text = stringResource(id = R.string.Confirmationrealy)) },
+                            buttons = {
+                                Column(
+                                    modifier = Modifier
+                                        .padding(horizontal = 16.dp)
+                                        .padding(bottom = 10.dp),
+                                    verticalArrangement = Arrangement.SpaceBetween,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Button(
+                                        onClick = {
+                                            // Вызываем функцию kickuser только для текущего участника
+                                            kickuser(storedRoomId!!, participant.userId)
+                                            // Удаляем участника из списка
+                                            val updatedList = participantsState.filter { it != participant }
+                                            participantsState = updatedList
+                                            showDialog = false // Пользователь нажал "Delete", закрываем AlertDialog
+                                        },
+                                        colors = ButtonDefaults.buttonColors(Color.Red),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(15.dp))
+                                    ) {
+                                        Text(stringResource(id = R.string.Delete), color = Color.White)
+                                    }
+                                    Button(
+                                        onClick = {
+                                            showDialog = false // Пользователь нажал "Cancel", закрываем AlertDialog
+                                        },
+                                        colors = ButtonDefaults.buttonColors(Color.LightGray),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(15.dp))
+                                    ) {
+                                        Text(stringResource(id = R.string.Cancel), color = Color.DarkGray)
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(10.dp))
                 }
             }
         }
+
+
+
 
     }
 
