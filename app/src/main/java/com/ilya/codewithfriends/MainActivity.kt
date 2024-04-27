@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.ilya.codewithfriends.Startmenu.Main_menu
 import com.ilya.codewithfriends.presentation.profile.ProfileScreen
 import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
@@ -93,10 +94,7 @@ import com.google.firebase.ktx.Firebase
 import com.ilya.codewithfriends.presentation.profile.ID
 import com.ilya.codewithfriends.presentation.profile.IMG
 import com.ilya.codewithfriends.presentation.profile.UID
-
-
-
-
+import kotlinx.coroutines.delay
 
 
 class  MainActivity: ComponentActivity() {
@@ -119,214 +117,56 @@ class  MainActivity: ComponentActivity() {
 
         // Инициализируйте PreferenceHelper в вашей активности
         PreferenceHelper.initialize(applicationContext)
-        val myValue = PreferenceHelper.getValue("myKey")
         setContent {
-
-
-            if (myValue == false){
-                if (cloth == false) {
-                    DeleteRoom()
-                }
-            }
-
-
-
-
-            //val intent = Intent(this@MainActivity, Main_menu::class.java)
-            // startActivity(intent)
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
-
             toshear(userData = googleAuthUiClient.getSignedInUser())
 
-
-
-                @Composable
-                fun SignInScreen(
-                    state: SignInState,
-                    onSignInClick: () -> Unit,
-
-                    ) {
-
-
-
-                    var unvisible by remember {
-                        mutableStateOf(false)
-                    }
-
-
-
-                    var user by remember { mutableStateOf(Firebase.auth.currentUser) }
-
-                    val launcher = rememberFirebaseAuthLauncher(
-                        onAuthComplete = { result ->
-                            user = result.user
-                        },
-                        onAuthError = {
-                            user = null
-                        }
-                    )
-                    val token = stringResource(id = R.string.web_client_id)
-                    val context = LocalContext.current
-
-                    val configuration = LocalConfiguration.current
-                    val screenWidthDp = configuration.screenWidthDp
-                    val isTablet = screenWidthDp >= 600 // Примерно, для планшета
-
-                    if (isTablet) {
-                        Modifier
-                            .fillMaxWidth(0.5f) // На планшетах занимает половину ширины
-                            .height(60.dp) // Большая высота для планшетов
-                    } else {
-                        Modifier
-                            .fillMaxWidth() // На телефонах занимает всю ширину
-                            .height(48.dp) // Стандартная высота для телефонов
-                    }
-
-
-
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-
-                        if (!leftop) {
-                            Box(
-                                modifier = Modifier
-                                    .height(400.dp)
-                                    .align(Alignment.Center)
-                                    .padding(top = 100.dp)
-                            ) {
-                                LoadingCircle()
-
-                                toshear(userData = googleAuthUiClient.getSignedInUser())
-
-
-                            }
-                        }
-
-
-
-                        if (user == null) {
-
-                            if (!unvisible) {
-
-                                Column(
-                                    modifier = Modifier
-                                        .wrapContentSize(),
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-
-                                    IconButton(
-                                        onClick = {
-                                        onSignInClick()
-                                        val gso =
-                                            GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                                                .requestIdToken(token)
-                                                .requestEmail()
-                                                .build()
-                                        val googleSignInClient =
-                                            GoogleSignIn.getClient(context, gso)
-                                        launcher.launch(googleSignInClient.signInIntent)
-
-                                        leftop = !leftop
-
-                                        unvisible = !unvisible// не ведимый
-
-                                        PreferenceHelper.setShowElement(
-                                            context,
-                                            true
-                                        ) // !!!!!важный элемент
-                                    }) {
-
-                                        Image(
-                                            painter = painterResource(id = R.drawable.google),
-                                            contentDescription = "Nothing",
-
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier
-                                                .size(50.dp)
-                                                .clip(CircleShape)
-                                        )
-
-                                    }
-                                    Spacer(modifier = Modifier.height(30.dp))
-
-                                    Text(stringResource(id = R.string.login))
-
-                                    Spacer(modifier = Modifier.height(30.dp))
-
-                                    /*Button(modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(100.dp)
-                                        .padding(start = 20.dp, end = 20.dp),
-
-                                        onClick = {
-                                            val intent = Intent(this@MainActivity, Main_menu::class.java)
-                                            startActivity(intent)
-                                    }) {
-                                        Text(text = "If you are a developer or tester and you don’t have an account, click here")
-                                    }*/
-                                }
-                            }
-
-                        } else {
-                            if (!unvisible) {
-                                Button(onClick = {
-                                    Firebase.auth.signOut()
-                                    user = null
-                                }) {}
-                            }
-                        }
-
-                    }
-                }
                 ComposeGoogleSignInCleanArchitectureTheme {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = androidx.compose.material.MaterialTheme.colors.background
                     ) {
-
-
                         val navController = rememberNavController()
-                        NavHost(
-                            navController = navController,
-                            startDestination = "sign_in") {
-
+                        NavHost(navController = navController, startDestination = "sign_in") {
                             composable("sign_in") {
                                 val viewModel = viewModel<SignInViewModel>()
                                 val state by viewModel.state.collectAsStateWithLifecycle()
 
                                 LaunchedEffect(key1 = Unit) {
-                                    if (googleAuthUiClient.getSignedInUser() != null) {
+                                    if(googleAuthUiClient.getSignedInUser() != null) {
                                         navController.navigate("profile")
                                     }
                                 }
+
                                 val launcher = rememberLauncherForActivityResult(
                                     contract = ActivityResultContracts.StartIntentSenderForResult(),
-                                    onResult = {
-                                            result ->
-                                        if (result.resultCode == RESULT_OK) {
+                                    onResult = { result ->
+                                        if(result.resultCode == RESULT_OK) {
                                             lifecycleScope.launch {
-                                                val signInResult =
-                                                    googleAuthUiClient.signInWithIntent(
-                                                        intent = result.data ?: return@launch
-                                                    )
+                                                val signInResult = googleAuthUiClient.signInWithIntent(
+                                                    intent = result.data ?: return@launch
+                                                )
                                                 viewModel.onSignInResult(signInResult)
                                             }
                                         }
                                     }
                                 )
 
+                                LaunchedEffect(key1 = state.isSignInSuccessful) {
+                                    if(state.isSignInSuccessful) {
+                                        Toast.makeText(
+                                            applicationContext,
+                                            "Sign in successful",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+
+                                        navController.navigate("profile")
+                                        viewModel.resetState()
+                                    }
+                                }
+
                                 SignInScreen(
                                     state = state,
                                     onSignInClick = {
-
                                         lifecycleScope.launch {
                                             val signInIntentSender = googleAuthUiClient.signIn()
                                             launcher.launch(
@@ -335,25 +175,21 @@ class  MainActivity: ComponentActivity() {
                                                 ).build()
                                             )
                                         }
-
-                                    }
-
+                                    },
+                                    navController
                                 )
-
-
                             }
 
                             composable("profile") {
+                                leftop = true
                                 Column(modifier = Modifier.fillMaxSize()) {
 
                                     ProfileScreen(
-
                                         userData = googleAuthUiClient.getSignedInUser(),
-
                                         onSignOut = {
                                             lifecycleScope.launch {
                                                 googleAuthUiClient.signOut()
-                                                 saveRoomId(this@MainActivity, "")
+                                                saveRoomId(this@MainActivity, "")
                                                 Toast.makeText(
                                                     applicationContext,
                                                     "Goodbye",
@@ -361,100 +197,139 @@ class  MainActivity: ComponentActivity() {
                                                 ).show()
                                                 navController.popBackStack()
                                             }
-
                                         }
                                     )
                                     backtomenu()
                                 }
                             }
-
                         }
-
                     }
+                }
+        }
+    }
+
+    @Composable
+    fun SignInScreen(
+        state: SignInState,
+        onSignInClick: () -> Unit,
+        navController: NavController
+        ) {
+
+
+
+        var unvisible by remember {
+            mutableStateOf(false)
+        }
+
+
+
+        var user by remember { mutableStateOf(Firebase.auth.currentUser) }
+
+        val launcher = rememberFirebaseAuthLauncher(
+            onAuthComplete = { result ->
+                user = result.user
+            },
+            onAuthError = {
+                user = null
+            }
+        )
+        val token = stringResource(id = R.string.web_client_id)
+        val context = LocalContext.current
+
+        val configuration = LocalConfiguration.current
+        val screenWidthDp = configuration.screenWidthDp
+        val isTablet = screenWidthDp >= 600 // Примерно, для планшета
+
+        if (isTablet) {
+            Modifier
+                .fillMaxWidth(0.5f) // На планшетах занимает половину ширины
+                .height(60.dp) // Большая высота для планшетов
+        } else {
+            Modifier
+                .fillMaxWidth() // На телефонах занимает всю ширину
+                .height(48.dp) // Стандартная высота для телефонов
+        }
+
+
+
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+
+            if (!leftop) {
+
+                toshear(userData = googleAuthUiClient.getSignedInUser())
+                Box(
+                    modifier = Modifier
+                        .height(400.dp)
+                        .align(Alignment.Center)
+                        .padding(top = 100.dp)
+                ) {
+                   // LoadingCircle()
                 }
 
             }
-        }
-    }
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview
-    @Composable
-    fun DeleteRoom() {
-        var show by remember {
-            mutableStateOf(true)
-        }
-                if(show == true) {
-                    AlertDialog(
+
+
+
+            if (user == null) {
+
+                if (!unvisible) {
+
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                            .padding(top = 30.dp, bottom = 30.dp)
-                            .clip(
-                                RoundedCornerShape(20.dp)
-                            ),
-                        shape = RoundedCornerShape(20.dp),
-                        onDismissRequest = { /* ... */ },
-                        title = { Text(text = stringResource(id = R.string.Privacy_Policy),
-                            fontSize = 24.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()) },
+                            .wrapContentSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
 
-                        buttons = {
-                            Column(modifier = Modifier.height(600.dp)) {
+                        IconButton(
+                            onClick = {
+                                onSignInClick()
+                                val gso =
+                                    GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                                        .requestIdToken(token)
+                                        .requestEmail()
+                                        .build()
+                                val googleSignInClient =
+                                    GoogleSignIn.getClient(context, gso)
+                                launcher.launch(googleSignInClient.signInIntent)
 
-                                LazyColumn(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(500.dp)
-                                        .padding(5.dp)
-                                ) {
+                                leftop = !leftop
 
-                                    item {
-                                        Text(text = stringResource(id = R.string.policy))
-                                    }
-                                }
-                                Column(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .padding(bottom = 10.dp),
-                                    verticalArrangement = Arrangement.SpaceBetween,
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Button(
-                                        onClick = {
-                                            cloth = true
-                                            PreferenceHelper.saveValue("myKey", true)
-                                        },
-                                        colors = ButtonDefaults.buttonColors(Color(0xFF29B630)),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(20.dp))
-                                    ) {
-                                        Text(
-                                            text = stringResource(id = R.string.I_agree),
-                                            color = Color.White
-                                        )
-                                    }
-                                    Button(
-                                        onClick = {
-                                            finish()
-                                        },
-                                        colors = ButtonDefaults.buttonColors(Color(0xFFFA0505)),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(15.dp))
-                                    ) {
-                                        Text(
-                                            stringResource(id = R.string.I_dont_agree),
-                                            color = Color.White
-                                        )
-                                    }
-                                }
-                            }
+                                unvisible = !unvisible// не ведимый
+
+                                PreferenceHelper.setShowElement(
+                                    context,
+                                    true
+                                ) // !!!!!важный элемент
+                            }) {
+
+                            Image(
+                                painter = painterResource(id = R.drawable.google),
+                                contentDescription = "Nothing",
+
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(50.dp)
+                                    .clip(CircleShape)
+                            )
 
                         }
-                    )
+                        Spacer(modifier = Modifier.height(30.dp))
+
+                        Text(stringResource(id = R.string.login))
+
+                        Spacer(modifier = Modifier.height(30.dp))
+
+
+                    }
                 }
+            }
+        }
     }
 
 
@@ -468,7 +343,6 @@ class  MainActivity: ComponentActivity() {
 
         }
     }
-
     @Composable
     fun backtomenu(){
         Box(modifier = Modifier
@@ -497,10 +371,7 @@ class  MainActivity: ComponentActivity() {
         }
     }
 
-
 }
-
-
 
 
 @Preview(showBackground = true)
@@ -535,8 +406,6 @@ fun LoadingCircle() {
         }
     }
 }
-
-
 
 
 @Composable
