@@ -222,10 +222,6 @@ class FreandsFragments() : Fragment() {
         // Создаем ComposeView и устанавливаем контент
         return ComposeView(requireContext()).apply {
             setContent {
-
-
-
-
                 val navController = rememberNavController()
                 val viewModel = viewModel<MainViewModel>()
                 val isLoading by viewModel.isLoading.collectAsState()

@@ -106,13 +106,12 @@ This Privacy Policy comes into effect upon its publication and remains in force 
     <string name="Your_name">Write your name</string>
 
 
-    <string name="login">Log in with Google</string>
+    <string name="login">Log in with Google </string>
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="submit">Submit</string>
     <string name="cancel">Cancel</string>
     <string name="error">Error</string>
-    <string name="loading">Loading...</string>
     <string name="success">Success</string>
     <string name="logout">Logout</string>
     <string name="settings">Settings</string>
@@ -190,5 +189,6 @@ This Privacy Policy comes into effect upon its publication and remains in force 
     <string name="november">November</string>
     <string name="december">December</string>
     <string name="title_activity_friends_chat">FriendsChatActivity</string>
+    <string name="devmode">If you are a Google play or Rustor tester and do not have your own account, click here </string>
 
 </resources>

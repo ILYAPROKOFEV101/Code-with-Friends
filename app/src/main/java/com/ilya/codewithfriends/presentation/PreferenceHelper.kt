@@ -78,7 +78,6 @@ object PreferenceHelper {
         }
     }
 
-
     fun saveid(context: Context, value: String) {
         val editor = getSharedPreferences(context).edit()
         editor.putString(KEY_STRING_1, value)

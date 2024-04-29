@@ -101,14 +101,15 @@
     <string name="deleteroom">Удалить комнату</string>
     <string name="Your_name">Напишите свое имя</string>
 
+    <string name="devmode">Если вы тестировщик Google play или Rustor и не имеиите своего aкrаунта , то жмите сюда</string>
 
-    <string name="login">Войти с помощью Google</string>
+
+    <string name="login">Войти с помощью Google </string>
     <string name="username">Имя пользователя</string>
     <string name="password">Пароль</string>
     <string name="submit">Отправить</string>
     <string name="cancel">Отмена</string>
     <string name="error">Ошибка</string>
-    <string name="loading">Загрузка...</string>
     <string name="success">Успех</string>
     <string name="logout">Выход</string>
     <string name="settings">Настройки</string>
