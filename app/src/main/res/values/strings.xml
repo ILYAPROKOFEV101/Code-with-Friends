@@ -112,6 +112,7 @@ This Privacy Policy comes into effect upon its publication and remains in force 
     <string name="submit">Submit</string>
     <string name="cancel">Cancel</string>
     <string name="error">Error</string>
+    <string name="loading">Loading...</string>
     <string name="success">Success</string>
     <string name="logout">Logout</string>
     <string name="settings">Settings</string>

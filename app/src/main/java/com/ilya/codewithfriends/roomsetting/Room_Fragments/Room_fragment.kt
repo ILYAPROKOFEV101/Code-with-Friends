@@ -246,8 +246,7 @@ class Room_fragment : Fragment() {
                 }, 500) // 3000 миллисекунд (3 секунды)
                 val navController = rememberNavController()
 
-                val configuration = LocalConfiguration.current
-                val isTablet = configuration.screenWidthDp >= 600 && configuration.screenHeightDp >= 600
+
                 NavHost(
                     navController = navController,
                     startDestination = "Main_Menu",
@@ -294,18 +293,6 @@ class Room_fragment : Fragment() {
                                             }
                                             Spacer(modifier = Modifier.height(30.dp))
                                         }
-                                        item {
-                                                roomname(
-                                                    roomName = "Tablet",
-                                                    "$id",
-                                                    storedRoomId!!,
-                                                    "$id",
-                                                    data_from_myroom
-                                                )
-                                                Spacer(modifier = Modifier.height(30.dp))
-                                            }
-
-
                                             item {
                                                 User_ivite(ivite_list.value,)
                                                 Spacer(modifier = Modifier.height(30.dp))

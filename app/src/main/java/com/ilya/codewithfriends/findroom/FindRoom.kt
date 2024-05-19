@@ -558,7 +558,13 @@ class FindRoom : ComponentActivity() {
 
                                 keyboardActions = KeyboardActions(
                                     onDone = {
-                                        joinDataManager.pushData_join(room.id, "$uid", "$username", password)
+                                        joinDataManager.pushData_join(room.id, "$uid", "$username", password){ success ->
+                                            if (success) {
+
+                                            } else {
+
+                                            }
+                                        }
                                         show = !show
                                     }
                                 ),
@@ -570,7 +576,12 @@ class FindRoom : ComponentActivity() {
                                 .height(50.dp),
                                 colors = ButtonDefaults.buttonColors(Color.Green),
                                 onClick = {
-                                    joinDataManager.pushData_join(room.id,"$uid", "$username",password)
+                                    joinDataManager.pushData_join(room.id,"$uid", "$username",password){ success ->
+                                        if (success) {
+                                        } else {
+
+                                        }
+                                    }
                                     val intent = Intent(this@FindRoom, Chat::class.java)
                                     intent.putExtra("roomid", room.id)
                                     startActivity(intent)

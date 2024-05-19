@@ -26,6 +26,7 @@ import androidx.compose.material3.*
 
 
 import android.view.View
+import android.widget.Toast
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MeetingRoom
@@ -317,7 +318,10 @@ fun ButtonAppBar(navController: NavController, context: Context) {
                                 2 -> navController.navigate("friends")
                                 3 -> {
                                     when (getRoomId(context)) {
-                                        null, "" -> navController.navigate("FindRoom")
+                                        null, "" -> {
+                                            Toast.makeText(context, "Присоединитесь к комнате", Toast.LENGTH_SHORT).show()
+                                            navController.navigate("FindRoom")
+                                        }
                                         else -> navController.navigate("Room")
                                     }
                                 }

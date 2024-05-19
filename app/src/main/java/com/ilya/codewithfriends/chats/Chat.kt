@@ -1,15 +1,22 @@
 package com.ilya.codewithfriends.chats
 
 import LoadingComponent
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
+import android.widget.EditText
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,13 +42,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,7 +57,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -83,12 +86,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
@@ -97,9 +103,16 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import coil.ImageLoader
+import coil.compose.AsyncImagePainter
 
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.size.Size
 import com.ilya.codewithfriends.R
 import com.ilya.codewithfriends.MainViewModel
 import com.ilya.codewithfriends.Viewphote.ViewPhoto
@@ -129,10 +142,13 @@ import kotlinx.coroutines.GlobalScope
 
 
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.File
+import java.io.InputStream
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -199,10 +215,12 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
     private var proces by mutableStateOf(false)
 
     private var storedRoomId: String? = null // Объявляем на уровне класса
+    var selectedGifUri by mutableStateOf<Uri?>(null)
+    var gifUrl = ""
 
 
 
-
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -259,7 +277,6 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
 
         }
 
-
         setContent {
 
             val navController = rememberNavController()
@@ -283,7 +300,6 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                     color = MaterialTheme.colorScheme.background
                 ) {
 
-
                     SwipeRefresh(
                         state = swipeRefresh,
                         onRefresh = {
@@ -297,32 +313,33 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                                 .height(100.dp)
 
                         ) {
-                            upbar(storedRoomId!!, "$id", "$name", "$img",navController)
+                            upbar(storedRoomId!!, "$id", "$name", "$img", navController)
 
                         }
 
-                    }
-
-                    Spacer(modifier = Modifier.height(100.dp))
-                    if (storedRoomId != null && show.value) {
-                        MessageList(messages.value, "$name", "$img", "$id", navController)
-                    }
 
 
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    if (storedRoomId != null) {
-                        Creator(
-                            onSendMessage = { message ->
-
-                                sendMessage(message)
-
-                            },
-                           // selectedImageUri,
-                            pickImage
-                        )
+                        Spacer(modifier = Modifier.height(100.dp))
+                        if (storedRoomId != null && show.value) {
+                            MessageList(messages.value, "$name", "$img", "$id", navController)
+                        }
 
 
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        if (storedRoomId != null) {
+                            Creator(
+                                onSendMessage = { message ->
+
+                                    sendMessage(message)
+
+                                },
+
+                                pickImage
+                            )
+
+
+                        }
                     }
                 }
             }
@@ -509,270 +526,348 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
     }
 
 
-    fun removeImageLinkFromMessage(message: String): String {
-        val imageUrl = extractImageFromMessage(message)
-        return if (imageUrl != null) {
-            // Если ссылка на изображение найдена, заменяем ее на пустую строку
-            message.replace("<image>$imageUrl</image>", "")
-        } else {
-            // Если ссылка на изображение не найдена, возвращаем исходное сообщение
-            message
-        }
+    fun removeMediaLinkFromMessage(message: String): String {
+        var modifiedMessage = message
+
+        // Remove GIF links
+        val gifRegex = Regex("<gif>(.*?)</gif>")
+        modifiedMessage = gifRegex.replace(modifiedMessage, "")
+
+        // Remove image links (your existing logic)
+        val imageRegex = Regex("<image>(.*?)</image>")
+        modifiedMessage = imageRegex.replace(modifiedMessage, "")
+
+        // Remove content links
+        val contentUriRegex = Regex("content://\\S+\\.gif")
+        modifiedMessage = contentUriRegex.replace(modifiedMessage, "")
+
+        return modifiedMessage
     }
 
 
-      @Composable
+    fun extractGifUrlFromMessage(message: String): String? {
+        val gifRegex = Regex("<gif>(.*?)</gif>")
+        val matchResult = gifRegex.find(message)
+        return matchResult?.groupValues?.getOrNull(1)
+    }
+
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    @Composable
+    fun SimpleGifFromContentUri(gifUriString: String) {
+        Log.d("igotgif", gifUriString)
+
+    }
+
+
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    @Composable
        fun MessageList(messages: List<Message>?, username: String, url: String, id: String,navController: NavController ) {
-           Log.d("MessageList", "Number of messages: ${messages?.size}")
+        Log.d("MessageList", "Number of messages: ${messages?.size}")
 
-           if (messages != null && messages.isNotEmpty()) {
-               if (messages.isNotEmpty()) { // Проверяем, что список не пуст
-                   val listState = rememberLazyListState()
-                   val coroutineScope = rememberCoroutineScope()
-                   val hasScrolled = rememberSaveable { mutableStateOf(false) }
-                   // Состояние для отслеживания времени последнего клика
-                   val lastClickTime = remember { mutableStateOf(0L) }
-
-
-                   LaunchedEffect(hasScrolled.value, messages) {
-                       if (!hasScrolled.value || messages.last().img == url) {
-                           val lastVisibleItemIndex = messages.size - 1
-                           if (lastVisibleItemIndex >= 0) {
-                               coroutineScope.launch {
-                                   // listState.animateScrollToItem(lastVisibleItemIndex)
-                                   listState.scrollToItem(lastVisibleItemIndex)
-                                   hasScrolled.value = true
-                               }
-                           }
-                       }
-                   }
-                   LaunchedEffect(messages.size) {
-                       listState.animateScrollToItem(messages.size - 1)
-                   }
-
-                   LazyColumn(
-                       modifier = Modifier
-                           .fillMaxWidth()
-                           .padding(bottom = 60.dp, top = 50.dp)
-                           //.background(Color(0x2FFFFFFF))
-                           .fillMaxHeight(),
-                       reverseLayout = false,
-                       state = listState
-                   ) {
-                       items(messages) { message ->
-                           val isMyMessage = message.uid == id
-                           val paint = extractImageFromMessage(message.message)
-
-                           val messageDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(message.time), ZoneId.systemDefault())
-
-                           val showDayMarker = lastShownMonth == null || lastShownDayOfMonth == null ||
-                                   messageDateTime.monthValue != lastShownMonth ||
-                                   messageDateTime.dayOfMonth != lastShownDayOfMonth
-                           // Проверка, совпадает ли месяц и день с момента последнего сообщения
-
-                           // Обновление текущего месяца и дня
-                           lastShownMonth = messageDateTime.monthValue
-                           lastShownDayOfMonth = messageDateTime.dayOfMonth
-                           val currentDate = LocalDate.now()
-                           val isToday = messageDateTime.toLocalDate() == currentDate
-
-                           val dayOfWeekText = when (messageDateTime.dayOfWeek) {
-                               DayOfWeek.MONDAY -> getString(R.string.monday)
-                               DayOfWeek.TUESDAY -> getString(R.string.tuesday)
-                               DayOfWeek.WEDNESDAY -> getString(R.string.wednesday)
-                               DayOfWeek.THURSDAY -> getString(R.string.thursday)
-                               DayOfWeek.FRIDAY -> getString(R.string.friday)
-                               DayOfWeek.SATURDAY -> getString(R.string.saturday)
-                               DayOfWeek.SUNDAY -> getString(R.string.sunday)
-                           }
-
-                           val monthText = when (messageDateTime.month) {
-                               Month.JANUARY -> getString(R.string.january)
-                               Month.FEBRUARY -> getString(R.string.february)
-                               Month.MARCH -> getString(R.string.march)
-                               Month.APRIL -> getString(R.string.april)
-                               Month.MAY -> getString(R.string.may)
-                               Month.JUNE -> getString(R.string.june)
-                               Month.JULY -> getString(R.string.july)
-                               Month.AUGUST -> getString(R.string.august)
-                               Month.SEPTEMBER -> getString(R.string.september)
-                               Month.OCTOBER -> getString(R.string.october)
-                               Month.NOVEMBER -> getString(R.string.november)
-                               Month.DECEMBER -> getString(R.string.december)
-                           }
-                           val imageUrl = message.img
-
-                           val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-                           val formattedText = "${messageDateTime.dayOfMonth} ${monthText} ${dayOfWeekText} "
-
-                           if (showDayMarker) {
-                               // Отображение маркера дня
-                               Box(
-                                   modifier = Modifier
-                                       .fillMaxWidth()
-                                       .padding(8.dp),
-                                   contentAlignment = Alignment.Center
-                               ) {
-                                   if (isToday) {
-                                       // Вывод "сегодня" вместо даты
-                                       Text(
-                                           text = stringResource(id = R.string.today),
-                                           fontWeight = FontWeight.Bold,
-                                           color = Color(0xFF595D67),
-                                       )
-                                   } else {
-                                       // Вывод даты в обычном формате
-                                       Text(
-                                           text = formattedText,
-                                           fontWeight = FontWeight.Bold,
-                                           color = Color(0xFF595D67),
-                                       )
-                                   }
-                               }
-                           }
+        if (messages != null && messages.isNotEmpty()) {
+            if (messages.isNotEmpty()) { // Проверяем, что список не пуст
+                val listState = rememberLazyListState()
+                val coroutineScope = rememberCoroutineScope()
+                val hasScrolled = rememberSaveable { mutableStateOf(false) }
+                // Состояние для отслеживания времени последнего клика
+                val lastClickTime = remember { mutableStateOf(0L) }
 
 
-                               Row(
-                                   modifier = Modifier
-                                       .fillMaxWidth()
-                                       .padding(8.dp),
-                                   horizontalArrangement = if (isMyMessage) Arrangement.End else Arrangement.Start
-                               ) {
-                                   val imageModifier = Modifier
-                                       .size(40.dp)
-                                       .clip(RoundedCornerShape(40.dp))
+                LaunchedEffect(hasScrolled.value, messages) {
+                    if (!hasScrolled.value || messages.last().img == url) {
+                        val lastVisibleItemIndex = messages.size - 1
+                        if (lastVisibleItemIndex >= 0) {
+                            coroutineScope.launch {
+                                // listState.animateScrollToItem(lastVisibleItemIndex)
+                                listState.scrollToItem(lastVisibleItemIndex)
+                                hasScrolled.value = true
+                            }
+                        }
+                    }
+                }
+                LaunchedEffect(messages.size) {
+                    listState.animateScrollToItem(messages.size - 1)
+                }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 60.dp, top = 50.dp)
+                        //.background(Color(0x2FFFFFFF))
+                        .fillMaxHeight(),
+                    reverseLayout = false,
+                    state = listState
+                ) {
+                    items(messages) { message ->
+                        val isMyMessage = message.uid == id
 
 
-                                   if (!(isMyMessage)) {
-                                       if (imageUrl != null) {
-                                           val painter: Painter =
-                                               rememberAsyncImagePainter(model = imageUrl)
-                                           Image(
-                                               painter = painter,
-                                               contentDescription = null,
-                                               modifier = imageModifier
-                                           )
-                                           Spacer(modifier = Modifier.width(2.dp))
-                                       }
-                                   }
-                                    if(removeImageLinkFromMessage(message.message) != ""){
-                                   Card(
-                                       modifier = Modifier
-                                           .wrapContentWidth()
-                                           .padding(
-                                               end = if (isMyMessage) 0.dp else screenWidth * 0.2f,
-                                               top = 2.dp,
-                                               start = if (isMyMessage) screenWidth * 0.2f else 0.dp,
-                                               bottom = 2.dp
-                                           ),
-                                       backgroundColor = if (isMyMessage) Color(0xFF315FF3) else Color(0xFFFFFFFF),
-                                      // elevation = 10.dp,
-                                       shape = RoundedCornerShape(12.dp)
-                                   ) {
-                                       Column(
-                                           modifier = Modifier
-                                               .padding(8.dp)
-                                       )
-                                       {
-                                           Text(
-                                               text = removeImageLinkFromMessage(message.message),
-                                               textAlign = TextAlign.Start,
-                                               fontSize = 18.sp,
-                                               fontWeight = FontWeight.SemiBold,
-                                               color = if (isMyMessage) Color(0xFFFFFFFF) else Color(
-                                                   0xFF1B1B1B
-                                               ),
-                                               overflow = TextOverflow.Ellipsis
-                                           )
+                        val paint =
+                            extractImageFromMessage(message.message) // тут получаю на видео и фотоо сыллку
+                        val gifUriString = extractGifUrlFromMessage(message.message)
+                        Log.d("GIF_SRC", gifUriString ?: "null") // Логируем строку URI
 
-                                           Box(
-                                               modifier = Modifier
-                                                   // .fillMaxWidth()
-                                                   .wrapContentHeight(),
-                                               contentAlignment = Alignment.CenterEnd
-                                           )
-                                           {
-                                               val localDateTime =
-                                                   messageDateTime.atZone(ZoneId.systemDefault())
-                                                       .toLocalDateTime()
 
-                                               Text(
-                                                   text = localDateTime.format(
-                                                       DateTimeFormatter.ofPattern(
-                                                           "HH:mm"
-                                                       )
-                                                   ), // Извлекаем только время
-                                                   fontSize = 12.sp,
-                                                   color = if (isMyMessage) Color(0xFFFFFFFF) else Color(
-                                                       0xFF1B1B1B
-                                                   ),
-                                               )
-                                           }
-                                       }
-                                   }
-                                   }
+                        val messageDateTime = LocalDateTime.ofInstant(
+                            Instant.ofEpochMilli(message.time),
+                            ZoneId.systemDefault()
+                        )
 
-                           }
+                        val showDayMarker = lastShownMonth == null || lastShownDayOfMonth == null ||
+                                messageDateTime.monthValue != lastShownMonth ||
+                                messageDateTime.dayOfMonth != lastShownDayOfMonth
+                        // Проверка, совпадает ли месяц и день с момента последнего сообщения
 
-                           if (paint != null && paint.isNotEmpty()) {
-                               Box(
-                                   modifier = Modifier
-                                       .fillMaxWidth()
-                                       .height(if (isVideoUrl(paint)) 500.dp else 300.dp),
-                               ) {
-                                   Box(modifier = Modifier
-                                       .fillMaxSize()
-                                       .padding(8.dp),
-                                       contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
-                                   ) {
-                                       if (isVideoUrl(paint)) {
-                                           Column(modifier = Modifier.fillMaxSize()) {
-                                               Box(
-                                                   modifier = Modifier
-                                                       .fillMaxWidth()
-                                                       .height(500.dp)
-                                                       .clickable(
-                                                           onClick = {
-                                                               val currentTime =
-                                                                   System.currentTimeMillis()
-                                                               if (currentTime - lastClickTime.value < 300) { // 300 мс для двойного клика
-                                                                   playvideo = paint
-                                                                   navController.navigate("Video")
-                                                               }
-                                                               // Обновляем время последнего клика
-                                                               lastClickTime.value = currentTime
-                                                           },
-                                                           // Отключение волнового эффекта при клике
-                                                           indication = null,
-                                                           interactionSource = remember { MutableInteractionSource() }
-                                                       )
-                                               ) {
-                                                   CustomVideoPlayer(paint)
-                                               }
-                                           }
+                        // Обновление текущего месяца и дня
+                        lastShownMonth = messageDateTime.monthValue
+                        lastShownDayOfMonth = messageDateTime.dayOfMonth
+                        val currentDate = LocalDate.now()
+                        val isToday = messageDateTime.toLocalDate() == currentDate
 
-                                       } else {
-                                           Image(
-                                               painter = rememberImagePainter(data = paint),
-                                               contentDescription = null,
-                                               modifier = Modifier
-                                                   .fillMaxHeight()
-                                                   .fillMaxWidth(0.8f)
-                                                   .clip(RoundedCornerShape(20.dp))
-                                                   .clickable {
-                                                       openLargeImage("$paint")
-                                                   }
-                                           )
-                                       }
-                                   }
-                               }
-                           }
-                       }
-                   }
-               }
+                        val dayOfWeekText = when (messageDateTime.dayOfWeek) {
+                            DayOfWeek.MONDAY -> getString(R.string.monday)
+                            DayOfWeek.TUESDAY -> getString(R.string.tuesday)
+                            DayOfWeek.WEDNESDAY -> getString(R.string.wednesday)
+                            DayOfWeek.THURSDAY -> getString(R.string.thursday)
+                            DayOfWeek.FRIDAY -> getString(R.string.friday)
+                            DayOfWeek.SATURDAY -> getString(R.string.saturday)
+                            DayOfWeek.SUNDAY -> getString(R.string.sunday)
+                        }
+
+                        val monthText = when (messageDateTime.month) {
+                            Month.JANUARY -> getString(R.string.january)
+                            Month.FEBRUARY -> getString(R.string.february)
+                            Month.MARCH -> getString(R.string.march)
+                            Month.APRIL -> getString(R.string.april)
+                            Month.MAY -> getString(R.string.may)
+                            Month.JUNE -> getString(R.string.june)
+                            Month.JULY -> getString(R.string.july)
+                            Month.AUGUST -> getString(R.string.august)
+                            Month.SEPTEMBER -> getString(R.string.september)
+                            Month.OCTOBER -> getString(R.string.october)
+                            Month.NOVEMBER -> getString(R.string.november)
+                            Month.DECEMBER -> getString(R.string.december)
+                        }
+                        val imageUrl = message.img
+
+                        val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+                        val formattedText =
+                            "${messageDateTime.dayOfMonth} ${monthText} ${dayOfWeekText} "
+
+                        if (showDayMarker) {
+                            // Отображение маркера дня
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isToday) {
+                                    // Вывод "сегодня" вместо даты
+                                    Text(
+                                        text = stringResource(id = R.string.today),
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF595D67),
+                                    )
+                                } else {
+                                    // Вывод даты в обычном формате
+                                    Text(
+                                        text = formattedText,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF595D67),
+                                    )
+                                }
+                            }
+                        }
+
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            horizontalArrangement = if (isMyMessage) Arrangement.End else Arrangement.Start
+                        ) {
+                            val imageModifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(40.dp))
+
+
+                            if (!(isMyMessage)) {
+                                if (imageUrl != null) {
+                                    val painter: Painter =
+                                        rememberAsyncImagePainter(model = imageUrl)
+                                    Image(
+                                        painter = painter,
+                                        contentDescription = null,
+                                        modifier = imageModifier
+                                    )
+                                    Spacer(modifier = Modifier.width(2.dp))
+                                }
+                            }
+                            if (removeMediaLinkFromMessage(message.message) != "") {
+                                Card(
+                                    modifier = Modifier
+                                        .wrapContentWidth()
+                                        .padding(
+                                            end = if (isMyMessage) 0.dp else screenWidth * 0.2f,
+                                            top = 2.dp,
+                                            start = if (isMyMessage) screenWidth * 0.2f else 0.dp,
+                                            bottom = 2.dp
+                                        ),
+                                    backgroundColor = if (isMyMessage) Color(0xFF315FF3) else Color(
+                                        0xFFFFFFFF
+                                    ),
+                                    // elevation = 10.dp,
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .padding(8.dp)
+                                    )
+                                    {
+                                        Text(
+                                            text = removeMediaLinkFromMessage(message.message),
+                                            textAlign = TextAlign.Start,
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = if (isMyMessage) Color(0xFFFFFFFF) else Color(
+                                                0xFF1B1B1B
+                                            ),
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+
+                                        Box(
+                                            modifier = Modifier
+                                                // .fillMaxWidth()
+                                                .wrapContentHeight(),
+                                            contentAlignment = Alignment.CenterEnd
+                                        )
+                                        {
+                                            val localDateTime =
+                                                messageDateTime.atZone(ZoneId.systemDefault())
+                                                    .toLocalDateTime()
+
+                                            Text(
+                                                text = localDateTime.format(
+                                                    DateTimeFormatter.ofPattern(
+                                                        "HH:mm"
+                                                    )
+                                                ), // Извлекаем только время
+                                                fontSize = 12.sp,
+                                                color = if (isMyMessage) Color(0xFFFFFFFF) else Color(
+                                                    0xFF1B1B1B
+                                                ),
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+
+
+                            if (paint != null && paint.isNotEmpty()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(if (isVideoUrl(paint)) 500.dp else 300.dp),
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(8.dp),
+                                        contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
+                                    ) {
+                                        if (isVideoUrl(paint)) {
+                                            Column(modifier = Modifier.fillMaxSize()) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(500.dp)
+                                                        .clickable(
+                                                            onClick = {
+                                                                val currentTime =
+                                                                    System.currentTimeMillis()
+                                                                if (currentTime - lastClickTime.value < 300) { // 300 мс для двойного клика
+                                                                    playvideo = paint
+                                                                    navController.navigate("Video")
+                                                                }
+                                                                // Обновляем время последнего клика
+                                                                lastClickTime.value = currentTime
+                                                            },
+                                                            // Отключение волнового эффекта при клике
+                                                            indication = null,
+                                                            interactionSource = remember { MutableInteractionSource() }
+                                                        )
+                                                ) {
+                                                    CustomVideoPlayer(paint)
+                                                }
+                                            }
+
+                                        } else {
+                                            Image(
+                                                painter = rememberImagePainter(data = paint),
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .fillMaxHeight()
+                                                    .fillMaxWidth(0.8f)
+                                                    .clip(RoundedCornerShape(20.dp))
+                                                    .clickable {
+                                                        openLargeImage("$paint")
+                                                    }
+                                            )
+                                        }
+
+
+                                    }
+                                }
+                            }
+
+                            if (gifUriString != null) {
+                                Log.d("GIF_VIDEO", gifUriString)
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp),
+                                    contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+
+                                            .fillMaxHeight()
+                                    ) {
+                                        val painter = rememberImagePainter(
+                                            request = ImageRequest.Builder(LocalContext.current)
+                                                .data(gifUriString)
+                                                .decoderFactory(
+                                                    if (android.os.Build.VERSION.SDK_INT >= 28) {
+                                                        ImageDecoderDecoder.Factory()
+                                                    } else {
+                                                        GifDecoder.Factory()
+                                                    }
+                                                )
+                                                .size(Size.ORIGINAL) // для загрузки оригинального размера GIF
+                                                .build()
+                                        )
+
+                                        Image(
+                                            painter = painter,
+                                            contentDescription = "GIF from URL",
+                                            modifier = Modifier
+                                                .width(300.dp) // Фиксированная ширина
+                                                .height(200.dp) // Фиксированная высота
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-          }
-
+        }
+    }
 
     fun openLargeImage( photo: String) {
         // Здесь реализуйте логику открытия большой версии изображения
@@ -853,8 +948,7 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
         })
     }
 
-
-
+    @RequiresApi(Build.VERSION_CODES.S)
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
     @Composable
     fun Creator(
@@ -868,7 +962,29 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
         var showimg by remember { mutableStateOf(false) }
         var main by remember { mutableStateOf(true)}
        // var selectedImageUri by remember { mutableStateOf<Uri?>(null) } // Локальное управляемое состояние
+        var selectedGifUrl by remember { mutableStateOf<String?>(null) }
 
+
+        val pickGif = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data = result.data
+                val gifUri = data?.data
+                // Handle the selected GIF URI (gifUri) here
+            }
+        }
+
+
+        var showGifPreview by remember { mutableStateOf(false) }
+        var selectedGifUri by remember { mutableStateOf<Uri?>(null) }
+
+        // Function to extract GIF URL from text
+        fun extractGifUrl(text: String): String {
+            // Implement your logic to extract the GIF URL
+            // Example (assuming a simple format like "<gif>URL</gif>"):
+            val regex = Regex("<gif>(.*?)</gif>")
+            val matchResult = regex.find(text)
+            return matchResult?.groupValues?.get(1) ?: "" // Return the URL or an empty string if not found
+        }
 
         Column(
             modifier = Modifier
@@ -994,7 +1110,7 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                         .align(Alignment.CenterVertically), // Выравнивание по центру вертикально
                     onClick = {
 
-                            showimg = !showimg
+                        showimg = !showimg
 
 
                         pickMedia.launch(arrayOf("image/*", "video/*"))
@@ -1009,31 +1125,57 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                         showimg = false
                     }
                 }
-                TextField(
+                var selectedGifUri by remember { mutableStateOf<Uri?>(null) }
+
+
+
+                AndroidView(
+                    factory = { context ->
+                        EditText(context).apply {
+                            setOnReceiveContentListener(arrayOf("image/gif")) { _, payload ->
+                                val uri = payload.clip.getItemAt(0).uri
+
+                                // Запускаем загрузку GIF, передавая uri
+                                uploadGifToFirebaseStorage(uri)
+
+                                Log.d("uri", uri.toString())
+                                // onSendMessage("$uri") // Не отправляем URI напрямую, а отправляем ссылку после загрузки
+                                showGifPreview = true
+                                keyboardController?.hide()
+                                payload
+                            }
+                            addTextChangedListener(object : TextWatcher {
+                                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                                override fun afterTextChanged(editable: Editable?) {
+                                    text = editable.toString()
+                                }
+                            })
+                            background = null
+                            setTextColor(Color.Black.toArgb())
+                            setHintTextColor(Color.White.toArgb())
+                            textSize = 24.sp
+                            maxLines = 10
+                        }
+                    },
                     modifier = Modifier
                         .weight(0.8f)
                         .clip(RoundedCornerShape(20.dp)),
-                    value = text,
-                    onValueChange = { text = it },
-                    textStyle = TextStyle(fontSize = textSize),
-                    colors = TextFieldDefaults.textFieldColors(
-                        focusedIndicatorColor = Color.White,
-                        unfocusedIndicatorColor = Color.White,
-                        disabledIndicatorColor = Color.White,
-                        containerColor = Color.White
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            keyboardController?.hide()
+                    update = { editText ->
+                        if (editText.text.toString() != text) {
+                            editText.setText(text)
+                            editText.setSelection(text.length)
                         }
-                    ),
-                    maxLines = 10 // Устанавливаем максимальное количество строк, чтобы TextField мог увеличиваться по высоте
+                    }
                 )
+
+
+
 
                 IconButton(
                     modifier = Modifier
                         .weight(0.1f)
-                        .align(Alignment.CenterVertically), // Выравнивание по центру вертикально
+                        .align(Alignment.CenterVertically),
                     onClick = {
 
                         if (show.value) {
@@ -1041,7 +1183,7 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                             submittedText = text
 
                             if(proces == false) { // глобальная для тогочтобы отслеживать фото щас грузится
-                                 text = "" //обнуление текста
+                                text = "" //обнуление текста
                                 if (submittedText != "" || photo != "") {
                                     onSendMessage(
                                         if (photo != "") {
@@ -1076,6 +1218,8 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
     }
     val joinDataManager = JoinDataManager()
 
+
+
     @Composable
     fun upbar(roomId: String, id: String, name: String, img: String,navController: NavController){
         val room = "Room"
@@ -1109,8 +1253,16 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                                 .fillMaxWidth(),
                             shape = RoundedCornerShape(20.dp),
                             onClick = {
-                                joinDataManager.pushData_join(roomId,id, name,"",)
+                                joinDataManager.pushData_join(roomId,id, name,"",) { success ->
+                                    if (success) {
+                                        val intent = intent
+                                        finish()
+                                        startActivity(intent)
+                                        overridePendingTransition(0, 0)
+                                    } else {
 
+                                    }
+                                }
                                 recreate()
                             }
                         ) {
@@ -1184,6 +1336,45 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                 showToast("Ошибка загрузки файла: ${exception.message}")
             }
         }
+
+
+    private fun uploadGifToFirebaseStorage(uri: Uri) { // Добавляем параметр uri
+        if (uri == null) {
+            showToast("Выберите GIF перед загрузкой.")
+            return
+        }
+
+        proces = true
+        val storage = FirebaseStorage.getInstance()
+        val storageRef = storage.reference
+
+        val fileName = UUID.randomUUID().toString()
+        val fileRef = storageRef.child("image/gif/$storedRoomId/$fileName")
+        Log.d("Uploudgif", "image/gif/$storedRoomId/$fileName")
+
+        val uploadTask = fileRef.putFile(uri) // Используем переданный uri
+
+        uploadTask.addOnProgressListener { taskSnapshot ->
+            uploadProgress.value = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount).toFloat() / 100
+        }
+
+        uploadTask.addOnSuccessListener { taskSnapshot ->
+            fileRef.downloadUrl.addOnSuccessListener { uri ->
+                gifUrl = uri.toString()
+                proces = false
+                showToast("GIF успешно загружен: $gifUrl")
+
+                // Отправляем сообщение со ссылкой на GIF
+                sendMessage("<gif>$gifUrl</gif>")
+
+                selectedImageUri = null
+            }.addOnFailureListener { exception ->
+                // Обработка ошибки при получении ссылки
+            }
+        }.addOnFailureListener { exception ->
+            // Обработка ошибки загрузки
+        }
+    }
 
 
 

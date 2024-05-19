@@ -73,6 +73,7 @@ import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.ilya.reaction.logik.PreferenceHelper
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.storage.FirebaseStorage
+import com.ilya.codewithfriends.Startmenu.Main_menu
 import com.ilya.codewithfriends.presentation.profile.UID
 import com.ilya.codewithfriends.roomsetting.Roomsetting
 
@@ -521,7 +522,7 @@ class CreativyRoom : ComponentActivity() {
         val json = """
         {
             "url": "$photo",
-            "password": "${if(password != "") {password} else {null}}"
+            "password": "${if(password != "") {password} else {""}}"
         }
     """.trimIndent()
 
@@ -550,8 +551,6 @@ class CreativyRoom : ComponentActivity() {
 
 
 
-
-
     @Composable
     fun WriteDb(uid: String){
         val coroutineScope = rememberCoroutineScope()
@@ -559,7 +558,6 @@ class CreativyRoom : ComponentActivity() {
         Button(
 
             onClick = {
-               /// if(selectedNumber <= 0) {
                     if (
                         uniqueId != "" &&
                         selectedLanguage != "" &&
@@ -570,15 +568,14 @@ class CreativyRoom : ComponentActivity() {
                         coroutineScope.launch {
                             pushData()
                         }
-                        intent = Intent(this@CreativyRoom, Roomsetting::class.java)
-                        startActivity(intent)
+
+                        val intent = Intent(this, Main_menu::class.java)
+                        intent.putExtra("Room", "Room")
+                        this.startActivity(intent)
 
                     } else {
                         showToast(getString(R.string.datainbalank))
                     }
-                /*}else {
-                    showToast(getString(R.string.myroom))
-                }*/
 
         },modifier = Modifier
             .fillMaxWidth()
