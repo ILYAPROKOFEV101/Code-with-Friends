@@ -37,7 +37,7 @@
     <string name="passwrd">write your password</string>
     <string name="adduser">add user</string>
     <string name="aboutuser">about user</string>
-
+    <string name="yourcontacts">Дайте контакты на ваш github и социальные сети </string>
 
     <string name="Nothinkchose">nothing selected</string>
     <string name="all">ALL ROOMS</string>
@@ -106,13 +106,13 @@ This Privacy Policy comes into effect upon its publication and remains in force 
     <string name="Your_name">Write your name</string>
 
 
+
     <string name="login">Log in with Google </string>
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="submit">Submit</string>
     <string name="cancel">Cancel</string>
     <string name="error">Error</string>
-    <string name="loading">Loading...</string>
     <string name="success">Success</string>
     <string name="logout">Logout</string>
     <string name="settings">Settings</string>
@@ -191,5 +191,6 @@ This Privacy Policy comes into effect upon its publication and remains in force 
     <string name="december">December</string>
     <string name="title_activity_friends_chat">FriendsChatActivity</string>
     <string name="devmode">If you are a Google play or Rustor tester and do not have your own account, click here </string>
-
+    <string name="join">Join in room</string>
+    <string name="plaseinroom">Plases in room</string>
 </resources>

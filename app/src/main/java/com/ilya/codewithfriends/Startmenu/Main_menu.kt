@@ -50,6 +50,8 @@ import androidx.navigation.compose.rememberNavController
 
 import com.ilya.codewithfriends.Startmenu.Menu_Fragment.Mainmenufragment
 
+import com.ilya.codewithfriends.Startmenu.Menu_Fragment.Myprofile_fragment
+
 import com.ilya.codewithfriends.chattest.ChatRoomm
 import com.ilya.codewithfriends.chattest.ChatScreen
 import com.ilya.codewithfriends.chattest.ChatmenuContent
@@ -171,6 +173,29 @@ fun Main_menu_fragment() {
     )
 
 }
+@Composable
+fun ADD_PROfile() {
+    AndroidView(
+        factory = { context ->
+            // Создаем FragmentContainerView
+            FragmentContainerView(context).apply {
+                id = View.generateViewId()
+            }
+        },
+        update = { view ->
+            // Получаем FragmentManager
+            val fragmentManager = (view.context as FragmentActivity).supportFragmentManager
+            // Создаем и добавляем Chatmenu фрагмент
+            val fragmentTransaction = fragmentManager.beginTransaction()
+            val FindRoom_fragment = Myprofile_fragment()
+            fragmentTransaction.replace(view.id, FindRoom_fragment)
+            fragmentTransaction.commit()
+        }
+    )
+
+
+}
+
 
 
 

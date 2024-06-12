@@ -766,102 +766,86 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                             }
 
 
-
-                            if (paint != null && paint.isNotEmpty()) {
+                            if (paint != null && paint.isNotEmpty()) { Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(if (isVideoUrl(paint)) 500.dp else 300.dp),) {
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(if (isVideoUrl(paint)) 500.dp else 300.dp),
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(8.dp),
-                                        contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
-                                    ) {
-                                        if (isVideoUrl(paint)) {
-                                            Column(modifier = Modifier.fillMaxSize()) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .height(500.dp)
-                                                        .clickable(
-                                                            onClick = {
-                                                                val currentTime =
-                                                                    System.currentTimeMillis()
-                                                                if (currentTime - lastClickTime.value < 300) { // 300 мс для двойного клика
-                                                                    playvideo = paint
-                                                                    navController.navigate("Video")
-                                                                }
-                                                                // Обновляем время последнего клика
-                                                                lastClickTime.value = currentTime
-                                                            },
-                                                            // Отключение волнового эффекта при клике
-                                                            indication = null,
-                                                            interactionSource = remember { MutableInteractionSource() }
-                                                        )
-                                                ) {
-                                                    CustomVideoPlayer(paint)
-                                                }
-                                            }
-
-                                        } else {
-                                            Image(
-                                                painter = rememberImagePainter(data = paint),
-                                                contentDescription = null,
-                                                modifier = Modifier
-                                                    .fillMaxHeight()
-                                                    .fillMaxWidth(0.8f)
-                                                    .clip(RoundedCornerShape(20.dp))
-                                                    .clickable {
-                                                        openLargeImage("$paint")
-                                                    }
-                                            )
-                                        }
-
-
-                                    }
-                                }
-                            }
-
-                            if (gifUriString != null) {
-                                Log.d("GIF_VIDEO", gifUriString)
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp),
+                                        .fillMaxSize()
+                                        .padding(8.dp),
                                     contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
                                 ) {
-                                    Box(
+                                    if (isVideoUrl(paint)) {
+                                        Column(modifier = Modifier.fillMaxSize()) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(500.dp)
+                                                    .clickable(
+                                                        onClick = {
+                                                            val currentTime =
+                                                                System.currentTimeMillis()
+                                                            if (currentTime - lastClickTime.value < 300) { // 300 мс для двойного клика
+                                                                playvideo = paint
+                                                                navController.navigate("Video")
+                                                            }
+                                                            // Обновляем время последнего клика
+                                                            lastClickTime.value = currentTime },
+                                                        // Отключение волнового эффекта при клике
+                                                        indication = null,
+                                                        interactionSource = remember { MutableInteractionSource() }
+                                                    )
+                                            ) {
+                                                CustomVideoPlayer(paint)
+                                            }
+                                        } } else {
+                                            Image(
+                                        painter = rememberImagePainter(data = paint),
+                                        contentDescription = null,
                                         modifier = Modifier
-
                                             .fillMaxHeight()
-                                    ) {
-                                        val painter = rememberImagePainter(
-                                            request = ImageRequest.Builder(LocalContext.current)
-                                                .data(gifUriString)
-                                                .decoderFactory(
-                                                    if (android.os.Build.VERSION.SDK_INT >= 28) {
-                                                        ImageDecoderDecoder.Factory()
-                                                    } else {
-                                                        GifDecoder.Factory()
-                                                    }
-                                                )
-                                                .size(Size.ORIGINAL) // для загрузки оригинального размера GIF
-                                                .build()
-                                        )
-
-                                        Image(
-                                            painter = painter,
-                                            contentDescription = "GIF from URL",
-                                            modifier = Modifier
-                                                .width(300.dp) // Фиксированная ширина
-                                                .height(200.dp) // Фиксированная высота
-                                        )
-                                    }
+                                            .fillMaxWidth(0.8f)
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .clickable {
+                                                openLargeImage("$paint")
+                                            }
+                                        ) }
+                                }
                                 }
                             }
+                            if (gifUriString != null) { Log.d("GIF_VIDEO", gifUriString)
+                                Box(modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                                contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                ) {
+                                    val painter = rememberImagePainter(
+                                        request = ImageRequest.Builder(LocalContext.current)
+                                            .data(gifUriString)
+                                            .decoderFactory(
+                                                if (android.os.Build.VERSION.SDK_INT >= 28) {
+                                                    ImageDecoderDecoder.Factory()
+                                                } else {
+                                                    GifDecoder.Factory()
+                                                }
+                                            )
+                                            .size(Size.ORIGINAL) // для загрузки оригинального размера GIF
+                                            .build()
+                                    )
+                                    Image(
+                                        painter = painter,
+                                        contentDescription = "GIF from URL",
+                                        modifier = Modifier
+                                            .width(300.dp) // Фиксированная ширина
+                                            .height(200.dp) // Фиксированная высота
+                                    )
+                                }
+                            } }
                         }
                     }
                 }
@@ -880,7 +864,7 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
         // Создаем клиент OkHttp
         val client = OkHttpClient()
 
-        // Создаем запрос
+        // Создаем запросwd
         val request = Request.Builder()
             .url("https://getpost-ilya1.up.railway.app/exists/$roomId/$id/$username")
             .build()
