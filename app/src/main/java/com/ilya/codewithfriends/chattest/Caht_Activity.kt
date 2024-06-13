@@ -1,5 +1,6 @@
 package com.ilya.codewithfriends.chattest
 
+import FriendsChatFragment
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -164,6 +165,34 @@ fun ChatScreen(navController: NavController, storedRoomId: String?) {
             val chatFragment = ChatFragment().apply {
                 arguments = Bundle().apply {
                     putString("STORED_ROOM_ID_KEY", storedRoomId)
+                }
+            }
+
+            fragmentTransaction.replace(view.id, chatFragment)
+            fragmentTransaction.commit()
+
+        }
+    )
+
+
+}
+
+@Composable
+fun ShowVideo(video: String?) {
+
+    AndroidView(
+        factory = { context ->
+            FragmentContainerView(context).apply {
+                id = View.generateViewId()
+            }
+        },
+        update = { view ->
+
+            val fragmentManager = (view.context as FragmentActivity).supportFragmentManager
+            val fragmentTransaction = fragmentManager.beginTransaction()
+            val chatFragment = FriendsChatFragment().apply {
+                arguments = Bundle().apply {
+                    putString("VIDEO_URL", video)
                 }
             }
 

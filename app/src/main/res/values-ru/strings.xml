@@ -1,0 +1,191 @@
+<resources>
+    <string name="app_name">Code with Friends</string>
+    <string name="web_client_id">723880678401-e36qj2dcmalhhnp8brc81r5kaiqgr6lb.apps.googleusercontent.com</string>
+    <string name="title_activity_main_menu">Главное меню</string>
+    <string name="DataBase">https://code-with-friends-73cde-default-rtdb.europe-west1.firebasedatabase.app/</string>
+    <string name="breanch">Укажите ветку репозитория git</string>
+    <string name="filename">Укажите, есть ли работа в файле</string>
+    <string name="mission">Что нужно сделать</string>
+    <string name="Addtask">Добавить задачи</string>
+    <string name="Photo">Добавить фото</string>
+    <string name="Teamspek">Создать комнату TeamSpeak</string>
+    <string name="nameTeamspek">Название комнаты</string>
+    <string name="Icon">Загрузить фото комнаты</string>
+    <string name="room">Войти в комнату</string>
+    <string name="outroom">Задачи</string>
+    <string name="create">Создать комнату</string>
+    <string name="name">Название вашей комнаты</string>
+    <string name="chosedata">Выберите дату</string>
+    <string name="chosetime">Выберите время </string>
+    <string name="time">Время</string>
+    <string name="Selected">Выбрано</string>
+    <string name="Choose">Выбрать</string>
+    <string name="place">Места</string>
+    <string name="Complaint">Написать жалобу</string>
+    <string name="Confirmation">Подтверждение</string>
+    <string name="Confirmationrealy">Вы уверены, что хотите удалить этого пользователя из комнаты?</string>
+    <string name="Delete">Удалить</string>
+    <string name="Cancel">Отмена</string>
+    <string name="escape">Отмена</string>
+    <string name="want">Вы действительно хотите покинуть комнату?</string>
+    <string name="destroy">Вы действительно хотите уничтожить комнату?</string>
+    <string name="destroyroom">Уничтожить</string>
+    <string name="Exit">Выход</string>
+    <string name="reply_label">отправить</string>
+    <string name="label">отправить</string>
+    <string name="find">Найти пользователя</string>
+    <string name="passwrd">введите ваш пароль</string>
+    <string name="adduser">добавить пользователя</string>
+    <string name="aboutuser">о пользователе</string>
+    <string name="Nothinkchose">ничего не выбрано</string>
+    <string name="all">ВСЕ КОМНАТЫ</string>
+    <string name="Muroom">МОЯ КОМНАТА</string>
+    <string name="SpeshelRoom">ВЫБРАТЬ</string>
+    <string name="policy">
+Эта политика конфиденциальности описывает процедуры сбора, использования и раскрытия персональной информации пользователей (далее - "пользователи") при использовании нашей социальной сети (далее - "Сеть"). Этот документ также устанавливает правила, которые пользователи соглашаются соблюдать при использовании Сети.\n\n
+1. Сбор и использование персональной информации\n\n
+1.1. При регистрации в Сети пользователи предоставляют определенную персональную информацию, включая, но не ограничиваясь, имя, адрес электронной почты и другую информацию, необходимую для создания учетной записи.\n\n
+1.2. Мы также можем собирать и использовать информацию о поведении пользователей в Сети для улучшения функциональности и предоставления персонализированных услуг.\n\n
+2. Ограничения на использование Сети\n\n
+2.1. Пользователи соглашаются воздерживаться от размещения фотографий и контента непристойного характера в Сети, а также от выражения агрессии и призывов к незаконным действиям против других пользователей или третьих лиц.\n\n
+2.2. Мы оставляем за собой право удалять контент, который нарушает правила использования Сети, и принимать меры в отношении пользователей, нарушающих эти ограничения.\n\n
+3. Ответственность и конфиденциальность данных\n\n
+4. Отсутствие обязательств перед пользователями\n\n
+4.1. Настоящая политика не создает никаких обязательств со стороны нашей социальной сети перед пользователями. Мы оставляем за собой право вносить изменения в условия настоящей политики в любое время без предварительного уведомления.\n\n
+4.2. Пользователи соглашаются, что использование Сети осуществляется на их собственный риск, и мы не несем ответственности за любой ущерб, причиненный им вследствие использования Сети.\n\n
+5. Конфиденциальность детей:\n\n
+5.1. Сеть не предназначена для лиц младше 13 лет. Мы не собираем сознательно персональную информацию от детей младше этого возраста без согласия родителей.\n\n
+5.2. Родители или законные опекуны могут связаться с нами для просмотра, удаления или отказа от дальнейшего сбора информации о своем ребенке.\n\n
+6. Изменения в политике конфиденциальности:\n\n
+6.1. Мы оставляем за собой право вносить изменения или обновлять настоящую политику конфиденциальности. Пользователи будут уведомлены обо всех существенных изменениях, и продолжение использования Сети после таких модификаций означает принятие измененной политики.\n\n
+Настоящая политика конфиденциальности вступает в силу с момента ее публикации и остается в силе до ее изменения или отмены. Используя нашу социальную сеть, пользователи подтверждают свое согласие с условиями настоящей политики.
+</string>
+
+    <string name="chooselenguage">Выберите язык программирования</string>
+    <string name="writecomplaint">напишите жалобу, и мы рассмотрим ваше обращение</string>
+    <string name="Privacy_Policy">Политика конфиденциальности</string>
+    <string name="I_agree">Я согласен</string>
+    <string name="I_dont_agree">Я не согласен</string>
+    <string name="notfoun">
+Похоже, что сервер в данный момент не отвечает. Это может быть вызвано различными причинами, такими как временные технические проблемы, ограниченный доступ с вашего региона или отсутствие подключения к Интернету. Также возможно, что сервер находится на техническом обслуживании.
+</string>
+
+
+
+    <string name="reactionresult">Результат реакции</string>
+    <string name="singout">Выйти</string>
+    <string name="bestresult">Лучший результат</string>
+    <string name="result">Результат</string>
+    <string name="atantion">Мы не можем отображать вашу статистику в общих списках и рейтингах игроков без регистрации.</string>
+    <string name="main_text">Тест реакции</string>
+    <string name="title_activity_secondtest">Второй тест</string>
+    <string name="title_activity_second_activiti">Вторая активность</string>
+    <string name="title_activity_tetrismenu">Меню Тетриса</string>
+    <string name="main_tetris">Тетрис</string>
+    <string name="age">Возраст:</string>
+    <string name="joinroom">Создать команду</string>
+    <string name="creatroom">Найти команду</string>
+    <string name="aboutyou">Расскажите о себе:</string>
+    <string name="placeinroom">Выберите место</string>
+    <string name="Nameofroom">Выберите место</string>
+
+
+    <string name="hello">Привет!</string>
+    <string name="welcome">Добро пожаловать!</string>
+    <string name="aboutroom">расскажите другим пользователям о своем проекте</string>
+    <string name="addPhoto">фото успешно добавлено</string>
+    <string name="upload_error_message">Ошибка загрузки фото. Пожалуйста, попробуйте снова.</string>
+    <string name="datainbalank">Вы не предоставили все данные о своей комнате</string>
+    <string name="myroom">у вас уже есть комната</string>
+    <string name="savedata">Сохранить информацию о вас</string>
+    <string name="deleteroom">Удалить комнату</string>
+    <string name="Your_name">Напишите свое имя</string>
+
+    <string name="devmode">Если вы тестировщик Google play или Rustor и не имеиите своего aкrаунта , то жмите сюда</string>
+
+
+    <string name="login">Войти с помощью Google </string>
+    <string name="username">Имя пользователя</string>
+    <string name="password">Пароль</string>
+    <string name="submit">Отправить</string>
+    <string name="cancel">Отмена</string>
+    <string name="error">Ошибка</string>
+    <string name="success">Успех</string>
+    <string name="logout">Выход</string>
+    <string name="settings">Настройки</string>
+    <string name="save">Сохранить</string>
+    <string name="delete">Удалить</string>
+    <string name="edit">Редактировать</string>
+    <string name="update">Обновить</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="exit">Выход</string>
+    <string name="back">Назад</string>
+    <string name="search">Поиск</string>
+    <string name="select">Выбрать</string>
+    <string name="view">Просмотр</string>
+    <string name="share">Поделиться</string>
+    <string name="copy">Копировать</string>
+    <string name="paste">Вставить</string>
+    <string name="undo">Отменить</string>
+    <string name="redo">Повторить</string>
+    <string name="preferences">Настройки</string>
+    <string name="language">Язык</string>
+    <string name="theme">Тема</string>
+    <string name="dark">Темная</string>
+    <string name="light">Светлая</string>
+    <string name="help">Помощь</string>
+    <string name="about">О приложении</string>
+    <string name="version">Версия</string>
+    <string name="author">Автор</string>
+    <string name="copyright">Авторское право</string>
+    <string name="privacy_policy">Политика конфиденциальности</string>
+
+    <string name="difficulty">Уровень сложности</string>
+    <string name="easy">Легкий</string>
+    <string name="medium">Средний</string>
+    <string name="hard">Сложный</string>
+    <string name="difficulty_settings">Настройки уровня сложности</string>
+    <string name="title_activity_logek_log_in">LogekLogIn</string>
+    <string name="title_activity_tester">Тестировщик</string>
+    <string name="title_activity_data_tester">DataActivity_Tester</string>
+    <string name="title_activity_write">Write_Activity</string>
+    <string name="title_activity_creativy_room">CreativyRoom</string>
+    <string name="title_activity_find_room">FindRoom</string>
+    <string name="title_activity_chat">Чат</string>
+    <string name="title_activity_roomsetting">Настройки комнаты</string>
+    <string name="title_activity_addtask">Добавить задачу</string>
+    <string name="title_activity_test">Тестовая активность</string>
+    <string name="title_activity_team_speak">TeamSpeak</string>
+    <string name="title_activity_aboutuser">О пользователе</string>
+    <string name="title_activity_view_photo">Просмотр фото</string>
+    <string name="title_activity_complaint">Жалоба</string>
+    <string name="title_activity_sendban">Отправить бан</string>
+    <string name="title_activity_caht">Caht_Activity</string>
+    <string name="title_activity_vice">ViceActivity</string>
+
+    <string name="today">Сегодня</string>
+    <string name="monday">Понедельник</string>
+    <string name="tuesday">Вторник</string>
+    <string name="wednesday">Среда</string>
+    <string name="thursday">Четверг</string>
+    <string name="friday">Пятница</string>
+    <string name="saturday">Суббота</string>
+    <string name="sunday">Воскресенье</string>
+
+    <string name="january">Январь</string>
+    <string name="february">Февраль</string>
+    <string name="march">Март</string>
+    <string name="april">Апрель</string>
+    <string name="may">Май</string>
+    <string name="june">Июнь</string>
+    <string name="july">Июль</string>
+    <string name="august">Август</string>
+    <string name="september">Сентябрь</string>
+    <string name="october">Октябрь</string>
+    <string name="november">Ноябрь</string>
+    <string name="december">Декабрь</string>
+    <string name="title_activity_friends_chat">FriendsChatActivity</string>
+
+</resources>

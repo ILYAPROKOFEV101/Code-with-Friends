@@ -1,10 +1,13 @@
 package com.ilya.codewithfriends.chats
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.Drawable
 import android.media.MediaMetadataRetriever
 import android.os.Handler
 import android.os.Looper
+import android.transition.Transition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -36,6 +39,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -43,6 +47,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
+import coil.compose.rememberImagePainter
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
@@ -56,6 +61,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.material3.CircularProgressIndicator
+
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.CustomTarget
+import com.google.firebase.storage.StorageReference
+
 
 @Composable
 fun CustomVideoPlayer(
@@ -63,11 +80,35 @@ fun CustomVideoPlayer(
     modifier: Modifier = Modifier,
     onVideoCompleted: () -> Unit = {}
 ) {
-
-
+    var exoPlayer: ExoPlayer? by remember { mutableStateOf(null) }
+    var isPlayerReady by remember { mutableStateOf(false) }
+    var previewImage: Bitmap? by remember { mutableStateOf(null) }
     val context = LocalContext.current
-    val exoPlayer = remember {
-        SimpleExoPlayer.Builder(context).build().apply {
+
+    // Загрузка превью
+    LaunchedEffect(videoUrl) {
+        Glide.with(context)
+            .asBitmap()
+            .load(videoUrl)
+            .frame(1) // Захватить кадр на 1-й секунде
+            .into(object : CustomTarget<Bitmap>() {
+                override fun onResourceReady(
+                    resource: Bitmap,
+                    transition: com.bumptech.glide.request.transition.Transition<in Bitmap>?
+                ) {
+                    previewImage = resource
+                }
+
+                override fun onLoadCleared(placeholder: Drawable?) {}
+            })
+
+
+
+    }
+
+
+    DisposableEffect(Unit) {
+        val exoPlayerInstance = SimpleExoPlayer.Builder(context).build().apply {
             val dataSourceFactory = DefaultDataSourceFactory(
                 context,
                 Util.getUserAgent(context, context.packageName)
@@ -76,21 +117,80 @@ fun CustomVideoPlayer(
                 .createMediaSource(MediaItem.fromUri(videoUrl))
             setMediaSource(videoSource)
             prepare()
+            playWhenReady = false // Начать с паузы
             addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(state: Int) {
+                    if (state == ExoPlayer.STATE_READY && !isPlayerReady) {
+                        isPlayerReady = true
+                        pause() // Удерживаем первый кадр
+                    }
                     if (state == ExoPlayer.STATE_ENDED) {
                         onVideoCompleted()
                     }
                 }
             })
         }
+        exoPlayer = exoPlayerInstance
+
+        onDispose {
+            exoPlayerInstance.release()
+        }
     }
 
-    val currentPosition = remember { mutableStateOf(0L) }
-    val duration = remember { mutableStateOf(0L) }
+    Column(modifier = modifier.fillMaxWidth(0.5f).clip(RoundedCornerShape(20.dp))) {
+        if (previewImage != null && !isPlayerReady) {
+            Box(modifier = Modifier.fillMaxSize()) {
 
-    val previewImageBitmap = remember { mutableStateOf<ImageBitmap?>(null) }
+                    val compressedImage = compressBitmap(previewImage!!, 50) // Качество 50 из 100
+                    Image(bitmap = compressedImage.asImageBitmap(), contentDescription = "Video Preview",
+                        modifier = Modifier.clip(RoundedCornerShape(20.dp)))
+
+            }
+        } else {
+            exoPlayer?.let {
+                AndroidView(
+                    factory = { ctx ->
+                        StyledPlayerView(ctx).apply {
+                            player = it
+                            controllerAutoShow = true
+                            controllerHideOnTouch = true
+                            useController = false
+                            setShowNextButton(false)
+                            setShowPreviousButton(false)
+                            setShowFastForwardButton(false)
+                            setShowRewindButton(false)
+                            setShowShuffleButton(false)
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            if (it.isPlaying) {
+                                it.pause()
+                            } else {
+                                it.play()
+                            }
+                        }
+                )
+            }
+        }
+    }
+}
+
+
+fun compressBitmap(source: Bitmap, quality: Int): Bitmap {
+    val outputStream = ByteArrayOutputStream()
+    source.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+    val byteArray = outputStream.toByteArray()
+    return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+}
+
+/*
+
+ val currentPosition = remember { mutableStateOf(0L) }
+    val duration = remember { mutableStateOf(0L) }
     val videoStarted = remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(key1 = exoPlayer) {
         val interval = 1000L // Update every second
@@ -111,112 +211,21 @@ fun CustomVideoPlayer(
         }
     }
 
-    LaunchedEffect(videoUrl) {
-        val bitmap = getFirstFrameBitmap(videoUrl, 50) // Пример уровня качества: 50
-        previewImageBitmap.value = bitmap?.asImageBitmap()
+if (duration.value > 0L) {
+    Box(modifier = Modifier.fillMaxWidth().height(5.dp)) {
+        Slider(
+            value = currentPosition.value.toFloat(),
+            onValueChange = {
+                exoPlayer?.seekTo(it.toLong())
+                currentPosition.value = it.toLong()
+            },
+            valueRange = 0f..duration.value.toFloat(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(0.1f),
+            steps = 100
+        )
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        if (previewImageBitmap.value != null && !videoStarted.value) {
-            Image(
-                bitmap = previewImageBitmap.value!!,
-                contentDescription = null,
-                modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(30.dp))
-                    .clickable {
-                        videoStarted.value = true
-                        exoPlayer.play()
-                    }
-            )
-        } else {
-            AndroidView(
-                factory = { ctx ->
-                    StyledPlayerView(ctx).apply {
-                        player = exoPlayer
-                        controllerAutoShow = true
-                        controllerHideOnTouch = true
-                        useController = false
-                        setShowNextButton(false)
-                        setShowPreviousButton(false)
-                        setShowFastForwardButton(false)
-                        setShowRewindButton(false)
-                        setShowShuffleButton(false)
-                    }
-                },
-                modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(30.dp))
-                    .clickable {
-                        if (exoPlayer.isPlaying) {
-                            exoPlayer.pause()
-                        } else {
-                            exoPlayer.play()
-                        }
-                    }
-            )
 
-            if (duration.value > 0L) {
-                Box(modifier = Modifier.height(5.dp)) {
-                    Slider(
-                        value = currentPosition.value.toFloat(),
-                        onValueChange = {
-                            exoPlayer.seekTo(it.toLong())
-                            currentPosition.value = it.toLong()
-                        },
-                        valueRange = 0f..duration.value.toFloat(),
-                        modifier = Modifier
-                            .wrapContentWidth()
-                            .alpha(1f),
-                        steps = 100 // Ограничим количество шагов слайдера
-                    )
-                }
-            }
-
-            if (duration.value > 0L) {
-                Slider(
-                    value = currentPosition.value.toFloat(),
-                    onValueChange = {
-                        exoPlayer.seekTo(it.toLong())
-                        currentPosition.value = it.toLong()
-                    },
-                    valueRange = 0f..duration.value.toFloat(),
-                    modifier = Modifier.fillMaxWidth(),
-                    steps = 100 // Ограничим количество шагов слайдера
-                )
-            }
-        }
-    }
-
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(key1 = exoPlayer) {
-        val observer = object : LifecycleObserver {
-            @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-            fun onDestroy() {
-                exoPlayer.release()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-}
-
-private fun getFirstFrameBitmap(videoUrl: String, quality: Int): Bitmap? {
-    val retriever = MediaMetadataRetriever()
-    try {
-        retriever.setDataSource(videoUrl)
-        // Получение первого кадра. Используем 0 для извлечения первого доступного кадра.
-        val data = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-        if (data != null) {
-            val outputStream = ByteArrayOutputStream()
-            // Используйте параметр quality для управления качеством изображения
-            data.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
-            val compressedData = outputStream.toByteArray()
-            return BitmapFactory.decodeByteArray(compressedData, 0, compressedData.size)
-        }
-    } catch (ex: Exception) {
-        // Обработка исключения, например, логирование
-        ex.printStackTrace()
-    } finally {
-        retriever.release()
-    }
-    return null
-}
+}*/

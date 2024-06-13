@@ -11,7 +11,13 @@ import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.ilya.codewithfriends.findroom.Room
+import com.ilya.codewithfriends.roomsetting.Add_user_Invite
 import com.ilya.codewithfriends.roomsetting.ui.theme.Participant
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class Get_Recuast {
     fun whoinroom(roomId: String, participantsState: MutableState<List<Participant>>, context: Context) {
@@ -78,3 +84,34 @@ class Get_Recuast {
 
 
 }
+
+fun addUser(uidAdmin: String, idRequest: String, uidUser: String, roomId: String) {
+    val url = "https://getpost-ilya1.up.railway.app/" // Replace with your actual base URL
+
+    val retrofit = Retrofit.Builder()
+        .baseUrl(url)
+        .addConverterFactory(GsonConverterFactory.create()) // Assuming JSON response format
+        .build()
+
+    val apiService = retrofit.create(Add_user_Invite::class.java)
+
+    // Call the API method
+    val call = apiService.putUSER(uidAdmin, idRequest, uidUser, roomId)
+
+    // Execute the call asynchronously
+    call.enqueue(object : Callback<Void> {
+        override fun onResponse(call: Call<Void>, response: Response<Void>) {
+            if (response.isSuccessful) {
+                Log.d("ADDUSER" , "User added successfully $response")
+            } else {
+                Log.d("ADDUSER" , "User not added successfully $response")
+            }
+        }
+
+        override fun onFailure(call: Call<Void>, t: Throwable) {
+            // Handle failure
+            // Maybe show an error message or perform some other action
+        }
+    })
+}
+

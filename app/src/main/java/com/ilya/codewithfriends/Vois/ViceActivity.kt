@@ -256,3 +256,4 @@ class ViceActivity : ComponentActivity() {
         const val SAMPLE_RATE = 44100 // Change to your desired sample rate
     }
 }
+

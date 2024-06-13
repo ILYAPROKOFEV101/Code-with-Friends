@@ -1,7 +1,9 @@
 package com.ilya.codewithfriends.firebase
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -53,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -78,6 +81,7 @@ import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
+import com.ilya.codewithfriends.Startmenu.Main_menu
 import okhttp3.OkHttpClient
 import java.util.UUID
 
@@ -161,7 +165,7 @@ class Addtask : ComponentActivity() {
                             }
                             item {
                                 Spacer(modifier = Modifier.height(20.dp))
-                                addtask(storedRoomId!!)
+                                AddTaskButton(storedRoomId!!)
                             }
                         }
                     }
@@ -278,7 +282,6 @@ class Addtask : ComponentActivity() {
 
     }
 
-
     @Composable
     fun AddImage() {
 
@@ -364,7 +367,6 @@ class Addtask : ComponentActivity() {
             }
         }
     }
-
 
     @Preview(showBackground = true)
     @Composable
@@ -468,9 +470,10 @@ class Addtask : ComponentActivity() {
     val uniqueId = generateUniqueId()
 
     @Composable
-    fun addtask(roomid: String){
+    fun AddTaskButton(roomid: String) {
+        val context = LocalContext.current
+
         Button(
-            colors = ButtonDefaults.buttonColors(Color.Blue),
             onClick = {
                 val database = Firebase.database("https://code-with-friends-73cde-default-rtdb.europe-west1.firebasedatabase.app/")
                 // val database = Firebase.database(stringResource(id = R.string.DataBase))
@@ -484,25 +487,27 @@ class Addtask : ComponentActivity() {
                     "id" to uniqueId
                 )
 
-                    sendPostRequest("$roomid", photo, gitbreanch, filename, mession, uniqueId)
-                
-                myRef.setValue(values)
-
-
-                
-
-            }
-            ,
+                sendPostRequest(roomid, photo, gitbreanch, filename, mession, uniqueId,
+                    onSuccess = {
+                        myRef.setValue(values)
+                        val intent = Intent(context, Main_menu::class.java)
+                        intent.putExtra("Room", "Room")
+                        context.startActivity(intent)
+                    },
+                    onError = { errorMessage ->
+                        Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp)
-
-
                 .clip(RoundedCornerShape(1.dp))
         ) {
-            Text(text = stringResource(id = R.string.Addtask),fontSize = 24.sp)
+            Text(text = stringResource(id = R.string.Addtask), fontSize = 24.sp)
         }
     }
+
 
 
 
@@ -554,7 +559,7 @@ class Addtask : ComponentActivity() {
 
 
 
-    fun sendPostRequest(roomId: String, imageUrl: String, gitbranch: String, filename: String, mession: String, id: String) {
+    fun sendPostRequest(roomId: String, imageUrl: String, gitbranch: String, filename: String, mession: String, id: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         // Создайте экземпляр Retrofit
         val retrofit = Retrofit.Builder()
             .baseUrl("https://getpost-ilya1.up.railway.app/")
@@ -564,7 +569,7 @@ class Addtask : ComponentActivity() {
         // Создайте экземпляр службы API
         val apiService = retrofit.create(ApiService::class.java)
 
-        // Создайте объект TaskRequest
+        // Создайте объект TaskRequestапттпатпат
         val request = TaskRequest(gitbranch, filename, imageUrl, mession, id)
 
         // Отправьте POST-запрос с передачей roomId в качестве параметра пути
@@ -573,17 +578,24 @@ class Addtask : ComponentActivity() {
             override fun onResponse(call: Call<Void>, response: retrofit2.Response<Void>) {
                 if (response.isSuccessful) {
                     // Запрос успешно отправлен
-                    // Можете выполнить какие-либо дополнительные действия здесь
+                    Log.d("sendPostRequest", "Успешно отправлен запрос")
+                    onSuccess()
                 } else {
                     // Обработайте ошибку, если есть
+                    Log.e("sendPostRequest", "Ошибка при отправке запроса: ${response.code()}")
+                    onError("Ошибка при отправке запроса: ${response.code()}")
                 }
             }
 
             override fun onFailure(call: Call<Void>, t: Throwable) {
                 // Обработайте ошибку при отправке запроса
+                Log.e("sendPostRequest", "Ошибка при отправке запроса: ${t.message}")
+                onError("Ошибка при отправке запроса: ${t.message}")
             }
         })
     }
+
+
 
 
 

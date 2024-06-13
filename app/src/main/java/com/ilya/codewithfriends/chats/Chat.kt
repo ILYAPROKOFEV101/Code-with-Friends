@@ -6,18 +6,19 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+
 
 import androidx.compose.foundation.layout.Row
 
@@ -29,9 +30,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.KeyboardActions
@@ -56,7 +57,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-import com.ilya.reaction.logik.PreferenceHelper.getRoomId
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
@@ -66,15 +66,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
+import androidx.compose.material.ProgressIndicatorDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
@@ -84,20 +85,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -108,59 +104,35 @@ import com.ilya.codewithfriends.R
 import com.ilya.codewithfriends.MainViewModel
 import com.ilya.codewithfriends.Viewphote.ViewPhoto
 import com.ilya.codewithfriends.createamspeck.ui.theme.CodeWithFriendsTheme
-import com.ilya.codewithfriends.findroom.FindRoom
 import com.ilya.codewithfriends.presentation.profile.ID
-import com.ilya.codewithfriends.presentation.profile.IMG
 import com.ilya.codewithfriends.presentation.profile.UID
 import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
-import com.ilya.codewithfriends.roomsetting.Roomsetting
 import com.ilya.reaction.logik.PreferenceHelper.loadMessagesFromMemory
 
 import com.ilya.reaction.logik.PreferenceHelper.saveMessages
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.ui.StyledPlayerView
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.google.android.exoplayer2.util.Util
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import com.ilya.codewithfriends.APIclass.JoinDataManager
-import com.ilya.codewithfriends.Complaint.Complaint
-import com.ilya.codewithfriends.Complaint.Complainttouser
-import com.ilya.codewithfriends.Startmenu.FindRoom
-import com.ilya.codewithfriends.Startmenu.Friends
+import com.ilya.codewithfriends.Startmenu.FragmentManagerProvider_manu
 import com.ilya.codewithfriends.Startmenu.Main_menu
-import com.ilya.codewithfriends.Startmenu.Main_menu_fragment
 import com.ilya.codewithfriends.Startmenu.Room
 import com.ilya.codewithfriends.Viewphote.isVideoUrl
-import com.ilya.codewithfriends.findroom.Join
+import com.ilya.codewithfriends.chattest.ShowVideo
 
-import com.ilya.codewithfriends.findroom.join_room
 import com.ilya.reaction.logik.PreferenceHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 
 
 import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import org.java_websocket.client.WebSocketClient
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.io.IOException
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -171,16 +143,20 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 
-class Chat : ComponentActivity() {
+class Chat : FragmentActivity(), FragmentManagerProvider_manu {
 
     private var messageIdCounter = 0
 
 
-
+    override fun provideFragmentManager(): FragmentManager {
+        return supportFragmentManager
+    }
 
     var show = mutableStateOf(false)
     var kick = mutableStateOf(false)
     var photo by mutableStateOf("")
+
+    var uploadProgress = mutableStateOf(0f)
 
 
     private val googleAuthUiClient by lazy {
@@ -213,6 +189,7 @@ class Chat : ComponentActivity() {
             // Дальнейшая обработка URI...
         }
     }
+    var playvideo = ""
 
 
 
@@ -291,7 +268,7 @@ class Chat : ComponentActivity() {
             val isLoading by viewModel.isLoading.collectAsState()
             val swipeRefresh = rememberSwipeRefreshState(isRefreshing = isLoading)
 
-
+            Log.d("uploadProgress", "$uploadProgress")
 
             NavHost(
                 navController = navController,
@@ -328,7 +305,7 @@ class Chat : ComponentActivity() {
 
                     Spacer(modifier = Modifier.height(100.dp))
                     if (storedRoomId != null && show.value) {
-                        MessageList(messages.value, "$name", "$img", "$id")
+                        MessageList(messages.value, "$name", "$img", "$id", navController)
                     }
 
 
@@ -337,7 +314,7 @@ class Chat : ComponentActivity() {
                     if (storedRoomId != null) {
                         Creator(
                             onSendMessage = { message ->
-                                // Здесь вы можете добавить логику для отправки сообщения через WebSocket
+
                                 sendMessage(message)
 
                             },
@@ -349,10 +326,12 @@ class Chat : ComponentActivity() {
                     }
                 }
             }
-
                 }
                 composable("Room") {
                     Room()
+                }
+                composable("Video") {
+                    ShowVideo(playvideo)
                 }
             }
         }
@@ -545,16 +524,16 @@ class Chat : ComponentActivity() {
 
 
       @Composable
-       fun MessageList(messages: List<Message>?, username: String, url: String, id: String) {
+       fun MessageList(messages: List<Message>?, username: String, url: String, id: String,navController: NavController ) {
            Log.d("MessageList", "Number of messages: ${messages?.size}")
 
            if (messages != null && messages.isNotEmpty()) {
                if (messages.isNotEmpty()) { // Проверяем, что список не пуст
-                   val currentUserUrl = url.take(60) // Получаем первые 30 символов URL
                    val listState = rememberLazyListState()
-                   val lastVisibleItemIndex = messages.size - 1
                    val coroutineScope = rememberCoroutineScope()
                    val hasScrolled = rememberSaveable { mutableStateOf(false) }
+                   // Состояние для отслеживания времени последнего клика
+                   val lastClickTime = remember { mutableStateOf(0L) }
 
 
                    LaunchedEffect(hasScrolled.value, messages) {
@@ -569,13 +548,9 @@ class Chat : ComponentActivity() {
                            }
                        }
                    }
-
                    LaunchedEffect(messages.size) {
                        listState.animateScrollToItem(messages.size - 1)
                    }
-
-                   var lastShownDate: LocalDate? by remember { mutableStateOf(null) }
-
 
                    LazyColumn(
                        modifier = Modifier
@@ -590,24 +565,8 @@ class Chat : ComponentActivity() {
                            val isMyMessage = message.uid == id
                            val paint = extractImageFromMessage(message.message)
 
-
-                           val maxTextWidth = 0.8f // Максимальная ширина текста
-                           val messageText = removeImageLinkFromMessage(message.message) // Текст сообщения
-
-// Если ширина текста превышает максимальную ширину, обрезаем текст и добавляем многоточие
-                           val displayedText = if (messageText.length > maxTextWidth * 1000) {
-                               // Умножаем на 1000, чтобы преобразовать ширину в пиксели
-                               val maxWidthIndex = (maxTextWidth * 1000).toInt()
-                               messageText.substring(0, maxWidthIndex) + "..."
-                           } else {
-                               messageText
-                           }
-
-
                            val messageDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(message.time), ZoneId.systemDefault())
 
-
-                           // Проверка, совпадает ли месяц и день с момента последнего сообщения
                            val showDayMarker = lastShownMonth == null || lastShownDayOfMonth == null ||
                                    messageDateTime.monthValue != lastShownMonth ||
                                    messageDateTime.dayOfMonth != lastShownDayOfMonth
@@ -643,6 +602,7 @@ class Chat : ComponentActivity() {
                                Month.NOVEMBER -> getString(R.string.november)
                                Month.DECEMBER -> getString(R.string.december)
                            }
+                           val imageUrl = message.img
 
                            val screenWidth = LocalConfiguration.current.screenWidthDp.dp
                            val formattedText = "${messageDateTime.dayOfMonth} ${monthText} ${dayOfWeekText} "
@@ -674,24 +634,16 @@ class Chat : ComponentActivity() {
                            }
 
 
-
-                           Box(
-                               modifier = Modifier
-                                   .fillMaxWidth()
-                                   .padding(8.dp),
-                              contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
-                               )
-                           {
                                Row(
                                    modifier = Modifier
                                        .fillMaxWidth()
-                                       .padding(0.dp),
+                                       .padding(8.dp),
                                    horizontalArrangement = if (isMyMessage) Arrangement.End else Arrangement.Start
                                ) {
                                    val imageModifier = Modifier
                                        .size(40.dp)
                                        .clip(RoundedCornerShape(40.dp))
-                                   val imageUrl = message.img
+
 
                                    if (!(isMyMessage)) {
                                        if (imageUrl != null) {
@@ -716,7 +668,7 @@ class Chat : ComponentActivity() {
                                                bottom = 2.dp
                                            ),
                                        backgroundColor = if (isMyMessage) Color(0xFF315FF3) else Color(0xFFFFFFFF),
-                                       elevation = 10.dp,
+                                      // elevation = 10.dp,
                                        shape = RoundedCornerShape(12.dp)
                                    ) {
                                        Column(
@@ -724,7 +676,6 @@ class Chat : ComponentActivity() {
                                                .padding(8.dp)
                                        )
                                        {
-
                                            Text(
                                                text = removeImageLinkFromMessage(message.message),
                                                textAlign = TextAlign.Start,
@@ -762,7 +713,7 @@ class Chat : ComponentActivity() {
                                        }
                                    }
                                    }
-                               }
+
                            }
 
                            if (paint != null && paint.isNotEmpty()) {
@@ -770,39 +721,59 @@ class Chat : ComponentActivity() {
                                    modifier = Modifier
                                        .fillMaxWidth()
                                        .height(if (isVideoUrl(paint)) 500.dp else 300.dp),
-                                   contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
                                ) {
-                                   if (isVideoUrl(paint)) {
-                                       CustomVideoPlayer(paint)
-                                   } else {
-                                       Image(
-                                           painter = rememberImagePainter(data = paint),
-                                           contentDescription = null,
-                                           modifier = Modifier
-                                               .fillMaxSize()
-                                               .padding(
-                                                   start = 40.dp, end = 40.dp
-                                               )
-                                               .clip(RoundedCornerShape(20.dp))
-                                               .clickable {
-                                                   openLargeImage("$paint")
+                                   Box(modifier = Modifier
+                                       .fillMaxSize()
+                                       .padding(8.dp),
+                                       contentAlignment = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
+                                   ) {
+                                       if (isVideoUrl(paint)) {
+                                           Column(modifier = Modifier.fillMaxSize()) {
+                                               Box(
+                                                   modifier = Modifier
+                                                       .fillMaxWidth()
+                                                       .height(500.dp)
+                                                       .clickable(
+                                                           onClick = {
+                                                               val currentTime =
+                                                                   System.currentTimeMillis()
+                                                               if (currentTime - lastClickTime.value < 300) { // 300 мс для двойного клика
+                                                                   playvideo = paint
+                                                                   navController.navigate("Video")
+                                                               }
+                                                               // Обновляем время последнего клика
+                                                               lastClickTime.value = currentTime
+                                                           },
+                                                           // Отключение волнового эффекта при клике
+                                                           indication = null,
+                                                           interactionSource = remember { MutableInteractionSource() }
+                                                       )
+                                               ) {
+                                                   CustomVideoPlayer(paint)
                                                }
-                                       )
+                                           }
+
+                                       } else {
+                                           Image(
+                                               painter = rememberImagePainter(data = paint),
+                                               contentDescription = null,
+                                               modifier = Modifier
+                                                   .fillMaxHeight()
+                                                   .fillMaxWidth(0.8f)
+                                                   .clip(RoundedCornerShape(20.dp))
+                                                   .clickable {
+                                                       openLargeImage("$paint")
+                                                   }
+                                           )
+                                       }
                                    }
                                }
                            }
-
-
                        }
-
                    }
                }
-    }
-  }
-
-
-
-
+            }
+          }
 
 
     fun openLargeImage( photo: String) {
@@ -812,7 +783,6 @@ class Chat : ComponentActivity() {
         intent.putExtra("PHOTO_URL", photo) // Передача URL изображения в активность
         startActivity(intent)
     }
-
     private fun getData(roomId: String, id: String, username: String) {
         // Создаем клиент OkHttp
         val client = OkHttpClient()
@@ -871,8 +841,9 @@ class Chat : ComponentActivity() {
                     kick.value = trueOrFalse
 
                     if(kick.value == true){
-                        val intent = Intent(this@Chat, FindRoom::class.java)
+                        val intent = Intent(this@Chat, Main_menu::class.java)
                         startActivity(intent)
+
                         finish() // Завершаем текущую активность
                     }
 
@@ -913,23 +884,34 @@ class Chat : ComponentActivity() {
                     .zIndex(1f), // Устанавливает z-индекс, чтобы поместиться наверху других элементов
                     contentAlignment = Alignment.BottomCenter // Выравнивание по нижнему кра
                 ) {
-                    if (selectedImageUri != null) {
-                        Image(
-                            painter = rememberImagePainter(selectedImageUri),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight()
-                                .padding(bottom = 15.dp, top = 15.dp, start = 70.dp, end = 70.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                                .clickable {},
-                            contentScale = ContentScale.Crop
-                        )
+                    Column(modifier = Modifier.fillMaxSize()) {
+
+                        if (selectedImageUri != null) {
+                            Image(
+                                painter = rememberImagePainter(selectedImageUri),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
+                                    .padding(
+                                        bottom = 15.dp,
+                                        top = 15.dp,
+                                        start = 70.dp,
+                                        end = 70.dp
+                                    )
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .clickable {},
+                                contentScale = ContentScale.Crop
+                            )
+
+                        }
+
                     }
                 }
+
                 Row(modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 100.dp, end = 100.dp)
+                    .padding(start = 100.dp, end = 80.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .height(50.dp)
                     .alpha(0.9f) // Пример половинной прозрачности
@@ -943,6 +925,7 @@ class Chat : ComponentActivity() {
                         onClick = {
                             showimg = false
                             photo = ""
+                            uploadProgress.value = 0f
                         }
                     ){
                         Icon(
@@ -960,6 +943,7 @@ class Chat : ComponentActivity() {
                             selectedImageUri?.let { uri ->
                                 if (storedRoomId != null) {
                                     uploadFileToFirebaseStorage()
+                                    uploadProgress.value = 0f
                                 } else {
                                     showToast("Room ID is not set")
                                     proces = false  // Останавливаем индикатор загрузки, если нет room ID
@@ -978,7 +962,21 @@ class Chat : ComponentActivity() {
                     )
 
                     }
+
                 }
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(70.dp)
+                        .align(Alignment.CenterHorizontally)
+                ) {
+
+                    CircularProgressIndicatorSample()
+                }
+
+
+
             }
 
 
@@ -1058,9 +1056,9 @@ class Chat : ComponentActivity() {
                                     photo = ""
                                     selectedImageUri = null // Обнулить selectedImageUri после успешной загрузки
                                     showimg = false
+                                    uploadProgress.value = 0f
 
                                 }
-
                             } else {
                                 showToast("идёт загрузка фота.")
                             }
@@ -1075,17 +1073,10 @@ class Chat : ComponentActivity() {
                     )
                 }
             }
+
         }
     }
     val joinDataManager = JoinDataManager()
-
-
-
-
-
-
-
-
 
     @Composable
     fun upbar(roomId: String, id: String, name: String, img: String,navController: NavController){
@@ -1130,45 +1121,75 @@ class Chat : ComponentActivity() {
                 }
             }
 
-    private fun uploadFileToFirebaseStorage() {
-        if (selectedImageUri == null) {
-            showToast("Выберите файл перед загрузкой.")
-            return
-        }
 
-        proces = true
-        val storage = FirebaseStorage.getInstance()
-        val storageRef = storage.reference
+    @Composable
+    fun CircularProgressIndicatorSample() {
+        val progress = uploadProgress.value // Прямое использование uploadProgress как State
 
-        val fileName = UUID.randomUUID().toString()
-        val mimeType = contentResolver.getType(selectedImageUri!!) ?: "application/octet-stream"
-        val fileRef = storageRef.child("$mimeType/$storedRoomId/$fileName")
+        val animatedProgress by animateFloatAsState(
+            targetValue = progress,
+            animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+        )
 
-        val metadata = StorageMetadata.Builder()
-            .setContentType(mimeType)
-            .build()
-
-        val uploadTask = fileRef.putFile(selectedImageUri!!, metadata)
-
-        uploadTask.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                fileRef.downloadUrl.addOnSuccessListener { uri ->
-                    // Получаем ссылку на загруженное видео
-                     photo = uri.toString()
-                    proces = false
-                    showToast("Видео успешно загружено: $photo")
-                    Log.d("Uploudphoto", photo)
-                    selectedImageUri = null // Сбрасываем выбранный Uri после загрузки
-                }
-            } else {
-                proces = false
-                showToast("Ошибка загрузки файла")
-            }
+        Column(horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            CircularProgressIndicator(progress = animatedProgress, color = Color(0xFF42FC3C), strokeWidth = 5.dp)
+            Spacer(Modifier.requiredHeight(5.dp))
+            Text("Загрузка: ${String.format("%.1f", progress * 100)}%", fontSize = 16.sp)
         }
     }
+        private fun uploadFileToFirebaseStorage() {
+            if (selectedImageUri == null) {
+                showToast("Выберите файл перед загрузкой.")
+                return
+            }
+
+            proces = true
+            val storage = FirebaseStorage.getInstance()
+            val storageRef = storage.reference
+
+            val fileName = UUID.randomUUID().toString()
+            val mimeType = contentResolver.getType(selectedImageUri!!) ?: "application/octet-stream"
+            val fileRef = storageRef.child("$mimeType/$storedRoomId/$fileName")
+
+            val metadata = StorageMetadata.Builder()
+                .setContentType(mimeType)
+                .build()
+
+            val uploadTask = fileRef.putFile(selectedImageUri!!, metadata)
+
+            uploadTask.addOnProgressListener { taskSnapshot ->
+                // Обновляем глобальную переменную прогресса
+                uploadProgress.value = (100.0 * taskSnapshot.bytesTransferred / taskSnapshot.totalByteCount).toFloat() / 100
+                Log.d("UploadProgress", "Прогресс загрузки: ${uploadProgress.value}")
+            }
+
+            uploadTask.addOnSuccessListener { taskSnapshot ->
+                // Успешно загружено
+                fileRef.downloadUrl.addOnSuccessListener { uri ->
+                    // Получаем ссылку на загруженное видео
+                    photo = uri.toString()
+                    proces = false
+                    showToast("Файл успешно загружен: $photo")
+
+                    Log.d("Uploudphoto", photo)
+                    selectedImageUri = null // Сбрасываем выбранный Uri после загрузки
+                }.addOnFailureListener { exception ->
+                    // Ошибка при получении ссылки на загруженный файл
+                    proces = false
+                    showToast("Ошибка при получении ссылки на файл: ${exception.message}")
+                }
+            }.addOnFailureListener { exception ->
+                // Ошибка загрузки файла
+                proces = false
+                showToast("Ошибка загрузки файла: ${exception.message}")
+            }
+        }
 
 
 
 
 }
+
 

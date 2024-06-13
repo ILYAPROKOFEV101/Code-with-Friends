@@ -10,14 +10,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.compose.setContent
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.rememberTransformableState
-import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -41,11 +38,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -60,17 +55,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -92,33 +85,20 @@ import co.yml.charts.ui.piechart.models.PieChartConfig
 import co.yml.charts.ui.piechart.models.PieChartData
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
-import coil.size.Precision
-import com.android.volley.Request
-import com.android.volley.toolbox.JsonArrayRequest
-import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.google.android.gms.auth.api.identity.Identity
-import com.google.common.reflect.TypeToken
 import com.google.firebase.messaging.FirebaseMessaging
-import com.google.gson.Gson
-import com.google.gson.JsonSyntaxException
 import com.ilya.codewithfriends.Aboutusers.Aboutuser
 import com.ilya.codewithfriends.MainViewModel
 import com.ilya.codewithfriends.R
 import com.ilya.codewithfriends.Startmenu.Main_menu
-import com.ilya.codewithfriends.Vois.ViceActivity
-import com.ilya.codewithfriends.chattest.ViewPhoto
-import com.ilya.codewithfriends.chattest.fragments.newUserData
 import com.ilya.codewithfriends.createamspeck.TeamSpeak
 import com.ilya.codewithfriends.findroom.Room
 import com.ilya.codewithfriends.firebase.Addtask
 import com.ilya.codewithfriends.presentation.profile.ID
-import com.ilya.codewithfriends.presentation.profile.UID
 import com.ilya.codewithfriends.presentation.sign_in.GoogleAuthUiClient
 import com.ilya.codewithfriends.roomsetting.API_DELET
-import com.ilya.codewithfriends.roomsetting.Add_user_Invite
 
 import com.ilya.codewithfriends.roomsetting.Addids
 import com.ilya.codewithfriends.roomsetting.Api
@@ -130,16 +110,15 @@ import com.ilya.codewithfriends.roomsetting.Kick
 import com.ilya.codewithfriends.roomsetting.Over_DeletetItem
 import com.ilya.codewithfriends.roomsetting.Room2
 import com.ilya.codewithfriends.roomsetting.Room_Fragments.REST.Get_Recuast
+import com.ilya.codewithfriends.roomsetting.Room_Fragments.REST.addUser
 import com.ilya.codewithfriends.roomsetting.TaskData
 import com.ilya.codewithfriends.roomsetting.TaskResponse
 import com.ilya.codewithfriends.roomsetting.Usrs_ivite
 import com.ilya.codewithfriends.roomsetting.ids
 import com.ilya.codewithfriends.roomsetting.ui.theme.Participant
-import com.ilya.codewithfriends.test.TestActivity
 import com.ilya.reaction.logik.PreferenceHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
@@ -266,6 +245,9 @@ class Room_fragment : Fragment() {
 
                 }, 500) // 3000 миллисекунд (3 секунды)
                 val navController = rememberNavController()
+
+                val configuration = LocalConfiguration.current
+                val isTablet = configuration.screenWidthDp >= 600 && configuration.screenHeightDp >= 600
                 NavHost(
                     navController = navController,
                     startDestination = "Main_Menu",
@@ -300,9 +282,6 @@ class Room_fragment : Fragment() {
                                             icon(data_from_myroom)
                                             Spacer(modifier = Modifier.height(30.dp))
                                         }
-
-                                        // Вызываем roomname() только если есть данные комнаты
-
                                         item {
                                             firstRoom?.let {
                                                 roomname(
@@ -316,19 +295,29 @@ class Room_fragment : Fragment() {
                                             Spacer(modifier = Modifier.height(30.dp))
                                         }
                                         item {
-                                            User_ivite(ivite_list.value, )
-                                            Spacer(modifier = Modifier.height(30.dp))
-                                        }
+                                                roomname(
+                                                    roomName = "Tablet",
+                                                    "$id",
+                                                    storedRoomId!!,
+                                                    "$id",
+                                                    data_from_myroom
+                                                )
+                                                Spacer(modifier = Modifier.height(30.dp))
+                                            }
 
 
-                                        item {
-                                            userinroom(
-                                                participants.value,
-                                                "$id",
-                                                data_from_myroom
-                                            ) // Передаем participants.value
-                                            Spacer(modifier = Modifier.height(30.dp))
-                                        }
+                                            item {
+                                                User_ivite(ivite_list.value,)
+                                                Spacer(modifier = Modifier.height(30.dp))
+                                            }
+                                            item {
+                                                userinroom(
+                                                    participants.value,
+                                                    "$id",
+                                                    data_from_myroom
+                                                ) // Передаем participants.value
+                                                Spacer(modifier = Modifier.height(30.dp))
+                                            }
 
 
                                         item {
@@ -353,11 +342,6 @@ class Room_fragment : Fragment() {
                                             addtask()
                                             Spacer(modifier = Modifier.height(30.dp))
                                         }
-                                        item {
-                                            Teamspeack()
-                                            Spacer(modifier = Modifier.height(30.dp))
-                                        }
-
                                     }
 
                                 }
@@ -369,6 +353,37 @@ class Room_fragment : Fragment() {
 
             }
             }
+        }
+
+    @Composable
+    fun TabletContent(
+        ivite_list: List<Usrs_ivite>,
+        participantsState: List<Participant>,
+        rooms: MutableState<List<Room2>>,
+        ){
+        LazyRow(modifier = Modifier
+            .fillMaxWidth()
+            .height(500.dp)) {
+            item {
+                Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(0.5f)){
+
+                        User_ivite(ivite_list)
+                        Spacer(modifier = Modifier.height(30.dp))
+                }
+            }
+            item {
+                Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(0.5f)){
+                    userinroom(
+                        participantsState,
+                        "$id",
+                        rooms
+                    ) // Передаем participants.value
+                    Spacer(modifier = Modifier.height(30.dp))
+
+                }
+
+            }
+        }
         }
     @Composable
     fun icon( rooms: MutableState<List<Room2>>) {
@@ -406,21 +421,6 @@ class Room_fragment : Fragment() {
             }
         }
     }
-
-    private fun addUser(uidAdmin: String, idRequest: String, uidUser: String, roomId: String) {
-        val url = "https://getpost-ilya1.up.railway.app/" // Replace with your actual base URL
-
-        val retrofit = Retrofit.Builder()
-            .baseUrl(url)
-            .addConverterFactory(GsonConverterFactory.create()) // Assuming JSON response format
-            .build()
-
-        val apiService = retrofit.create(Add_user_Invite::class.java)
-
-
-    }
-
-
 
 
     private fun Get_invite_list(roomId: String, ivitelist: MutableState<List<Usrs_ivite>>) {
@@ -471,12 +471,6 @@ class Room_fragment : Fragment() {
         })
     }
 
-
-
-
-
-
-
     fun getTasks(roomId: String) {
         // Создайте экземпляр Retrofit
         val retrofit = Retrofit.Builder()
@@ -520,8 +514,6 @@ class Room_fragment : Fragment() {
         })
     }
 
-
-
     fun OVER_DELETE(roomId: String) {
         // Создайте экземпляр Retrofit
         val retrofit = Retrofit.Builder()
@@ -553,9 +545,6 @@ class Room_fragment : Fragment() {
             }
         })
     }
-
-
-
 
     @Composable
     fun roomname(
@@ -757,8 +746,6 @@ class Room_fragment : Fragment() {
                                                     )
                                                 ),
                                                 onClick = {
-                                                    //storedRoomId
-
                                                     addUser(
                                                         "$id",
                                                         ivitelist.id,
@@ -836,9 +823,6 @@ class Room_fragment : Fragment() {
             )
         }
     }
-
-
-
 
     @Composable
     fun DeleteRoom(uid: String, roomId: String, context: Context) {
@@ -980,8 +964,6 @@ class Room_fragment : Fragment() {
         })
     }
 
-
-
     fun deleteRequest(uid: String, roomId: String) {
         // Создаем Retrofit клиент
         val retrofit = Retrofit.Builder()
@@ -1060,9 +1042,6 @@ class Room_fragment : Fragment() {
             }
         })
     }
-
-
-
 
     @Composable
     fun userinroom(participantsState: List<Participant>, uids: String, rooms: MutableState<List<Room2>>,) {  // this fun mean how match users in room
@@ -1173,8 +1152,6 @@ class Room_fragment : Fragment() {
 
     }
 
-
-
     @Composable
     fun TaskList(tasks: List<TaskData>, roomId: String, navController: NavController) {
         Box(
@@ -1198,8 +1175,6 @@ class Room_fragment : Fragment() {
             }
         }
     }
-
-
 
     @Composable
     fun TaskCard(task: TaskData, roomId: String, navController: NavController) {
@@ -1325,12 +1300,6 @@ class Room_fragment : Fragment() {
     @Composable
     private fun SimpleDonutChart(context: Context, over: Float, delet: Float) {
         var selectedLabelText  by remember { mutableStateOf("") }
-        val accessibilitySheetState =
-            rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
-        val scope = rememberCoroutineScope()
-
-        // Новые данные с двумя секторами
-
 
         val donutChartData = PieChartData(
             slices = listOf(
@@ -1340,8 +1309,6 @@ class Room_fragment : Fragment() {
                 ),
             plotType = PlotType.Donut
         )
-
-
 
 
         val pieChartConfig =
@@ -1361,13 +1328,11 @@ class Room_fragment : Fragment() {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(450.dp)
+                .height(600.dp)
         ) {
             DonutPieChart(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentWidth(),
-
+                    .size(500.dp),
                 donutChartData, // Передаем новые данные
                 pieChartConfig
             ) { slice ->
@@ -1378,7 +1343,6 @@ class Room_fragment : Fragment() {
             // Отображаем выбранный текст внизу
 
             androidx.compose.material.Text(
-
                 text = " $selectedLabelText",
                 fontSize = 24.sp,
                 modifier = Modifier
@@ -1387,8 +1351,6 @@ class Room_fragment : Fragment() {
             )
         }
     }
-
-
 
     fun deleteData(id: String, roomId: String) {
         // Запускаем корутину
@@ -1479,9 +1441,6 @@ class Room_fragment : Fragment() {
     }
 
 
-
-
-
     @Preview(showBackground = true)
     @Composable
     fun addtask(){
@@ -1534,6 +1493,7 @@ class Room_fragment : Fragment() {
             }
         }
     }
+
     private fun GET_MYROOM(uid:String, rooms: MutableState<List<Room2>>) {
         // Создаем Retrofit клиент
         val retrofit = Retrofit.Builder()
