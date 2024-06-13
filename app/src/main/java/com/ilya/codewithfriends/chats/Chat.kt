@@ -521,8 +521,6 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
     }
 
 
-
-
       @Composable
        fun MessageList(messages: List<Message>?, username: String, url: String, id: String,navController: NavController ) {
            Log.d("MessageList", "Number of messages: ${messages?.size}")

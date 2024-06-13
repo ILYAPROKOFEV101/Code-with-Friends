@@ -3,6 +3,7 @@ package com.ilya.codewithfriends.presentation.sign_in
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
+import android.util.Log
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.firebase.auth.GoogleAuthProvider
@@ -27,6 +28,7 @@ class GoogleAuthUiClient(
                 ).await()
             } catch(e: Exception) {
                 e.printStackTrace()
+                Log.e("GoogleSignIn", "Sign in failed", e)
                 if(e is CancellationException) throw e
                 null
             }
@@ -39,6 +41,7 @@ class GoogleAuthUiClient(
             val googleCredentials = GoogleAuthProvider.getCredential(googleIdToken, null)
             return try {
                 val user = auth.signInWithCredential(googleCredentials).await().user
+                Log.d("GoogleSignIn", "Sign in successful: ${user?.displayName}")
                 SignInResult(
                     data = user?.run {
                         UserData(
@@ -50,6 +53,7 @@ class GoogleAuthUiClient(
                     errorMessage = null
                 )
             } catch(e: Exception) {
+                Log.e("GoogleSignIn", "Sign in failed", e)
                 e.printStackTrace()
                 if(e is CancellationException) throw e
                 SignInResult(
@@ -63,7 +67,9 @@ class GoogleAuthUiClient(
             try {
                 oneTapClient.signOut().await()
                 auth.signOut()
+                Log.d("GoogleSignIn", "Sign out successful")
             } catch(e: Exception) {
+                Log.e("GoogleSignIn", "Sign out failed", e)
                 e.printStackTrace()
                 if(e is CancellationException) throw e
             }

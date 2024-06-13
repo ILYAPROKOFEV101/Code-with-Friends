@@ -330,25 +330,23 @@ class  MainActivity: ComponentActivity() {
 
                         IconButton(
                             onClick = {
-                                onSignInClick()
-                                val gso =
-                                    GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                                        .requestIdToken(token)
-                                        .requestEmail()
-                                        .build()
-                                val googleSignInClient =
-                                    GoogleSignIn.getClient(context, gso)
+                                Log.d("GoogleSignIn", "Attempting to sign in")
+
+                                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                                    .requestIdToken(token)
+                                    .requestEmail()
+                                    .build()
+
+                                val googleSignInClient = GoogleSignIn.getClient(context, gso)
                                 launcher.launch(googleSignInClient.signInIntent)
 
                                 leftop = !leftop
+                                unvisible = !unvisible
+                                PreferenceHelper.setShowElement(context, true)
 
-                                unvisible = !unvisible// не ведимый
-
-                                PreferenceHelper.setShowElement(
-                                    context,
-                                    true
-                                )
-                            }) {
+                                Log.d("GoogleSignIn", "Sign in intent launched")
+                            }
+                        ) {
 
                             Image(
                                 painter = painterResource(id = R.drawable.google),
@@ -530,7 +528,7 @@ class  MainActivity: ComponentActivity() {
                 label = { // Метка, которая отображается над полем ввода
 
                     Text(
-                        text = "Логин",
+                        text = "email",
                         fontSize = 24.sp,
                         color = Color.Black,
                         textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()

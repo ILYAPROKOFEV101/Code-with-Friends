@@ -103,6 +103,7 @@ import com.ilya.codewithfriends.Activity.CreatyActivity.ApiService
 import com.ilya.codewithfriends.Activity.CreatyActivity.CreativyRoom
 import com.ilya.codewithfriends.MainViewModel
 import com.ilya.codewithfriends.R
+import com.ilya.codewithfriends.Startmenu.ADD_PROfile
 import com.ilya.codewithfriends.Startmenu.Adduser
 import com.ilya.codewithfriends.Startmenu.Apiuser
 import com.ilya.codewithfriends.Startmenu.FindRoom
@@ -262,7 +263,7 @@ class Mainmenufragment : Fragment() {
                                              Create_Acount(if(imgValue == ""){"$img"} else {"$imgValue"}, LocalContext.current)
                                          }
                                          item {
-                                             Edit("$id", "$img", "$name")
+                                             Edit("$id", "$img", "$name", navController)
                                          }
                                          item {
                                              Button("$id", navController)
@@ -276,6 +277,10 @@ class Mainmenufragment : Fragment() {
                      composable("FindRoom") {
                          FindRoom()
                      }
+                      composable("MYSELF"){
+                          ADD_PROfile()
+                      }
+
 
 
                  }
@@ -638,7 +643,7 @@ class Mainmenufragment : Fragment() {
 
     @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
     @Composable
-    fun Edit(uid : String, img : String, name: String)
+    fun Edit(uid : String, img : String, name: String, navController: NavController)
     {
         var text by remember { mutableStateOf("") }
         val focusRequester = remember { FocusRequester() }
@@ -711,9 +716,12 @@ class Mainmenufragment : Fragment() {
                         .height(50.dp),
                     shape = RoundedCornerShape(20.dp),
                     onClick = {
-                        if(aboutme != ""){
+
+                        // wratehere
+                        /*if(aboutme != ""){
                             sendPostRequest("$uid", "$img", "$name")
-                        }
+                        }*/
+                        navController.navigate("MYSELF")
                     }
                 )
                 {

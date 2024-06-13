@@ -59,6 +59,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "723880678401-41bdb2t4s8qi5inel6kq7f350jusudbt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ilya.codewithfriends",
+            "certificate_hash": "62c5d744bdff7f33bbf6629b9c09da8ea4a67518"
+          }
+        },
+        {
           "client_id": "723880678401-bnom6tq1fh4p0u5a7ihp6a0ulfivjc44.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

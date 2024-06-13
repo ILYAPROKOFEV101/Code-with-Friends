@@ -85,9 +85,10 @@
     <string name="age">Возраст:</string>
     <string name="joinroom">Создать команду</string>
     <string name="creatroom">Найти команду</string>
-    <string name="aboutyou">Расскажите о себе:</string>
+    <string name="aboutyou">Расскажите о себе и про свой опыт</string>
     <string name="placeinroom">Выберите место</string>
     <string name="Nameofroom">Выберите место</string>
+
 
 
     <string name="hello">Привет!</string>
@@ -165,6 +166,7 @@
     <string name="title_activity_caht">Caht_Activity</string>
     <string name="title_activity_vice">ViceActivity</string>
 
+
     <string name="today">Сегодня</string>
     <string name="monday">Понедельник</string>
     <string name="tuesday">Вторник</string>
@@ -187,5 +189,7 @@
     <string name="november">Ноябрь</string>
     <string name="december">Декабрь</string>
     <string name="title_activity_friends_chat">FriendsChatActivity</string>
-
+    <string name="join">Зайти в комнату</string>
+    <string name="plaseinroom">Мест в комнате</string>
+    <string name="yourcontacts">Дайте контакты на ваш github и социальные сети </string>
 </resources>

@@ -218,7 +218,7 @@ class FindRoom_fragment : Fragment() {
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.background)
+                                    .background(colorScheme.background)
                             ) {
                                 Box(
                                     modifier = Modifier
@@ -264,7 +264,6 @@ class FindRoom_fragment : Fragment() {
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp)
             )
-
         }
     }
 
@@ -334,14 +333,9 @@ class FindRoom_fragment : Fragment() {
         }
     }
 
-
-
-    @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun RoomItem(room: Room){
-        val joinroom: Color = colorResource(id = R.color.joinroom)
-        val creatroom: Color = colorResource(id = R.color.creatroom)
-
+    fun RoomItem(room: Room) {
         var show by remember {
             mutableStateOf(false)
         }
@@ -359,174 +353,189 @@ class FindRoom_fragment : Fragment() {
         val img =  PreferenceHelper.getimg(requireContext())
 
 
-
-
-
+        Spacer(modifier = Modifier.height(30.dp))
         Card(
             elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
             modifier = Modifier
-                .height(500.dp)
+                .height(350.dp)
                 .fillMaxWidth()
-                .padding(start = 5.dp, end = 5.dp)
-                .clip(RoundedCornerShape(30.dp))
-                .background(Color.Black)
-                .border(
-                    border = BorderStroke(5.dp, SolidColor(joinroom)),
-                    shape = RoundedCornerShape(30.dp)
-                ),
+                .padding(start = 15.dp, end = 15.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color.Black),
             colors = CardDefaults.cardColors(
-                MaterialTheme.colorScheme.background,
+                colorScheme.background,
             ),
-
             ) {
-            Column(modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)) {
-                Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .height(150.dp),
+            Row(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(0.6f)
+                    .padding(top = 30.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top
                 )
                 {
-                    Box(
+                    Image(
+                        painter = if (room.url.isNotEmpty()) {
+                            // Load image from URL
+                            rememberImagePainter(data = room.url)
+                        } else {
+                            // Load a default image when URL is empty
+                            painterResource(id = R.drawable.android) // Replace with your default image resource
+                        },
+                        contentDescription = null,
                         modifier = Modifier
-                            .weight(0.4f)
-                            .align(Alignment.CenterVertically)
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.4f)
+                            .padding(start = 20.dp, end = 5.dp)
+                            .clip(RoundedCornerShape(20.dp)),
+                        contentScale = ContentScale.Crop
                     )
-                    {
-                        Image(
-                            painter = if (room.url.isNotEmpty()) {
-                                // Load image from URL
-                                rememberImagePainter(data = room.url)
-                            } else {
-                                // Load a default image when URL is empty
-                                painterResource(id = R.drawable.android) // Replace with your default image resource
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Column(Modifier.fillMaxWidth().fillMaxHeight()) {
+
+                        Button(
+                            onClick = {
+                                if (room.id != null) {
+                                    // Вызов функции Writepassword
+                                    if (room.hasPassword) {
+                                        show = !show
+                                    } else {
+                                        val intent = Intent(requireContext(), Chat::class.java)
+                                        intent.putExtra("roomid", room.id)
+                                        startActivity(intent)
+                                    }
+                                } else {
+                                    // Обработка ситуации, когда идентификатор комнаты равен null
+                                    // например, вы можете вывести сообщение об ошибке
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Идентификатор комнаты пуст",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+
+
+                                showCircle = !showCircle
                             },
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(150.dp)
-                                .padding(start = 15.dp, end = 5.dp, top = 15.dp)
-                                .clip(RoundedCornerShape(40.dp)),
-                            contentScale = ContentScale.Crop
-                        )
 
-
-                    }
-                    Column(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .weight(0.6f)
-                            .padding(end = 5.dp)
-                    ){
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 5.dp, start = 10.dp)
-                                .height(65.dp)
-                                .clip(CircleShape)
-                        ) {
-                            Text(
-                                text = "${room.roomName}",
-                                modifier = Modifier.padding(top = 10.dp, start = 10.dp),
-                                style = TextStyle(
-                                    fontSize = 24.sp,
-                                    color = Color.Black  // Set the text color to colorScheme.background
+                            colors = ButtonDefaults.buttonColors(
+                                Color(
+                                    0xFF23A3FF
                                 )
-                            )
-
-                        }
-                        Box(
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 5.dp, start = 10.dp)
-                                .height(65.dp)
-                                .clip(CircleShape)
+                                .wrapContentHeight()
+                                .padding(start = 30.dp, end = 20.dp),
+                            shape = RoundedCornerShape(11.dp),
                         )
                         {
-                            Text(text = "${room.language}", modifier = Modifier
-                                .padding( start = 10.dp),
-                                style = TextStyle(fontSize = 24.sp),
-                                color = Color.Black  )
+                            Text(
+                                text = "Зайти",
+                                modifier = Modifier,
+                                style = TextStyle(fontSize = 12.sp)
+                            )
                         }
-
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-                Row(modifier = Modifier
-                    .padding(start = 8.dp, end = 8.dp)
-                    .height(65.dp)
-                    .fillMaxWidth())
-                {
-                    Button(
-                        onClick = {
-                            if (room.id != null) {
-                                // Вызов функции Writepassword
-                                if(room.hasPassword){
-                                    show = !show
-                                } else {
-                                    val intent = Intent(requireContext(), Chat::class.java)
-                                    intent.putExtra("roomid", room.id)
-                                    startActivity(intent)
-                                }
-                            } else {
-                                // Обработка ситуации, когда идентификатор комнаты равен null
-                                // например, вы можете вывести сообщение об ошибке
-                                Toast.makeText(requireContext(), "Идентификатор комнаты пуст", Toast.LENGTH_SHORT).show()
-                            }
-
-
-                            showCircle = !showCircle
-                        },
-
-                        colors = ButtonDefaults.buttonColors(creatroom),
-                        modifier = Modifier.fillMaxSize(),
-                        shape = RoundedCornerShape(20.dp),
-
-                        ) {
-
-                        Text(
-                            text = "Join in room: ${room.placeInRoom}",
-                            modifier = Modifier,
-                            style = TextStyle(fontSize = 24.sp)
-                        )
-                        showluck(show = room.hasPassword)
                         Spacer(modifier = Modifier.width(10.dp))
                         if (room.hasPassword) {
-                            IconButton(
-                                modifier = Modifier
-                                    .size(80.dp),
+                            Button(
                                 onClick = {
                                     joinDataManager.post_invite("$uid", room.id, "$name", "$img")
                                     Log.d("igetdatt", "$uid , ${room.id}, $name $img")
-                                }
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.post_invite), // Показываем иконку "person_add"
-                                    contentDescription = "Cancel",
-                                    tint = Color.Blue
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    Color(
+                                        0xFF23A3FF
+                                    )
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
+                                    .padding(top = 10.dp, start = 30.dp, end = 20.dp),
+                                shape = RoundedCornerShape(11.dp),
+                            )
+                            {
+                                Text(
+                                    text = "Подать заявку",
+                                    modifier = Modifier,
+                                    style = TextStyle(fontSize = 12.sp)
                                 )
                             }
                         }
                     }
-
                 }
 
-                LazyColumn(modifier = Modifier
-                    .padding(start = 5.dp, end = 5.dp)
-                    .fillMaxWidth()
-                    .height(350.dp)
-                    .clip(RoundedCornerShape(30.dp))
-                ){
-                    item {  Text(text = "${room.aboutRoom}", modifier = Modifier.padding( start = 10.dp), style = TextStyle(fontSize = 24.sp), color = Color.Black  ) }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column(modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(0.6f)
+                ) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Box(modifier = Modifier
+                        .fillMaxWidth()
+                        .height(30.dp)
+                        .align(Alignment.CenterHorizontally)
+                    ) {
+                        showluck(show = room.hasPassword)
+
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                        Text(
+                            text = room.roomName,
+                            modifier = Modifier,
+                            style = TextStyle(fontSize = 24.sp),
+                            color = colorScheme.onBackground
+                        )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                        Text(
+                            text = "Мест в команде: ${room.placeInRoom}",
+                            modifier = Modifier,
+                            style = TextStyle(fontSize = 20.sp),
+                            color = colorScheme.onBackground
+                        )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Box(modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                    )
+                        {
+                            Text(
+                                text = room.language,
+                                modifier = Modifier,
+                                style = TextStyle(fontSize = 24.sp),
+                                color = colorScheme.onBackground
+                            )
+                        }
+                    Spacer(modifier = Modifier.height(2.dp))
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(30.dp))
+                    ) {
+                        item {
+                            Text(
+                                text = room.aboutRoom,
+                                modifier = Modifier.padding(start = 10.dp),
+                                style = TextStyle(fontSize = 24.sp),
+                                color = colorScheme.onBackground
+                            )
+                        }
+                    }
                 }
 
-
+                }
             }
         }
         Spacer(modifier = Modifier.height(10.dp))
-
-
 
         if(show) {
             AlertDialog(
@@ -568,7 +577,9 @@ class FindRoom_fragment : Fragment() {
 
                             keyboardActions = KeyboardActions(
                                 onDone = {
-                                    joinDataManager.pushData_join(room.id, "$uid", "$username", password)
+                                    joinDataManager.pushData_join(room.id, "$uid", "$username", password){ success ->
+
+                                    }
                                     show = !show
                                 }
                             ),
@@ -580,7 +591,9 @@ class FindRoom_fragment : Fragment() {
                             .height(50.dp),
                             colors = ButtonDefaults.buttonColors(Color.Green),
                             onClick = {
-                                joinDataManager.pushData_join(room.id,"$uid", "$username",password)
+                                joinDataManager.pushData_join(room.id,"$uid", "$username",password){ success ->
+
+                                }
                                 val intent = Intent(requireContext(), Chat::class.java)
                                 intent.putExtra("roomid", room.id)
                                 startActivity(intent)
@@ -611,35 +624,33 @@ class FindRoom_fragment : Fragment() {
 
         }
 
-
     }
 
     @Composable
     fun showluck(show: Boolean){
-        Box(modifier = Modifier
-            .fillMaxHeight()
-            .width(60.dp)){
             if (show) {
                 Icon(
                     modifier = Modifier
-                        .size(80.dp),
+                        .fillMaxSize()
+                        .size(20.dp),
                     painter = painterResource(id = R.drawable.lock),
                     contentDescription = "lock",
-                    tint = Color.Blue
+                    tint = colorScheme.onBackground,
                     // Цвет иконки
                 )
             } else {
                 Icon(
                     modifier = Modifier
-                        .size(80.dp),
+                        .fillMaxSize()
+                        .size(20.dp),
                     painter = painterResource(id = R.drawable.lock24px),
                     contentDescription = "open",
-                    tint = Color.Blue
+                    tint = colorScheme.onBackground,
 
                 )
             }
         }
-    }
+
 
 
 

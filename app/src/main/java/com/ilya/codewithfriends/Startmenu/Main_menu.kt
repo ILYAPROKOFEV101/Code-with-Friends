@@ -26,6 +26,7 @@ import androidx.compose.material3.*
 
 
 import android.view.View
+import android.widget.Toast
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MeetingRoom
@@ -48,6 +49,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
 import com.ilya.codewithfriends.Startmenu.Menu_Fragment.Mainmenufragment
+
+import com.ilya.codewithfriends.Startmenu.Menu_Fragment.Myprofile_fragment
 
 import com.ilya.codewithfriends.chattest.ChatRoomm
 import com.ilya.codewithfriends.chattest.ChatScreen
@@ -170,6 +173,29 @@ fun Main_menu_fragment() {
     )
 
 }
+@Composable
+fun ADD_PROfile() {
+    AndroidView(
+        factory = { context ->
+            // Создаем FragmentContainerView
+            FragmentContainerView(context).apply {
+                id = View.generateViewId()
+            }
+        },
+        update = { view ->
+            // Получаем FragmentManager
+            val fragmentManager = (view.context as FragmentActivity).supportFragmentManager
+            // Создаем и добавляем Chatmenu фрагмент
+            val fragmentTransaction = fragmentManager.beginTransaction()
+            val FindRoom_fragment = Myprofile_fragment()
+            fragmentTransaction.replace(view.id, FindRoom_fragment)
+            fragmentTransaction.commit()
+        }
+    )
+
+
+}
+
 
 
 
@@ -317,7 +343,10 @@ fun ButtonAppBar(navController: NavController, context: Context) {
                                 2 -> navController.navigate("friends")
                                 3 -> {
                                     when (getRoomId(context)) {
-                                        null, "" -> navController.navigate("FindRoom")
+                                        null, "" -> {
+                                            Toast.makeText(context, "Присоединитесь к комнате", Toast.LENGTH_SHORT).show()
+                                            navController.navigate("FindRoom")
+                                        }
                                         else -> navController.navigate("Room")
                                     }
                                 }
