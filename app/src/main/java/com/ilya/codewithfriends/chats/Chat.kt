@@ -1109,7 +1109,9 @@ class Chat : FragmentActivity(), FragmentManagerProvider_manu {
                                 .fillMaxWidth(),
                             shape = RoundedCornerShape(20.dp),
                             onClick = {
-                                joinDataManager.pushData_join(roomId,id, name,"",)
+                                joinDataManager.pushData_join(roomId,id, name,""){ success ->
+
+                                }
 
                                 recreate()
                             }
