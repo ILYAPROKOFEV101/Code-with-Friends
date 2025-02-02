@@ -36,12 +36,6 @@
 **23.07.2023** — Первый коммит  
 **1 год активной разработки** с командой дизайнеров  
 
-Эволюция интерфейса:  
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/eb2e3554-1628-4aa2-b7cd-821a559b6b35" width="45%">
-  <em>Первый прототип чата → Текущая версия</em>
-</div>
-
 Архитектура Git-веток:  
 ![image](https://github.com/user-attachments/assets/529a976f-2a36-4f3f-8ce9-8b5b3179f545)
 ![image](https://github.com/user-attachments/assets/13b507d6-fdf8-4942-888a-5fd245d89950)
